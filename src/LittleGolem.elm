@@ -1,6 +1,7 @@
 module LittleGolem exposing (..)
 
 import GameRecord exposing (..)
+import List.Extra
 import Parser exposing (..)
 
 
@@ -10,21 +11,6 @@ type alias Property =
 
 type alias Node =
     List Property
-
-
-
--- type Property
---     = FF Int
---     | GM Int
---     | EV String
---     | PB String
---     | PW String
---     | SZ Int
---     | KM Float
---     | VR String
---     | B String
---     | W String
---     | R String
 
 
 propertyParser : Parser Property
@@ -68,6 +54,132 @@ parser =
         |. end
 
 
-parse : String -> Maybe Record
+find : Node -> String -> Maybe String
+find node key =
+    List.Extra.find (\( k, _ ) -> k == key) node
+        |> Maybe.map Tuple.second
+
+
+doFind : Node -> String -> String
+doFind node key =
+    find node key |> Maybe.withDefault ""
+
+
+getColRow : Player -> String -> Result String Play
+getColRow player move =
+    let
+        charToCoord char =
+            Char.toCode char - 96
+    in
+    case String.toList move of
+        [ 's', 'w', 'a', 'p' ] ->
+            Ok { player = player, move = Swap }
+
+        [ 'r', 'e', 's', 'i', 'g', 'n' ] ->
+            Ok { player = player, move = Resign }
+
+        [ col, row ] ->
+            Ok { player = player, move = Place (charToCoord col) (charToCoord row) }
+
+        _ ->
+            Err <| "Can't parse a move: " ++ move
+
+
+getMove : String -> String -> Node -> Result String Play
+getMove blackMove whiteMove node =
+    case ( find node blackMove, find node whiteMove ) of
+        ( Just bm, Nothing ) ->
+            getColRow Black bm
+
+        ( Nothing, Just wm ) ->
+            getColRow White wm
+
+        ( Nothing, Nothing ) ->
+            Err <| "A node with no moves: " ++ Debug.toString node
+
+        _ ->
+            Err <| "A node with too many moves: " ++ Debug.toString node
+
+
+gameToRecord : Game -> Node -> List Node -> Result String Record
+gameToRecord game first rest =
+    let
+        ( ( blackName, whiteName ), ( blackMove, whiteMove ) ) =
+            if game == TwixT then
+                ( ( "PW", "PB" ), ( "r", "b" ) )
+
+            else
+                ( ( "PB", "PW" ), ( "B", "W" ) )
+
+        resultMoves : Result String (List Play)
+        resultMoves =
+            rest
+                |> List.map (getMove blackMove whiteMove)
+                |> List.foldr (Result.map2 (::)) (Ok [])
+    in
+    Result.map
+        (\moves ->
+            { black = doFind first blackName
+            , white = doFind first whiteName
+            , game = game
+            , size = doFind first "SZ" |> String.toInt |> Maybe.withDefault 0
+            , result = ""
+            , moves = moves
+            }
+        )
+        resultMoves
+
+
+nodesToRecord : List Node -> Result String Record
+nodesToRecord nodes =
+    let
+        first =
+            List.head nodes |> Maybe.withDefault []
+
+        ev =
+            doFind first "EV" |> String.toLower
+
+        vr =
+            doFind first "VR" |> String.toLower
+
+        maybeGame : Maybe Game
+        maybeGame =
+            if String.contains "twixt" ev then
+                Just TwixT
+
+            else if String.contains "hex" ev then
+                Just Hex
+
+            else if String.contains "toroid" ev then
+                Just ToroidGo
+
+            else if String.contains "go" vr then
+                Just Go
+
+            else
+                Nothing
+    in
+    case ( maybeGame, List.tail nodes ) of
+        ( Just game, Just rest ) ->
+            gameToRecord game first rest
+
+        ( Nothing, _ ) ->
+            Err "Could not determine game type"
+
+        ( _, Nothing ) ->
+            Err "This game seems to have no moves"
+
+
+showDeadEnd : DeadEnd -> String
+showDeadEnd de =
+    "DeadEnd: " ++ Debug.toString de
+
+
+showDeadEnds : List DeadEnd -> String
+showDeadEnds deadEnds =
+    "Problem when parsing SGF: [" ++ (List.map showDeadEnd deadEnds |> String.join ", ") ++ "]"
+
+
+parse : String -> Result String Record
 parse input =
-    Nothing
+    Parser.run parser input |> Result.mapError showDeadEnds |> Result.andThen nodesToRecord

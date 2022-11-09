@@ -13,10 +13,15 @@ type Player
     | White
 
 
-type alias Move =
+type Move
+    = Place Int Int
+    | Swap
+    | Resign
+
+
+type alias Play =
     { player : Player
-    , col : Int
-    , row : Int
+    , move : Move
     }
 
 
@@ -24,6 +29,17 @@ type alias Record =
     { black : String
     , white : String
     , game : Game
+    , size : Int
     , result : String
-    , moves : List Move
+    , moves : List Play
+    }
+
+
+empty =
+    { black = ""
+    , white = ""
+    , game = Go
+    , size = 19
+    , result = ""
+    , moves = []
     }
