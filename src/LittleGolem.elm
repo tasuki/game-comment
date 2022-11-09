@@ -65,34 +65,37 @@ doFind node key =
     find node key |> Maybe.withDefault ""
 
 
-getColRow : Player -> String -> Result String Play
-getColRow player move =
+parsePlay : Player -> String -> Result String Play
+parsePlay player move =
     let
         charToCoord char =
             Char.toCode char - 96
     in
     case String.toList move of
+        [ col, row ] ->
+            Ok { player = player, move = Place (charToCoord col) (charToCoord row) }
+
+        [ col, row, '|', 'd', 'r', 'a', 'w' ] ->
+            Ok { player = player, move = Place (charToCoord col) (charToCoord row) }
+
         [ 's', 'w', 'a', 'p' ] ->
             Ok { player = player, move = Swap }
 
         [ 'r', 'e', 's', 'i', 'g', 'n' ] ->
             Ok { player = player, move = Resign }
 
-        [ col, row ] ->
-            Ok { player = player, move = Place (charToCoord col) (charToCoord row) }
-
         _ ->
             Err <| "Can't parse a move: " ++ move
 
 
-getMove : String -> String -> Node -> Result String Play
-getMove blackMove whiteMove node =
+getPlay : String -> String -> Node -> Result String Play
+getPlay blackMove whiteMove node =
     case ( find node blackMove, find node whiteMove ) of
-        ( Just bm, Nothing ) ->
-            getColRow Black bm
+        ( Just bp, Nothing ) ->
+            parsePlay Black bp
 
-        ( Nothing, Just wm ) ->
-            getColRow White wm
+        ( Nothing, Just wp ) ->
+            parsePlay White wp
 
         ( Nothing, Nothing ) ->
             Err <| "A node with no moves: " ++ Debug.toString node
@@ -108,13 +111,16 @@ gameToRecord game first rest =
             if game == TwixT then
                 ( ( "PW", "PB" ), ( "r", "b" ) )
 
+            else if game == Hex then
+                ( ( "PB", "PW" ), ( "W", "B" ) )
+
             else
                 ( ( "PB", "PW" ), ( "B", "W" ) )
 
         resultMoves : Result String (List Play)
         resultMoves =
             rest
-                |> List.map (getMove blackMove whiteMove)
+                |> List.map (getPlay blackMove whiteMove)
                 |> List.foldr (Result.map2 (::)) (Ok [])
     in
     Result.map

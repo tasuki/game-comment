@@ -124,4 +124,71 @@ parseTest =
                 , \_ -> Expect.equal (Just { player = White, move = Place 4 4 }) (getMove moves 4)
                 , \_ -> Expect.equal (Just { player = White, move = Place 37 30 }) (getMove moves 698)
                 ]
+        , test "Can parse twixtDJB" <|
+            let
+                ( record, moves ) =
+                    recordMoves twixtDJB
+            in
+            Expect.all
+                [ \_ -> Expect.equal "David J Bush" record.black
+                , \_ -> Expect.equal "tasuki" record.white
+                , \_ -> Expect.equal GameRecord.TwixT record.game
+                , \_ -> Expect.equal 30 record.size
+                , \_ -> Expect.equal (Just { player = White, move = Place 4 3 }) (getMove moves 1)
+                , \_ -> Expect.equal (Just { player = Black, move = Place 15 16 }) (getMove moves 2)
+                ]
+        , test "Can parse hexLazy" <|
+            let
+                ( record, moves ) =
+                    recordMoves hexLazy
+            in
+            Expect.all
+                [ \_ -> Expect.equal "tasuki" record.black
+                , \_ -> Expect.equal "lazyplayer" record.white
+                , \_ -> Expect.equal GameRecord.Hex record.game
+                , \_ -> Expect.equal 19 record.size
+                , \_ -> Expect.equal (Just { player = Black, move = Place 1 3 }) (getMove moves 1)
+                , \_ -> Expect.equal (Just { player = White, move = Place 5 15 }) (getMove moves 2)
+                , \_ -> Expect.equal (Just { player = White, move = Place 14 7 }) (getMove moves 36)
+                , \_ -> Expect.equal (Just { player = Black, move = Resign }) (getMove moves 37)
+                ]
+        , test "Can parse twixtCassiel" <|
+            let
+                ( record, moves ) =
+                    recordMoves twixtCassiel
+            in
+            Expect.all
+                [ \_ -> Expect.equal "tasuki" record.black
+                , \_ -> Expect.equal "Cassiel" record.white
+                , \_ -> Expect.equal GameRecord.TwixT record.game
+                , \_ -> Expect.equal 48 record.size
+                , \_ -> Expect.equal (Just { player = White, move = Place 45 14 }) (getMove moves 1)
+                , \_ -> Expect.equal (Just { player = Black, move = Place 32 32 }) (getMove moves 2)
+                ]
+        , test "Can parse hexMP" <|
+            let
+                ( record, moves ) =
+                    recordMoves hexMP
+            in
+            Expect.all
+                [ \_ -> Expect.equal "tasuki" record.black
+                , \_ -> Expect.equal "Marcin Pindral" record.white
+                , \_ -> Expect.equal GameRecord.Hex record.game
+                , \_ -> Expect.equal 19 record.size
+                , \_ -> Expect.equal (Just { player = Black, move = Place 1 3 }) (getMove moves 1)
+                , \_ -> Expect.equal (Just { player = White, move = Place 3 5 }) (getMove moves 2)
+                ]
+        , test "Can parse torusAdam" <|
+            let
+                ( record, moves ) =
+                    recordMoves torusAdam
+            in
+            Expect.all
+                [ \_ -> Expect.equal "tasuki" record.black
+                , \_ -> Expect.equal "egozolwia" record.white
+                , \_ -> Expect.equal GameRecord.ToroidGo record.game
+                , \_ -> Expect.equal 11 record.size
+                , \_ -> Expect.equal (Just { player = Black, move = Place 11 1 }) (getMove moves 1)
+                , \_ -> Expect.equal (Just { player = White, move = Place 6 6 }) (getMove moves 2)
+                ]
         ]
