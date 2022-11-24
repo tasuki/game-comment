@@ -13,8 +13,14 @@ type Player
     | White
 
 
+type alias Coords =
+    { x : Int
+    , y : Int
+    }
+
+
 type Move
-    = Place Int Int
+    = Place Coords
     | Swap
     | Resign
 
@@ -35,6 +41,7 @@ type alias Record =
     }
 
 
+empty : Record
 empty =
     { black = ""
     , white = ""

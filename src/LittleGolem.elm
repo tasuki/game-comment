@@ -73,10 +73,10 @@ parsePlay player move =
     in
     case String.toList move of
         [ col, row ] ->
-            Ok { player = player, move = Place (charToCoord col) (charToCoord row) }
+            Ok { player = player, move = Place <| Coords (charToCoord col) (charToCoord row) }
 
         [ col, row, '|', 'd', 'r', 'a', 'w' ] ->
-            Ok { player = player, move = Place (charToCoord col) (charToCoord row) }
+            Ok { player = player, move = Place <| Coords (charToCoord col) (charToCoord row) }
 
         [ 's', 'w', 'a', 'p' ] ->
             Ok { player = player, move = Swap }
