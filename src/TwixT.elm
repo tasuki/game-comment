@@ -49,11 +49,7 @@ drawBorders size =
         border : String -> String -> String -> Svg msg
         border from path color =
             Svg.path
-                [ SA.d <|
-                    "M"
-                        ++ from
-                        ++ " "
-                        ++ path
+                [ SA.d <| "M" ++ from ++ " " ++ path
                 , SA.stroke <| color
                 , SA.strokeWidth ".25"
                 , SA.strokeLinecap <| "square"
@@ -70,8 +66,8 @@ drawBorders size =
 drawGuidelines : Int -> List (Svg msg)
 drawGuidelines size =
     let
-        val : Int -> String
-        val i =
+        coord : Int -> String
+        coord i =
             String.fromFloat <|
                 if i == 0 then
                     1
@@ -84,10 +80,10 @@ drawGuidelines size =
 
         guide x1 y1 x2 y2 =
             Svg.line
-                [ SA.x1 <| val x1
-                , SA.y1 <| val y1
-                , SA.x2 <| val x2
-                , SA.y2 <| val y2
+                [ SA.x1 <| coord x1
+                , SA.y1 <| coord y1
+                , SA.x2 <| coord x2
+                , SA.y2 <| coord y2
                 , SA.stroke "#AAA"
                 , SA.strokeWidth ".1"
                 , SA.strokeLinecap <| "round"
@@ -143,21 +139,20 @@ drawPegs size position =
             List.map (\( player, coords ) -> ( ( coords.x, coords.y ), player )) position.pegs
                 |> Dict.fromList
 
+        coordProps coords =
+            [ SA.cx <| String.fromInt coords.x, SA.cy <| String.fromInt coords.y ]
+
+        styleProps coords =
+            case Dict.get ( coords.x, coords.y ) pegs of
+                Nothing ->
+                    [ SA.r "0.4", SA.fill "transparent", SA.class "clickable" ]
+
+                Just player ->
+                    [ SA.r "0.3", SA.stroke "black", SA.strokeWidth "0.08", SA.fill <| R.color player ]
+
         drawCoords : R.Coords -> Svg msg
         drawCoords coords =
-            let
-                coordProps =
-                    [ SA.cx <| String.fromInt coords.x, SA.cy <| String.fromInt coords.y ]
-
-                styleProps =
-                    case Dict.get ( coords.x, coords.y ) pegs of
-                        Nothing ->
-                            [ SA.r "0.4", SA.fill "transparent", SA.class "clickable" ]
-
-                        Just player ->
-                            [ SA.r "0.3", SA.fill <| R.color player ]
-            in
-            Svg.circle (coordProps ++ styleProps) []
+            Svg.circle (coordProps coords ++ styleProps coords) []
     in
     List.map drawCoords (coordList size)
 
