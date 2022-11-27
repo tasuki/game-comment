@@ -43,8 +43,8 @@ testReplay =
         { moves = Array.empty
         , currentMove = 0
         , currentPosition =
-            { pegs = [ ( R.Black, R.Coords 3 5 ), ( R.Black, R.Coords 4 4 ), ( R.White, R.Coords 4 5 ) ]
-            , links = []
+            { pegs = [ ( R.Black, R.Coords 3 5 ), ( R.Black, R.Coords 5 4 ), ( R.White, R.Coords 4 5 ), ( R.White, R.Coords 5 7 ) ]
+            , links = [ ( R.Black, ( R.Coords 3 5, R.Coords 5 4 ) ), ( R.White, ( R.Coords 4 5, R.Coords 5 7 ) ) ]
             }
         }
 

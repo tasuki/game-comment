@@ -131,6 +131,24 @@ drawPoints size =
     List.map toHole (coordList size)
 
 
+drawLinks : Int -> Position -> List (Svg msg)
+drawLinks size position =
+    let
+        drawLink : ( R.Player, ( R.Coords, R.Coords ) ) -> Svg msg
+        drawLink ( player, ( from, to ) ) =
+            Svg.line
+                [ SA.x1 <| String.fromInt from.x
+                , SA.y1 <| String.fromInt from.y
+                , SA.x2 <| String.fromInt to.x
+                , SA.y2 <| String.fromInt to.y
+                , SA.stroke "black"
+                , SA.strokeWidth ".1"
+                ]
+                []
+    in
+    List.map drawLink position.links
+
+
 drawPegs : Int -> Position -> List (Svg msg)
 drawPegs size position =
     let
@@ -148,7 +166,7 @@ drawPegs size position =
                     [ SA.r "0.4", SA.fill "transparent", SA.class "clickable" ]
 
                 Just player ->
-                    [ SA.r "0.3", SA.stroke "black", SA.strokeWidth "0.08", SA.fill <| R.color player ]
+                    [ SA.r "0.3", SA.stroke "black", SA.strokeWidth "0.1", SA.fill <| R.color player ]
 
         drawCoords : R.Coords -> Svg msg
         drawCoords coords =
@@ -167,4 +185,5 @@ view record replay =
         ++ drawBorders size
         ++ drawGuidelines size
         ++ drawPoints size
+        ++ drawLinks size replay.currentPosition
         ++ drawPegs size replay.currentPosition
