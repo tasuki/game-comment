@@ -31,6 +31,16 @@ type alias Play =
     }
 
 
+color : Player -> String
+color p =
+    case p of
+        Black ->
+            "black"
+
+        White ->
+            "white"
+
+
 type alias Record =
     { black : String
     , white : String
@@ -45,7 +55,7 @@ empty : Record
 empty =
     { black = ""
     , white = ""
-    , game = Go
+    , game = TwixT
     , size = 19
     , result = ""
     , moves = []

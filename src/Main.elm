@@ -1,7 +1,8 @@
 module Main exposing (..)
 
+import Array
 import Browser
-import GameRecord exposing (Coords, Game)
+import GameRecord as R
 import Svg exposing (Svg)
 import Svg.Attributes as SA
 import TwixT
@@ -17,15 +18,44 @@ main =
 
 
 type Msg
-    = Void
+    = Play R.Coords
+
+
+type Replay
+    = TwixTReplay R.Record TwixT.Replay
+
+
+replaySize : Replay -> Int
+replaySize replay =
+    case replay of
+        TwixTReplay record _ ->
+            record.size
+
+
+testReplay : Replay
+testReplay =
+    let
+        e =
+            R.empty
+    in
+    TwixTReplay
+        { e | size = 24 }
+        { moves = Array.empty
+        , currentMove = 0
+        , currentPosition =
+            { pegs = [ ( R.Black, R.Coords 3 5 ), ( R.Black, R.Coords 4 4 ), ( R.White, R.Coords 4 5 ) ]
+            , links = []
+            }
+        }
 
 
 type alias Model =
-    { game : Game, size : Int }
+    { replay : Replay }
 
 
+empty : Model
 empty =
-    { game = GameRecord.TwixT, size = 24 }
+    { replay = testReplay }
 
 
 init : () -> ( Model, Cmd Msg )
@@ -36,7 +66,8 @@ init _ =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Void ->
+        Play coords ->
+            -- TODO
             ( model, Cmd.none )
 
 
@@ -50,15 +81,26 @@ intsToStr ints =
     List.map String.fromInt ints |> String.join " "
 
 
+boardView : Replay -> List (Svg msg)
+boardView replay =
+    case replay of
+        TwixTReplay record twixtReplay ->
+            TwixT.view record twixtReplay
+
+
 view : Model -> Browser.Document Msg
 view model =
+    let
+        size =
+            replaySize model.replay
+    in
     { title = "Game Comment"
     , body =
         [ Svg.svg
-            [ SA.viewBox (intsToStr [ -1, -1, model.size + 1, model.size + 1 ])
+            [ SA.viewBox (intsToStr [ -1, -1, size + 1, size + 1 ])
             , SA.width "800"
             , SA.height "800"
             ]
-            (TwixT.view model.size)
+            (boardView model.replay)
         ]
     }

@@ -1,26 +1,22 @@
 module TwixT exposing (..)
 
-import Array
+import Array exposing (Array)
+import Dict exposing (Dict)
 import GameRecord as R
-import GameReplay as Replay
 import Svg exposing (Svg)
 import Svg.Attributes as SA
 
 
 type alias Position =
-    { blackPegs : List R.Coords
-    , whitePegs : List R.Coords
-    , blackLines : List ( R.Coords, R.Coords )
-    , whiteLines : List ( R.Coords, R.Coords )
+    { pegs : List ( R.Player, R.Coords )
+    , links : List ( R.Player, ( R.Coords, R.Coords ) )
     }
 
 
-emptyReplay : Replay.Replay Position
-emptyReplay =
-    { record = R.empty
-    , moves = Array.empty
-    , currentMove = 0
-    , currentPosition = Position [] [] [] []
+type alias Replay =
+    { moves : Array R.Play
+    , currentMove : Int
+    , currentPosition : Position
     }
 
 
@@ -109,8 +105,8 @@ drawGuidelines size =
     ]
 
 
-drawPoints : Int -> List (Svg msg)
-drawPoints size =
+coordList : Int -> List R.Coords
+coordList size =
     let
         isBorder : Int -> Bool
         isBorder i =
@@ -119,27 +115,61 @@ drawPoints size =
         nodes : List Int
         nodes =
             List.range 0 (size - 1)
+    in
+    List.concatMap (\x -> List.map (R.Coords x) nodes) nodes
+        |> List.filter (\coord -> not (isBorder coord.x) || not (isBorder coord.y))
 
-        coords : List R.Coords
-        coords =
-            List.concatMap (\x -> List.map (R.Coords x) nodes) nodes
-                |> List.filter (\coord -> not (isBorder coord.x) || not (isBorder coord.y))
 
+drawPoints : Int -> List (Svg msg)
+drawPoints size =
+    let
         toHole : R.Coords -> Svg msg
-        toHole crds =
+        toHole coords =
             Svg.circle
-                [ SA.cx <| String.fromInt crds.x
-                , SA.cy <| String.fromInt crds.y
+                [ SA.cx <| String.fromInt coords.x
+                , SA.cy <| String.fromInt coords.y
                 , SA.r "0.1"
                 ]
                 []
     in
-    List.map toHole coords
+    List.map toHole (coordList size)
 
 
-view : Int -> List (Svg msg)
-view size =
+drawPegs : Int -> Position -> List (Svg msg)
+drawPegs size position =
+    let
+        pegs : Dict ( Int, Int ) R.Player
+        pegs =
+            List.map (\( player, coords ) -> ( ( coords.x, coords.y ), player )) position.pegs
+                |> Dict.fromList
+
+        drawCoords : R.Coords -> Svg msg
+        drawCoords coords =
+            let
+                coordProps =
+                    [ SA.cx <| String.fromInt coords.x, SA.cy <| String.fromInt coords.y ]
+
+                styleProps =
+                    case Dict.get ( coords.x, coords.y ) pegs of
+                        Nothing ->
+                            [ SA.r "0.4", SA.fill "transparent", SA.class "clickable" ]
+
+                        Just player ->
+                            [ SA.r "0.3", SA.fill <| R.color player ]
+            in
+            Svg.circle (coordProps ++ styleProps) []
+    in
+    List.map drawCoords (coordList size)
+
+
+view : R.Record -> Replay -> List (Svg msg)
+view record replay =
+    let
+        size =
+            record.size
+    in
     background size
         ++ drawBorders size
         ++ drawGuidelines size
         ++ drawPoints size
+        ++ drawPegs size replay.currentPosition
