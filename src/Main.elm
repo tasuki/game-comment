@@ -67,8 +67,11 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Play coords ->
-            -- TODO
-            ( model, Cmd.none )
+            case model.replay of
+                TwixTReplay record twixtReplay ->
+                    ( { model | replay = TwixTReplay record <| TwixT.play coords twixtReplay }
+                    , Cmd.none
+                    )
 
 
 subscriptions : model -> Sub msg
@@ -81,11 +84,11 @@ intsToStr ints =
     List.map String.fromInt ints |> String.join " "
 
 
-boardView : Replay -> List (Svg msg)
+boardView : Replay -> List (Svg Msg)
 boardView replay =
     case replay of
         TwixTReplay record twixtReplay ->
-            TwixT.view record twixtReplay
+            TwixT.view record twixtReplay Play
 
 
 view : Model -> Browser.Document Msg

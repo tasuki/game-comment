@@ -5,11 +5,20 @@ import Dict exposing (Dict)
 import GameRecord as R
 import Svg exposing (Svg)
 import Svg.Attributes as SA
+import Svg.Events as SE
+
+
+type alias Peg =
+    ( R.Player, R.Coords )
+
+
+type alias Link =
+    ( R.Player, ( R.Coords, R.Coords ) )
 
 
 type alias Position =
-    { pegs : List ( R.Player, R.Coords )
-    , links : List ( R.Player, ( R.Coords, R.Coords ) )
+    { pegs : List Peg
+    , links : List Link
     }
 
 
@@ -17,6 +26,81 @@ type alias Replay =
     { moves : Array R.Play
     , currentMove : Int
     , currentPosition : Position
+    }
+
+
+pegDict : List Peg -> Dict ( Int, Int ) R.Player
+pegDict pegs =
+    List.map (\( player, coords ) -> ( ( coords.x, coords.y ), player )) pegs
+        |> Dict.fromList
+
+
+isOnBoard : Int -> R.Coords -> Bool
+isOnBoard size coord =
+    let
+        isBorder : Int -> Bool
+        isBorder i =
+            (i == 0) || (i == (size - 1))
+    in
+    not (isBorder coord.x) || not (isBorder coord.y)
+
+
+newLinks : R.Player -> R.Coords -> Position -> List Link
+newLinks player newPeg position =
+    let
+        linkCoords : List R.Coords
+        linkCoords =
+            [ R.Coords 1 2
+            , R.Coords 2 1
+            , R.Coords 2 -1
+            , R.Coords 1 -2
+            , R.Coords -1 -2
+            , R.Coords -2 -1
+            , R.Coords -2 1
+            , R.Coords -1 2
+            ]
+
+        pegs =
+            pegDict position.pegs
+
+        shouldCreateLink : R.Coords -> Bool
+        shouldCreateLink linkTo =
+            Dict.get ( linkTo.x, linkTo.y ) pegs == Just player
+
+        a : List R.Coords
+        a =
+            List.map (\l -> R.Coords (newPeg.x + l.x) (newPeg.y + l.y)) linkCoords |> List.filter shouldCreateLink
+    in
+    List.map (\to -> ( player, ( newPeg, to ) )) a
+
+
+updatePosition : R.Play -> Position -> Position
+updatePosition { player, move } position =
+    case move of
+        R.Place coords ->
+            { position
+                | pegs = ( player, coords ) :: position.pegs
+                , links = List.append (newLinks player coords position) position.links
+            }
+
+        _ ->
+            position
+
+
+play : R.Coords -> Replay -> Replay
+play coords replay =
+    let
+        lastMove : Maybe R.Play
+        lastMove =
+            Array.get (Array.length replay.moves - 1) replay.moves
+
+        move : R.Play
+        move =
+            R.nextPlay (R.Place coords) lastMove
+    in
+    { replay
+        | moves = Array.append replay.moves (Array.fromList <| List.singleton move)
+        , currentPosition = updatePosition move replay.currentPosition
     }
 
 
@@ -104,16 +188,12 @@ drawGuidelines size =
 coordList : Int -> List R.Coords
 coordList size =
     let
-        isBorder : Int -> Bool
-        isBorder i =
-            (i == 0) || (i == (size - 1))
-
         nodes : List Int
         nodes =
             List.range 0 (size - 1)
     in
     List.concatMap (\x -> List.map (R.Coords x) nodes) nodes
-        |> List.filter (\coord -> not (isBorder coord.x) || not (isBorder coord.y))
+        |> List.filter (isOnBoard size)
 
 
 drawPoints : Int -> List (Svg msg)
@@ -131,11 +211,11 @@ drawPoints size =
     List.map toHole (coordList size)
 
 
-drawLinks : Int -> Position -> List (Svg msg)
-drawLinks size position =
+drawLinks : Position -> List (Svg msg)
+drawLinks position =
     let
-        drawLink : ( R.Player, ( R.Coords, R.Coords ) ) -> Svg msg
-        drawLink ( player, ( from, to ) ) =
+        drawLink : Link -> Svg msg
+        drawLink ( _, ( from, to ) ) =
             Svg.line
                 [ SA.x1 <| String.fromInt from.x
                 , SA.y1 <| String.fromInt from.y
@@ -149,13 +229,11 @@ drawLinks size position =
     List.map drawLink position.links
 
 
-drawPegs : Int -> Position -> List (Svg msg)
-drawPegs size position =
+drawPegs : Int -> Position -> (R.Coords -> msg) -> List (Svg msg)
+drawPegs size position playMsg =
     let
-        pegs : Dict ( Int, Int ) R.Player
         pegs =
-            List.map (\( player, coords ) -> ( ( coords.x, coords.y ), player )) position.pegs
-                |> Dict.fromList
+            pegDict position.pegs
 
         coordProps coords =
             [ SA.cx <| String.fromInt coords.x, SA.cy <| String.fromInt coords.y ]
@@ -163,7 +241,7 @@ drawPegs size position =
         styleProps coords =
             case Dict.get ( coords.x, coords.y ) pegs of
                 Nothing ->
-                    [ SA.r "0.4", SA.fill "transparent", SA.class "clickable" ]
+                    [ SA.r "0.4", SA.fill "transparent", SA.class "clickable", SE.onClick <| playMsg coords ]
 
                 Just player ->
                     [ SA.r "0.3", SA.stroke "black", SA.strokeWidth "0.1", SA.fill <| R.color player ]
@@ -175,8 +253,8 @@ drawPegs size position =
     List.map drawCoords (coordList size)
 
 
-view : R.Record -> Replay -> List (Svg msg)
-view record replay =
+view : R.Record -> Replay -> (R.Coords -> msg) -> List (Svg msg)
+view record replay playMsg =
     let
         size =
             record.size
@@ -185,5 +263,5 @@ view record replay =
         ++ drawBorders size
         ++ drawGuidelines size
         ++ drawPoints size
-        ++ drawLinks size replay.currentPosition
-        ++ drawPegs size replay.currentPosition
+        ++ drawLinks replay.currentPosition
+        ++ drawPegs size replay.currentPosition playMsg

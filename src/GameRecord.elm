@@ -31,6 +31,23 @@ type alias Play =
     }
 
 
+nextPlay : Move -> Maybe Play -> Play
+nextPlay move play =
+    let
+        player =
+            case Maybe.map .player play of
+                Nothing ->
+                    Black
+
+                Just White ->
+                    Black
+
+                Just Black ->
+                    White
+    in
+    { player = player, move = move }
+
+
 color : Player -> String
 color p =
     case p of
