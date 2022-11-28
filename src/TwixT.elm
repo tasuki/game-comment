@@ -90,13 +90,8 @@ updatePosition { player, move } position =
 play : R.Coords -> Replay -> Replay
 play coords replay =
     let
-        lastMove : Maybe R.Play
-        lastMove =
-            Array.get (Array.length replay.moves - 1) replay.moves
-
-        move : R.Play
         move =
-            R.nextPlay (R.Place coords) lastMove
+            { player = R.onMove replay.moves, move = R.Place coords }
     in
     { replay
         | moves = Array.append replay.moves (Array.fromList <| List.singleton move)
@@ -229,8 +224,8 @@ drawLinks position =
     List.map drawLink position.links
 
 
-drawPegs : Int -> Position -> (R.Coords -> msg) -> List (Svg msg)
-drawPegs size position playMsg =
+drawPegs : Int -> Position -> R.Player -> (R.Coords -> msg) -> List (Svg msg)
+drawPegs size position onMove playMsg =
     let
         pegs =
             pegDict position.pegs
@@ -238,10 +233,18 @@ drawPegs size position playMsg =
         coordProps coords =
             [ SA.cx <| String.fromInt coords.x, SA.cy <| String.fromInt coords.y ]
 
+        isClickable : R.Player -> Int -> Bool
+        isClickable player dirCoord =
+            onMove == player && dirCoord /= 0 && dirCoord /= (size - 1)
+
         styleProps coords =
             case Dict.get ( coords.x, coords.y ) pegs of
                 Nothing ->
-                    [ SA.r "0.4", SA.fill "transparent", SA.class "clickable", SE.onClick <| playMsg coords ]
+                    if isClickable R.Black coords.y || isClickable R.White coords.x then
+                        [ SA.r "0.4", SA.fill "transparent", SA.class "clickable", SE.onClick <| playMsg coords ]
+
+                    else
+                        []
 
                 Just player ->
                     [ SA.r "0.3", SA.stroke "black", SA.strokeWidth "0.1", SA.fill <| R.color player ]
@@ -258,10 +261,14 @@ view record replay playMsg =
     let
         size =
             record.size
+
+        onMove : R.Player
+        onMove =
+            R.onMove replay.moves
     in
     background size
         ++ drawBorders size
         ++ drawGuidelines size
         ++ drawPoints size
         ++ drawLinks replay.currentPosition
-        ++ drawPegs size replay.currentPosition playMsg
+        ++ drawPegs size replay.currentPosition onMove playMsg

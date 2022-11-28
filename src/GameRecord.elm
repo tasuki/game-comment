@@ -1,5 +1,7 @@
 module GameRecord exposing (..)
 
+import Array exposing (Array)
+
 
 type Game
     = Go
@@ -31,21 +33,22 @@ type alias Play =
     }
 
 
-nextPlay : Move -> Maybe Play -> Play
-nextPlay move play =
+onMove : Array Play -> Player
+onMove plays =
     let
-        player =
-            case Maybe.map .player play of
-                Nothing ->
-                    Black
-
-                Just White ->
-                    Black
-
-                Just Black ->
-                    White
+        lastMove : Maybe Play
+        lastMove =
+            Array.get (Array.length plays - 1) plays
     in
-    { player = player, move = move }
+    case Maybe.map .player lastMove of
+        Nothing ->
+            Black
+
+        Just White ->
+            Black
+
+        Just Black ->
+            White
 
 
 color : Player -> String
