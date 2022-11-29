@@ -63,15 +63,60 @@ newLinks player newPeg position =
         pegs =
             pegDict position.pegs
 
-        shouldCreateLink : R.Coords -> Bool
-        shouldCreateLink linkTo =
+        hasOwnPeg : R.Coords -> Bool
+        hasOwnPeg linkTo =
             Dict.get ( linkTo.x, linkTo.y ) pegs == Just player
 
         toCreate : List R.Coords
         toCreate =
-            List.map (\l -> R.Coords (newPeg.x + l.x) (newPeg.y + l.y)) linkCoords |> List.filter shouldCreateLink
+            List.map (\l -> R.Coords (newPeg.x + l.x) (newPeg.y + l.y)) linkCoords
+                |> List.filter hasOwnPeg
+
+        crosses : Link -> Link -> Bool
+        crosses new old =
+            let
+                ( newA, newB ) =
+                    Tuple.second new
+
+                ( oldA, oldB ) =
+                    Tuple.second old
+
+                dxNew =
+                    newB.x - newA.x
+
+                dyNew =
+                    newB.y - newA.y
+
+                dxOld =
+                    oldB.x - oldA.x
+
+                dyOld =
+                    oldB.y - oldA.y
+
+                p0 =
+                    dyOld * (oldB.x - newA.x) - dxOld * (oldB.y - newA.y)
+
+                p1 =
+                    dyOld * (oldB.x - newB.x) - dxOld * (oldB.y - newB.y)
+
+                p2 =
+                    dyNew * (newB.x - oldA.x) - dxNew * (newB.y - oldA.y)
+
+                p3 =
+                    dyNew * (newB.x - oldB.x) - dxNew * (newB.y - oldB.y)
+            in
+            (p0 * p1 <= 0) && (p2 * p3 <= 0)
+
+        crossesOpponentLink : Link -> Bool
+        crossesOpponentLink new =
+            let
+                opponentLinks =
+                    List.filter (\( linkOwner, _ ) -> linkOwner /= player) position.links
+            in
+            List.map (crosses new) opponentLinks |> List.any identity
     in
     List.map (\to -> ( player, ( newPeg, to ) )) toCreate
+        |> List.filter (\l -> not <| crossesOpponentLink l)
 
 
 updatePosition : R.Play -> Position -> Position
