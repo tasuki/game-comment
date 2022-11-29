@@ -67,11 +67,11 @@ newLinks player newPeg position =
         shouldCreateLink linkTo =
             Dict.get ( linkTo.x, linkTo.y ) pegs == Just player
 
-        a : List R.Coords
-        a =
+        toCreate : List R.Coords
+        toCreate =
             List.map (\l -> R.Coords (newPeg.x + l.x) (newPeg.y + l.y)) linkCoords |> List.filter shouldCreateLink
     in
-    List.map (\to -> ( player, ( newPeg, to ) )) a
+    List.map (\to -> ( player, ( newPeg, to ) )) toCreate
 
 
 updatePosition : R.Play -> Position -> Position
