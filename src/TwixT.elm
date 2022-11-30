@@ -22,10 +22,25 @@ type alias Position =
     }
 
 
+emptyPosition =
+    { pegs = []
+    , links = []
+    }
+
+
 type alias Replay =
-    { moves : Array R.Play
+    { moves : List R.Play
     , currentMove : Int
     , currentPosition : Position
+    , variationFromMove : Maybe Int
+    }
+
+
+emptyReplay =
+    { moves = []
+    , currentMove = 0
+    , currentPosition = emptyPosition
+    , variationFromMove = Nothing
     }
 
 
@@ -139,7 +154,7 @@ play coords replay =
             { player = R.onMove replay.moves, move = R.Place coords }
     in
     { replay
-        | moves = Array.append replay.moves (Array.fromList <| List.singleton move)
+        | moves = move :: replay.moves
         , currentPosition = updatePosition move replay.currentPosition
     }
 
@@ -306,14 +321,10 @@ view record replay playMsg =
     let
         size =
             record.size
-
-        onMove : R.Player
-        onMove =
-            R.onMove replay.moves
     in
     background size
         ++ drawBorders size
         ++ drawGuidelines size
         ++ drawPoints size
         ++ drawLinks replay.currentPosition
-        ++ drawPegs size replay.currentPosition onMove playMsg
+        ++ drawPegs size replay.currentPosition (R.onMove replay.moves) playMsg

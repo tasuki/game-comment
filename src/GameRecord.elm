@@ -33,14 +33,9 @@ type alias Play =
     }
 
 
-onMove : Array Play -> Player
+onMove : List Play -> Player
 onMove plays =
-    let
-        lastMove : Maybe Play
-        lastMove =
-            Array.get (Array.length plays - 1) plays
-    in
-    case Maybe.map .player lastMove of
+    case Maybe.map .player (List.head plays) of
         Nothing ->
             Black
 
