@@ -1,7 +1,5 @@
 module GameRecord exposing (..)
 
-import Array exposing (Array)
-
 
 type Game
     = Go

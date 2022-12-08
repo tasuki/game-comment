@@ -1,19 +1,19 @@
 module TwixT exposing (..)
 
-import Array exposing (Array)
 import Dict exposing (Dict)
-import GameRecord as R
+import GameRecord as G
+import Replay as R
 import Svg exposing (Svg)
 import Svg.Attributes as SA
 import Svg.Events as SE
 
 
 type alias Peg =
-    ( R.Player, R.Coords )
+    ( G.Player, G.Coords )
 
 
 type alias Link =
-    ( R.Player, ( R.Coords, R.Coords ) )
+    ( G.Player, ( G.Coords, G.Coords ) )
 
 
 type alias Position =
@@ -28,29 +28,13 @@ emptyPosition =
     }
 
 
-type alias Replay =
-    { moves : List R.Play
-    , currentMove : Int
-    , currentPosition : Position
-    , variationFromMove : Maybe Int
-    }
-
-
-emptyReplay =
-    { moves = []
-    , currentMove = 0
-    , currentPosition = emptyPosition
-    , variationFromMove = Nothing
-    }
-
-
-pegDict : List Peg -> Dict ( Int, Int ) R.Player
+pegDict : List Peg -> Dict ( Int, Int ) G.Player
 pegDict pegs =
     List.map (\( player, coords ) -> ( ( coords.x, coords.y ), player )) pegs
         |> Dict.fromList
 
 
-isOnBoard : Int -> R.Coords -> Bool
+isOnBoard : Int -> G.Coords -> Bool
 isOnBoard size coord =
     let
         isBorder : Int -> Bool
@@ -60,31 +44,31 @@ isOnBoard size coord =
     not (isBorder coord.x) || not (isBorder coord.y)
 
 
-newLinks : R.Player -> R.Coords -> Position -> List Link
+newLinks : G.Player -> G.Coords -> Position -> List Link
 newLinks player newPeg position =
     let
-        linkCoords : List R.Coords
+        linkCoords : List G.Coords
         linkCoords =
-            [ R.Coords 1 2
-            , R.Coords 2 1
-            , R.Coords 2 -1
-            , R.Coords 1 -2
-            , R.Coords -1 -2
-            , R.Coords -2 -1
-            , R.Coords -2 1
-            , R.Coords -1 2
+            [ G.Coords 1 2
+            , G.Coords 2 1
+            , G.Coords 2 -1
+            , G.Coords 1 -2
+            , G.Coords -1 -2
+            , G.Coords -2 -1
+            , G.Coords -2 1
+            , G.Coords -1 2
             ]
 
         pegs =
             pegDict position.pegs
 
-        hasOwnPeg : R.Coords -> Bool
+        hasOwnPeg : G.Coords -> Bool
         hasOwnPeg linkTo =
             Dict.get ( linkTo.x, linkTo.y ) pegs == Just player
 
-        toCreate : List R.Coords
+        toCreate : List G.Coords
         toCreate =
-            List.map (\l -> R.Coords (newPeg.x + l.x) (newPeg.y + l.y)) linkCoords
+            List.map (\l -> G.Coords (newPeg.x + l.x) (newPeg.y + l.y)) linkCoords
                 |> List.filter hasOwnPeg
 
         crosses : Link -> Link -> Bool
@@ -134,10 +118,10 @@ newLinks player newPeg position =
         |> List.filter (\l -> not <| crossesOpponentLink l)
 
 
-updatePosition : R.Play -> Position -> Position
+updatePosition : G.Play -> Position -> Position
 updatePosition { player, move } position =
     case move of
-        R.Place coords ->
+        G.Place coords ->
             { position
                 | pegs = ( player, coords ) :: position.pegs
                 , links = List.append (newLinks player coords position) position.links
@@ -145,18 +129,6 @@ updatePosition { player, move } position =
 
         _ ->
             position
-
-
-play : R.Coords -> Replay -> Replay
-play coords replay =
-    let
-        move =
-            { player = R.onMove replay.moves, move = R.Place coords }
-    in
-    { replay
-        | moves = move :: replay.moves
-        , currentPosition = updatePosition move replay.currentPosition
-    }
 
 
 
@@ -240,21 +212,21 @@ drawGuidelines size =
     ]
 
 
-coordList : Int -> List R.Coords
+coordList : Int -> List G.Coords
 coordList size =
     let
         nodes : List Int
         nodes =
             List.range 0 (size - 1)
     in
-    List.concatMap (\x -> List.map (R.Coords x) nodes) nodes
+    List.concatMap (\x -> List.map (G.Coords x) nodes) nodes
         |> List.filter (isOnBoard size)
 
 
 drawPoints : Int -> List (Svg msg)
 drawPoints size =
     let
-        toHole : R.Coords -> Svg msg
+        toHole : G.Coords -> Svg msg
         toHole coords =
             Svg.circle
                 [ SA.cx <| String.fromInt coords.x
@@ -284,7 +256,7 @@ drawLinks position =
     List.map drawLink position.links
 
 
-drawPegs : Int -> Position -> R.Player -> (R.Coords -> msg) -> List (Svg msg)
+drawPegs : Int -> Position -> G.Player -> (G.Coords -> msg) -> List (Svg msg)
 drawPegs size position onMove playMsg =
     let
         pegs =
@@ -293,38 +265,38 @@ drawPegs size position onMove playMsg =
         coordProps coords =
             [ SA.cx <| String.fromInt coords.x, SA.cy <| String.fromInt coords.y ]
 
-        isClickable : R.Player -> Int -> Bool
+        isClickable : G.Player -> Int -> Bool
         isClickable player dirCoord =
             onMove == player && dirCoord /= 0 && dirCoord /= (size - 1)
 
         styleProps coords =
             case Dict.get ( coords.x, coords.y ) pegs of
                 Nothing ->
-                    if isClickable R.Black coords.y || isClickable R.White coords.x then
+                    if isClickable G.Black coords.y || isClickable G.White coords.x then
                         [ SA.r "0.4", SA.fill "transparent", SA.class "clickable", SE.onClick <| playMsg coords ]
 
                     else
                         []
 
                 Just player ->
-                    [ SA.r "0.3", SA.stroke "black", SA.strokeWidth "0.1", SA.fill <| R.color player ]
+                    [ SA.r "0.3", SA.stroke "black", SA.strokeWidth "0.1", SA.fill <| G.color player ]
 
-        drawCoords : R.Coords -> Svg msg
+        drawCoords : G.Coords -> Svg msg
         drawCoords coords =
             Svg.circle (coordProps coords ++ styleProps coords) []
     in
     List.map drawCoords (coordList size)
 
 
-view : R.Record -> Replay -> (R.Coords -> msg) -> List (Svg msg)
-view record replay playMsg =
+view : R.Replay Position -> (G.Coords -> msg) -> List (Svg msg)
+view replay playMsg =
     let
         size =
-            record.size
+            replay.record.size
     in
     background size
         ++ drawBorders size
         ++ drawGuidelines size
         ++ drawPoints size
         ++ drawLinks replay.currentPosition
-        ++ drawPegs size replay.currentPosition (R.onMove replay.moves) playMsg
+        ++ drawPegs size replay.currentPosition (G.onMove replay.moves) playMsg

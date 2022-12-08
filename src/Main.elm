@@ -1,9 +1,11 @@
 module Main exposing (..)
 
-import Array
 import Browser
-import GameRecord as R
+import Browser.Events
+import GameRecord as G
+import Json.Decode as D
 import LittleGolem
+import Replay as R
 import Svg exposing (Svg)
 import Svg.Attributes as SA
 import TwixT
@@ -18,39 +20,16 @@ main =
         }
 
 
-type Msg
-    = Play R.Coords
 
-
-type Replay
-    = TwixTReplay R.Record TwixT.Replay
-
-
-replaySize : Replay -> Int
-replaySize replay =
-    case replay of
-        TwixTReplay record _ ->
-            record.size
-
-
-testReplay : Replay
-testReplay =
-    let
-        record : R.Record
-        record =
-            LittleGolem.parse "(;FF[4]EV[twixt.ld.SIZE30]PB[tasuki]PW[David J Bush]SZ[30]SO[https://www.littlegolem.net];b[dc];r[op];b[qp];r[ol];b[sk];r[qt];b[us];r[tm];b[vq];r[rl];b[xl];r[wf];b[xh];r[ye];b[ug];r[vl];b[kl];r[qx];b[iq];r[it];b[wx];r[qj];b[mp];r[qq];b[oo];r[sp];b[ku];r[kw];b[ky];r[lu];b[mt];r[jy];b[nv];r[oy];b[resign])"
-                |> Result.withDefault R.empty
-    in
-    TwixTReplay record TwixT.emptyReplay
+-- MODEL
 
 
 type alias Model =
-    { replay : Replay }
+    { replay : GameReplay }
 
 
-empty : Model
-empty =
-    { replay = testReplay }
+type GameReplay
+    = TwixTReplay (R.Replay TwixT.Position)
 
 
 init : () -> ( Model, Cmd Msg )
@@ -58,39 +37,108 @@ init _ =
     ( empty, Cmd.none )
 
 
+empty : Model
+empty =
+    { replay = TwixTReplay testReplay }
+
+
+testReplay : R.Replay TwixT.Position
+testReplay =
+    let
+        record : G.Record
+        record =
+            "(;FF[4]EV[twixt.ld.SIZE30]PB[tasuki]PW[David J Bush]SZ[30]SO[https://www.littlegolem.net]"
+                ++ ";b[dc];r[op];b[qp];r[ol];b[sk];r[qt];b[us];r[tm];b[vq];r[rl];b[xl];r[wf];b[xh]"
+                ++ ";r[ye];b[ug];r[vl];b[kl];r[qx];b[iq];r[it];b[wx];r[qj];b[mp];r[qq];b[oo];r[sp]"
+                ++ ";b[ku];r[kw];b[ky];r[lu];b[mt];r[jy];b[nv];r[oy];b[resign])"
+                |> LittleGolem.parse
+                |> Result.withDefault G.empty
+    in
+    R.emptyReplay record TwixT.emptyPosition
+
+
+
+-- UPDATE
+
+
+type Msg
+    = Noop
+    | Play G.Coords
+    | Forward
+    | Backward
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        Noop ->
+            ( model, Cmd.none )
+
+        Backward ->
+            ( model, Cmd.none )
+
+        Forward ->
+            ( model, Cmd.none )
+
         Play coords ->
             case model.replay of
-                TwixTReplay record twixtReplay ->
-                    ( { model | replay = TwixTReplay record <| TwixT.play coords twixtReplay }
+                TwixTReplay replay ->
+                    ( { model | replay = TwixTReplay <| R.play coords TwixT.updatePosition replay }
                     , Cmd.none
                     )
 
 
-subscriptions : model -> Sub msg
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
 subscriptions m =
-    Sub.none
+    Sub.batch
+        [ Browser.Events.onKeyDown (D.map keydown <| D.field "key" D.string)
+        ]
 
 
-intsToStr : List Int -> String
-intsToStr ints =
-    List.map String.fromInt ints |> String.join " "
+keydown : String -> Msg
+keydown keycode =
+    case keycode of
+        "ArrowLeft" ->
+            Backward
+
+        "ArrowRight" ->
+            Forward
+
+        _ ->
+            Noop
 
 
-boardView : Replay -> List (Svg Msg)
-boardView replay =
-    case replay of
-        TwixTReplay record twixtReplay ->
-            TwixT.view record twixtReplay Play
+
+-- VIEW
+
+
+getRecord : GameReplay -> G.Record
+getRecord gr =
+    case gr of
+        TwixTReplay replay ->
+            replay.record
+
+
+boardView : GameReplay -> List (Svg Msg)
+boardView gr =
+    case gr of
+        TwixTReplay replay ->
+            TwixT.view replay Play
 
 
 view : Model -> Browser.Document Msg
 view model =
     let
         size =
-            replaySize model.replay
+            getRecord model.replay |> .size
+
+        intsToStr : List Int -> String
+        intsToStr ints =
+            List.map String.fromInt ints |> String.join " "
     in
     { title = "Game Comment"
     , body =
