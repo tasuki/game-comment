@@ -31,17 +31,13 @@ type alias Play =
     }
 
 
-onMove : List Play -> Player
-onMove plays =
-    case Maybe.map .player (List.head plays) of
-        Nothing ->
-            Black
+onMove : Int -> Player
+onMove moveNum =
+    if modBy 2 moveNum == 0 then
+        Black
 
-        Just White ->
-            Black
-
-        Just Black ->
-            White
+    else
+        White
 
 
 color : Player -> String

@@ -317,4 +317,4 @@ view replay playMsg =
         ++ drawGuidelines size
         ++ drawPoints size
         ++ drawLinks replay.currentPosition
-        ++ drawPegs size replay.currentPosition (G.onMove replay.moves) playMsg
+        ++ drawPegs size replay.currentPosition (G.onMove replay.currentMove) playMsg
