@@ -70,20 +70,26 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    -- TODO this is horrid!
+    -- not trivial to dedupe because of let-polymorphism?
     case msg of
         Noop ->
             ( model, Cmd.none )
 
         Backward ->
-            ( model, Cmd.none )
+            case model.replay of
+                TwixTReplay replay ->
+                    ( { model | replay = TwixTReplay <| R.prev TwixT.remove replay }, Cmd.none )
 
         Forward ->
-            ( model, Cmd.none )
+            case model.replay of
+                TwixTReplay replay ->
+                    ( { model | replay = TwixTReplay <| R.next TwixT.add replay }, Cmd.none )
 
         Play coords ->
             case model.replay of
                 TwixTReplay replay ->
-                    ( { model | replay = TwixTReplay <| R.play coords TwixT.updatePosition replay }
+                    ( { model | replay = TwixTReplay <| R.play coords TwixT.add replay }
                     , Cmd.none
                     )
 

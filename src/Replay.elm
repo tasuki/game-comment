@@ -30,5 +30,34 @@ play coords updateFun replay =
     in
     { replay
         | moves = move :: replay.moves
+        , currentMove = replay.currentMove + 1
         , currentPosition = updateFun move replay.currentPosition
     }
+
+
+next : (G.Play -> pos -> pos) -> Replay pos -> Replay pos
+next updateFun replay =
+    case List.drop replay.currentMove replay.record.moves |> List.head of
+        Nothing ->
+            replay
+
+        Just p ->
+            { replay
+                | moves = p :: replay.moves
+                , currentMove = replay.currentMove + 1
+                , currentPosition = updateFun p replay.currentPosition
+            }
+
+
+prev : (G.Play -> pos -> pos) -> Replay pos -> Replay pos
+prev updateFun replay =
+    case List.head replay.moves of
+        Nothing ->
+            replay
+
+        Just move ->
+            { replay
+                | moves = List.drop 1 replay.moves
+                , currentMove = replay.currentMove - 1
+                , currentPosition = updateFun move replay.currentPosition
+            }

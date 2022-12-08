@@ -118,13 +118,31 @@ newLinks player newPeg position =
         |> List.filter (\l -> not <| crossesOpponentLink l)
 
 
-updatePosition : G.Play -> Position -> Position
-updatePosition { player, move } position =
+add : G.Play -> Position -> Position
+add { player, move } position =
     case move of
         G.Place coords ->
             { position
                 | pegs = ( player, coords ) :: position.pegs
                 , links = List.append (newLinks player coords position) position.links
+            }
+
+        _ ->
+            position
+
+
+remove : G.Play -> Position -> Position
+remove { player, move } position =
+    let
+        shouldKeep : G.Coords -> Link -> Bool
+        shouldKeep coords ( _, ( fst, snd ) ) =
+            coords /= fst && coords /= snd
+    in
+    case move of
+        G.Place coords ->
+            { position
+                | pegs = List.drop 1 position.pegs
+                , links = List.filter (shouldKeep coords) position.links
             }
 
         _ ->
