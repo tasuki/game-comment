@@ -139,7 +139,8 @@ viewMove currentMove moveNum { player, move } =
 
 view : Replay pos -> List (H.Html msg)
 view replay =
-    [ H.p [] [ H.text ("Black: " ++ replay.record.black) ]
-    , H.p [] [ H.text ("White: " ++ replay.record.white) ]
-    , H.p [] (List.indexedMap (viewMove replay.currentMove) replay.record.moves |> List.concat)
+    [ H.div [ HA.class "player-black" ] [ H.text replay.record.black ]
+    , H.div [ HA.class "player-white" ] [ H.text replay.record.white ]
+    , H.div [ HA.class "clear" ] []
+    , H.div [ HA.class "replay" ] (List.indexedMap (viewMove replay.currentMove) replay.record.moves |> List.concat)
     ]

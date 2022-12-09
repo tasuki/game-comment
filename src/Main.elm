@@ -165,8 +165,8 @@ view model =
                 ]
                 (boardView model.replay)
             , H.div
-                [ HA.class "pure-u-md-1-3 game-info" ]
-                (replayView model.replay)
+                [ HA.class "pure-u-md-1-3" ]
+                [ H.div [ HA.class "game-info" ] (replayView model.replay) ]
             ]
         ]
     }
