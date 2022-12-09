@@ -3,7 +3,6 @@ module Replay exposing (..)
 import GameRecord as G
 import Html as H
 import Html.Attributes as HA
-import Svg exposing (Svg)
 
 
 type alias Replay pos =
@@ -21,6 +20,18 @@ emptyReplay record position =
     , variation = []
     , position = position
     }
+
+
+lastMove : Replay pos -> Maybe G.Move
+lastMove replay =
+    case List.head replay.variation of
+        Just { player, move } ->
+            Just move
+
+        Nothing ->
+            List.drop (replay.currentMove - 1) replay.record.moves
+                |> List.head
+                |> Maybe.map .move
 
 
 play : G.Coords -> (G.Play -> pos -> pos) -> Replay pos -> Replay pos

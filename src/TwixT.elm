@@ -279,8 +279,8 @@ drawLinks position =
     List.map drawLink position.links
 
 
-drawPegs : Int -> Position -> G.Player -> (G.Coords -> msg) -> List (Svg msg)
-drawPegs size position onMove playMsg =
+drawPegs : Int -> Position -> Maybe G.Move -> G.Player -> (G.Coords -> msg) -> List (Svg msg)
+drawPegs size position lastMove onMove playMsg =
     let
         pegs =
             pegDict position.pegs
@@ -308,11 +308,23 @@ drawPegs size position onMove playMsg =
                         []
 
                 Just player ->
-                    [ SA.r "0.35"
-                    , SA.stroke "black"
-                    , SA.strokeWidth "0.1"
-                    , SA.fill <| G.color player
-                    ]
+                    classesProps player coords
+                        ++ [ SA.r "0.35"
+                           , SA.stroke "black"
+                           , SA.strokeWidth "0.1"
+                           , SA.fill <| G.color player
+                           ]
+
+        classesProps player coords =
+            if lastMove == Just (G.Place coords) then
+                if player == G.Black then
+                    [ SA.class "last-move black" ]
+
+                else
+                    [ SA.class "last-move white" ]
+
+            else
+                []
 
         drawCoords : G.Coords -> Svg msg
         drawCoords coords =
@@ -332,4 +344,4 @@ view replay playMsg =
         ++ drawGuidelines size
         ++ drawPoints size
         ++ drawLinks replay.position
-        ++ drawPegs size replay.position (G.onMove replay.currentMove) playMsg
+        ++ drawPegs size replay.position (R.lastMove replay) (G.onMove replay.currentMove) playMsg
