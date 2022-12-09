@@ -256,16 +256,21 @@ drawPoints size =
     List.map toHole (coordList size)
 
 
+coordProp : Int -> String
+coordProp coord =
+    String.fromInt <| coord - 1
+
+
 drawLinks : Position -> List (Svg msg)
 drawLinks position =
     let
         drawLink : Link -> Svg msg
         drawLink ( _, ( from, to ) ) =
             Svg.line
-                [ SA.x1 <| String.fromInt from.x
-                , SA.y1 <| String.fromInt from.y
-                , SA.x2 <| String.fromInt to.x
-                , SA.y2 <| String.fromInt to.y
+                [ SA.x1 <| coordProp from.x
+                , SA.y1 <| coordProp from.y
+                , SA.x2 <| coordProp to.x
+                , SA.y2 <| coordProp to.y
                 , SA.stroke "black"
                 , SA.strokeWidth ".1"
                 ]
@@ -281,7 +286,9 @@ drawPegs size position onMove playMsg =
             pegDict position.pegs
 
         coordProps coords =
-            [ SA.cx <| String.fromInt coords.x, SA.cy <| String.fromInt coords.y ]
+            [ SA.cx <| coordProp coords.x
+            , SA.cy <| coordProp coords.y
+            ]
 
         isClickable : G.Player -> Int -> Bool
         isClickable player dirCoord =
@@ -291,13 +298,21 @@ drawPegs size position onMove playMsg =
             case Dict.get ( coords.x, coords.y ) pegs of
                 Nothing ->
                     if isClickable G.Black coords.y || isClickable G.White coords.x then
-                        [ SA.r "0.4", SA.fill "transparent", SA.class "clickable", SE.onClick <| playMsg coords ]
+                        [ SA.r "0.4"
+                        , SA.fill "transparent"
+                        , SA.class "clickable"
+                        , SE.onClick <| playMsg coords
+                        ]
 
                     else
                         []
 
                 Just player ->
-                    [ SA.r "0.3", SA.stroke "black", SA.strokeWidth "0.1", SA.fill <| G.color player ]
+                    [ SA.r "0.35"
+                    , SA.stroke "black"
+                    , SA.strokeWidth "0.1"
+                    , SA.fill <| G.color player
+                    ]
 
         drawCoords : G.Coords -> Svg msg
         drawCoords coords =
