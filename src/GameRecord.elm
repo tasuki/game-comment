@@ -34,10 +34,10 @@ type alias Play =
 onMove : Int -> Player
 onMove moveNum =
     if modBy 2 moveNum == 0 then
-        Black
+        White
 
     else
-        White
+        Black
 
 
 color : Player -> String
