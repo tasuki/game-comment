@@ -1,6 +1,9 @@
 module Replay exposing (..)
 
 import GameRecord as G
+import Html as H
+import Html.Attributes as HA
+import Svg exposing (Svg)
 
 
 type alias Replay pos =
@@ -73,3 +76,59 @@ prev updateFun replay =
                 , variation = rest
                 , position = updateFun move replay.position
             }
+
+
+
+-- VIEW
+
+
+chars : List Char
+chars =
+    String.toList "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+viewMove : Int -> Int -> G.Play -> List (H.Html msg)
+viewMove currentMove moveNum { player, move } =
+    let
+        char : Int -> Char
+        char coord =
+            List.drop (coord - 1) chars |> List.head |> Maybe.withDefault '.'
+
+        moveStr =
+            case move of
+                G.Place coords ->
+                    String.fromChar (char coords.x) ++ String.fromInt coords.y
+
+                G.Swap ->
+                    "Swap"
+
+                G.Resign ->
+                    "Resign"
+
+        class =
+            case player of
+                G.Black ->
+                    "player black "
+
+                G.White ->
+                    "player white "
+
+        highlight =
+            if currentMove == moveNum + 1 then
+                "highlight "
+
+            else
+                ""
+    in
+    [ H.span [ HA.class (class ++ highlight) ]
+        [ H.text <| (String.fromInt <| moveNum + 1) ++ "." ++ moveStr ]
+    , H.text " "
+    ]
+
+
+view : Replay pos -> List (H.Html msg)
+view replay =
+    [ H.p [] [ H.text ("Black: " ++ replay.record.black) ]
+    , H.p [] [ H.text ("White: " ++ replay.record.white) ]
+    , H.p [] (List.indexedMap (viewMove replay.currentMove) replay.record.moves |> List.concat)
+    ]

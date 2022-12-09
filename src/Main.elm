@@ -3,6 +3,8 @@ module Main exposing (..)
 import Browser
 import Browser.Events
 import GameRecord as G
+import Html as H
+import Html.Attributes as HA
 import Json.Decode as D
 import LittleGolem
 import Replay as R
@@ -136,6 +138,13 @@ boardView gr =
             TwixT.view replay Play
 
 
+replayView : GameReplay -> List (H.Html Msg)
+replayView gr =
+    case gr of
+        TwixTReplay replay ->
+            R.view replay
+
+
 view : Model -> Browser.Document Msg
 view model =
     let
@@ -148,11 +157,16 @@ view model =
     in
     { title = "Game Comment"
     , body =
-        [ Svg.svg
-            [ SA.viewBox (intsToStr [ -1, -1, size + 1, size + 1 ])
-            , SA.width "800"
-            , SA.height "800"
+        [ H.div [ HA.class "pure-g" ]
+            [ Svg.svg
+                [ SA.viewBox (intsToStr [ -1, -1, size + 1, size + 1 ])
+                , SA.width "100%"
+                , SA.class "pure-u-md-2-3"
+                ]
+                (boardView model.replay)
+            , H.div
+                [ HA.class "pure-u-md-1-3 game-info" ]
+                (replayView model.replay)
             ]
-            (boardView model.replay)
         ]
     }
