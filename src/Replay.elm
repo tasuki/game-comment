@@ -1,5 +1,6 @@
 module Replay exposing (..)
 
+import Array
 import GameRecord as G
 import Html as H
 import Html.Attributes as HA
@@ -29,8 +30,8 @@ lastMove replay =
             Just move
 
         Nothing ->
-            List.drop (replay.currentMove - 1) replay.record.moves
-                |> List.head
+            Array.fromList replay.record.moves
+                |> Array.get (replay.currentMove - 1)
                 |> Maybe.map .move
 
 
@@ -56,15 +57,20 @@ play coords updateFun replay =
 
 next : (G.Play -> pos -> pos) -> Replay pos -> Replay pos
 next updateFun replay =
-    case List.drop replay.currentMove replay.record.moves |> List.head of
-        Nothing ->
+    case replay.variation of
+        move :: rest ->
             replay
 
-        Just move ->
-            { replay
-                | currentMove = replay.currentMove + 1
-                , position = updateFun move replay.position
-            }
+        [] ->
+            case List.drop replay.currentMove replay.record.moves |> List.head of
+                Nothing ->
+                    replay
+
+                Just move ->
+                    { replay
+                        | currentMove = replay.currentMove + 1
+                        , position = updateFun move replay.position
+                    }
 
 
 prev : (G.Play -> pos -> pos) -> Replay pos -> Replay pos
@@ -98,7 +104,7 @@ chars =
     String.toList "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
-viewMove : Int -> Int -> G.Play -> List (H.Html msg)
+viewMove : Maybe G.Move -> Int -> G.Play -> List (H.Html msg)
 viewMove currentMove moveNum { player, move } =
     let
         char : Int -> Char
@@ -125,7 +131,7 @@ viewMove currentMove moveNum { player, move } =
                     "player white "
 
         highlight =
-            if currentMove == moveNum + 1 then
+            if currentMove == Just move then
                 "highlight "
 
             else
@@ -142,5 +148,11 @@ view replay =
     [ H.div [ HA.class "player-black" ] [ H.text replay.record.black ]
     , H.div [ HA.class "player-white" ] [ H.text replay.record.white ]
     , H.div [ HA.class "clear" ] []
-    , H.div [ HA.class "replay" ] (List.indexedMap (viewMove replay.currentMove) replay.record.moves |> List.concat)
+    , H.div [ HA.class "replay" ] (List.indexedMap (viewMove (lastMove replay)) replay.record.moves |> List.concat)
+    , H.div [ HA.class "replay" ]
+        (List.indexedMap
+            (\i -> viewMove (lastMove replay) (i + replay.currentMove - List.length replay.variation))
+            (List.reverse replay.variation)
+            |> List.concat
+        )
     ]
