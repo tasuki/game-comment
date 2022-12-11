@@ -131,24 +131,6 @@ add { player, move } position =
             position
 
 
-remove : G.Play -> Position -> Position
-remove { player, move } position =
-    let
-        shouldKeep : G.Coords -> Link -> Bool
-        shouldKeep coords ( _, ( fst, snd ) ) =
-            coords /= fst && coords /= snd
-    in
-    case move of
-        G.Place coords ->
-            { position
-                | pegs = List.drop 1 position.pegs
-                , links = List.filter (shouldKeep coords) position.links
-            }
-
-        _ ->
-            position
-
-
 
 -- View
 
@@ -333,15 +315,19 @@ drawPegs size position lastMove onMove playMsg =
     List.map drawCoords (coordList size)
 
 
-view : R.Replay Position -> (G.Coords -> msg) -> List (Svg msg)
+view : R.Replay -> (G.Coords -> msg) -> List (Svg msg)
 view replay playMsg =
     let
         size =
             replay.record.size
+
+        position =
+            -- TODO
+            emptyPosition
     in
     background size
         ++ drawBorders size
         ++ drawGuidelines size
         ++ drawPoints size
-        ++ drawLinks replay.position
-        ++ drawPegs size replay.position (R.lastMove replay) (G.onMove replay.currentMove) playMsg
+        ++ drawLinks position
+        ++ drawPegs size position (R.lastMove replay) (G.onMove replay.currentMove) playMsg

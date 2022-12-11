@@ -6,24 +6,22 @@ import Html as H
 import Html.Attributes as HA
 
 
-type alias Replay pos =
+type alias Replay =
     { record : G.Record
     , currentMove : Int
     , variation : List G.Play
-    , position : pos
     }
 
 
-emptyReplay : G.Record -> pos -> Replay pos
-emptyReplay record position =
+emptyReplay : G.Record -> Replay
+emptyReplay record =
     { record = record
     , currentMove = 0
     , variation = []
-    , position = position
     }
 
 
-lastMove : Replay pos -> Maybe G.Move
+lastMove : Replay -> Maybe G.Move
 lastMove replay =
     case List.head replay.variation of
         Just { player, move } ->
@@ -35,8 +33,8 @@ lastMove replay =
                 |> Maybe.map .move
 
 
-play : G.Coords -> (G.Play -> pos -> pos) -> Replay pos -> Replay pos
-play coords updateFun replay =
+play : G.Coords -> Replay -> Replay
+play coords replay =
     let
         move =
             { player = G.onMove replay.currentMove, move = G.Place coords }
@@ -45,18 +43,17 @@ play coords updateFun replay =
             List.drop replay.currentMove replay.record.moves |> List.head
     in
     if replay.variation == [] && recordMove == Just move then
-        next updateFun replay
+        next replay
 
     else
         { replay
             | currentMove = replay.currentMove + 1
             , variation = move :: replay.variation
-            , position = updateFun move replay.position
         }
 
 
-next : (G.Play -> pos -> pos) -> Replay pos -> Replay pos
-next updateFun replay =
+next : Replay -> Replay
+next replay =
     case replay.variation of
         move :: rest ->
             replay
@@ -69,12 +66,11 @@ next updateFun replay =
                 Just move ->
                     { replay
                         | currentMove = replay.currentMove + 1
-                        , position = updateFun move replay.position
                     }
 
 
-prev : (G.Play -> pos -> pos) -> Replay pos -> Replay pos
-prev updateFun replay =
+prev : Replay -> Replay
+prev replay =
     case replay.variation of
         [] ->
             case List.take replay.currentMove replay.record.moves |> List.reverse |> List.head of
@@ -84,14 +80,12 @@ prev updateFun replay =
                 Just move ->
                     { replay
                         | currentMove = replay.currentMove - 1
-                        , position = updateFun move replay.position
                     }
 
         move :: rest ->
             { replay
                 | currentMove = replay.currentMove - 1
                 , variation = rest
-                , position = updateFun move replay.position
             }
 
 
@@ -143,7 +137,7 @@ viewMove currentMove moveNum { player, move } =
     ]
 
 
-view : Replay pos -> List (H.Html msg)
+view : Replay -> List (H.Html msg)
 view replay =
     [ H.div [ HA.class "player-black" ] [ H.text replay.record.black ]
     , H.div [ HA.class "player-white" ] [ H.text replay.record.white ]

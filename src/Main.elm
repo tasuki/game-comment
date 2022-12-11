@@ -31,7 +31,7 @@ type alias Model =
 
 
 type GameReplay
-    = TwixTReplay (R.Replay TwixT.Position)
+    = TwixTReplay R.Replay
 
 
 init : () -> ( Model, Cmd Msg )
@@ -44,7 +44,7 @@ empty =
     { replay = TwixTReplay testReplay }
 
 
-testReplay : R.Replay TwixT.Position
+testReplay : R.Replay
 testReplay =
     let
         record : G.Record
@@ -56,7 +56,7 @@ testReplay =
                 |> LittleGolem.parse
                 |> Result.withDefault G.empty
     in
-    R.emptyReplay record TwixT.emptyPosition
+    R.emptyReplay record
 
 
 
@@ -81,17 +81,17 @@ update msg model =
         Backward ->
             case model.replay of
                 TwixTReplay replay ->
-                    ( { model | replay = TwixTReplay <| R.prev TwixT.remove replay }, Cmd.none )
+                    ( { model | replay = TwixTReplay <| R.prev replay }, Cmd.none )
 
         Forward ->
             case model.replay of
                 TwixTReplay replay ->
-                    ( { model | replay = TwixTReplay <| R.next TwixT.add replay }, Cmd.none )
+                    ( { model | replay = TwixTReplay <| R.next replay }, Cmd.none )
 
         Play coords ->
             case model.replay of
                 TwixTReplay replay ->
-                    ( { model | replay = TwixTReplay <| R.play coords TwixT.add replay }
+                    ( { model | replay = TwixTReplay <| R.play coords replay }
                     , Cmd.none
                     )
 
