@@ -131,6 +131,11 @@ add { player, move } position =
             position
 
 
+positionFromMoves : List G.Play -> Position
+positionFromMoves moves =
+    List.foldl add emptyPosition moves
+
+
 
 -- View
 
@@ -322,8 +327,7 @@ view replay playMsg =
             replay.record.size
 
         position =
-            -- TODO
-            emptyPosition
+            positionFromMoves (R.currentMoves replay)
     in
     background size
         ++ drawBorders size
