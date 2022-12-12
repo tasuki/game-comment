@@ -17,7 +17,7 @@ type alias Replay =
 
 type alias Variation =
     { fromMove : Int
-    , moves : Array G.Play
+    , moves : Array G.Move
     }
 
 
@@ -35,7 +35,7 @@ emptyVariation =
     { fromMove = 0, moves = A.empty }
 
 
-allMoves : Replay -> List G.Play
+allMoves : Replay -> List G.Move
 allMoves replay =
     let
         fromMain =
@@ -51,22 +51,22 @@ allMoves replay =
         replay.record.moves
 
 
-currentMoves : Replay -> List G.Play
+currentMoves : Replay -> List G.Move
 currentMoves replay =
     allMoves replay |> List.take replay.currentMove
 
 
 lastMove : Replay -> Maybe G.Move
 lastMove replay =
-    allMoves replay |> List.take replay.currentMove |> List.Extra.last |> Maybe.map .move
+    allMoves replay |> List.take replay.currentMove |> List.Extra.last
 
 
 nextMove : Replay -> Maybe G.Move
 nextMove replay =
-    allMoves replay |> List.drop replay.currentMove |> List.head |> Maybe.map .move
+    allMoves replay |> List.drop replay.currentMove |> List.head
 
 
-addMoveToVar : G.Play -> Replay -> Replay
+addMoveToVar : G.Move -> Replay -> Replay
 addMoveToVar move replay =
     let
         var =
@@ -76,7 +76,7 @@ addMoveToVar move replay =
             else
                 { emptyVariation | fromMove = replay.currentMove }
 
-        addMove : G.Play -> Variation -> Variation
+        addMove : G.Move -> Variation -> Variation
         addMove m variation =
             { variation | moves = A.push m variation.moves }
     in
@@ -87,14 +87,14 @@ addMoveToVar move replay =
     }
 
 
-play : G.Coords -> Replay -> Replay
-play coords replay =
+playCoords : G.Coords -> Replay -> Replay
+playCoords coords replay =
     let
-        move : G.Play
+        move : G.Move
         move =
-            { player = G.onMove replay.currentMove, move = G.Place coords }
+            { player = G.onMove replay.currentMove, play = G.Place coords }
     in
-    if Just move.move == nextMove replay then
+    if Just move == nextMove replay then
         next replay
 
     else
@@ -134,15 +134,15 @@ chars =
     String.toList "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
-viewMove : Bool -> Int -> G.Play -> List (H.Html msg)
-viewMove highlight moveNum { player, move } =
+viewMove : Bool -> Int -> G.Move -> List (H.Html msg)
+viewMove highlight moveNum { player, play } =
     let
         char : Int -> Char
         char coord =
             List.drop (coord - 1) chars |> List.head |> Maybe.withDefault '.'
 
         moveStr =
-            case move of
+            case play of
                 G.Place coords ->
                     String.fromChar (char coords.x) ++ String.fromInt coords.y
 

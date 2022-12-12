@@ -91,7 +91,7 @@ update msg model =
         Play coords ->
             case model.replay of
                 TwixTReplay replay ->
-                    ( { model | replay = TwixTReplay <| R.play coords replay }
+                    ( { model | replay = TwixTReplay <| R.playCoords coords replay }
                     , Cmd.none
                     )
 

@@ -118,9 +118,9 @@ newLinks player newPeg position =
         |> List.filter (\l -> not <| crossesOpponentLink l)
 
 
-add : G.Play -> Position -> Position
-add { player, move } position =
-    case move of
+add : G.Move -> Position -> Position
+add { player, play } position =
+    case play of
         G.Place coords ->
             { position
                 | pegs = ( player, coords ) :: position.pegs
@@ -131,7 +131,7 @@ add { player, move } position =
             position
 
 
-positionFromMoves : List G.Play -> Position
+positionFromMoves : List G.Move -> Position
 positionFromMoves moves =
     List.foldl add emptyPosition moves
 
@@ -303,7 +303,7 @@ drawPegs size position lastMove onMove playMsg =
                            ]
 
         classesProps player coords =
-            if lastMove == Just (G.Place coords) then
+            if Maybe.map .play lastMove == Just (G.Place coords) then
                 if player == G.Black then
                     [ SA.class "last-move black" ]
 

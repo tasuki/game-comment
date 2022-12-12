@@ -19,15 +19,15 @@ type alias Coords =
     }
 
 
-type Move
+type Play
     = Place Coords
     | Swap
     | Resign
 
 
-type alias Play =
+type alias Move =
     { player : Player
-    , move : Move
+    , play : Play
     }
 
 
@@ -56,7 +56,7 @@ type alias Record =
     , game : Game
     , size : Int
     , result : String
-    , moves : List Play
+    , moves : List Move
     }
 
 
