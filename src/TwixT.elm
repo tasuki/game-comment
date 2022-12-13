@@ -39,7 +39,7 @@ isOnBoard size coord =
     let
         isBorder : Int -> Bool
         isBorder i =
-            (i == 0) || (i == (size - 1))
+            (i == 1) || (i == size)
     in
     not (isBorder coord.x) || not (isBorder coord.y)
 
@@ -143,8 +143,8 @@ positionFromMoves moves =
 background : Int -> List (Svg msg)
 background size =
     [ Svg.rect
-        [ SA.x "-0.5"
-        , SA.y "-0.5"
+        [ SA.x "0.5"
+        , SA.y "0.5"
         , SA.width <| String.fromInt <| size
         , SA.height <| String.fromInt <| size
         , SA.fill "#CCC"
@@ -160,7 +160,7 @@ drawBorders size =
             String.fromInt <| size - 3
 
         otherStartPoint =
-            (String.fromInt <| size - 2) ++ ".5"
+            (String.fromInt <| size - 1) ++ ".5"
 
         border : String -> String -> String -> Svg msg
         border from path color =
@@ -172,10 +172,10 @@ drawBorders size =
                 ]
                 []
     in
-    [ border "1,0.5" ("h" ++ length) "white"
-    , border "0.5,1" ("v" ++ length) "black"
-    , border ("1," ++ otherStartPoint) ("h" ++ length) "white"
-    , border (otherStartPoint ++ ",1") ("v" ++ length) "black"
+    [ border "2,1.5" ("h" ++ length) "white"
+    , border "1.5,2" ("v" ++ length) "black"
+    , border ("2," ++ otherStartPoint) ("h" ++ length) "white"
+    , border (otherStartPoint ++ ",2") ("v" ++ length) "black"
     ]
 
 
@@ -186,13 +186,13 @@ drawGuidelines size =
         coord i =
             String.fromFloat <|
                 if i == 0 then
-                    1
+                    2
 
                 else if i == 1 then
-                    toFloat (size - 1) / 2.0
+                    toFloat (size + 1) / 2.0
 
                 else
-                    toFloat size - 2
+                    toFloat size - 1
 
         guide x1 y1 x2 y2 =
             Svg.line
@@ -222,7 +222,7 @@ coordList size =
     let
         nodes : List Int
         nodes =
-            List.range 0 (size - 1)
+            List.range 1 size
     in
     List.concatMap (\x -> List.map (G.Coords x) nodes) nodes
         |> List.filter (isOnBoard size)
@@ -243,21 +243,16 @@ drawPoints size =
     List.map toHole (coordList size)
 
 
-coordProp : Int -> String
-coordProp coord =
-    String.fromInt <| coord - 1
-
-
 drawLinks : Position -> List (Svg msg)
 drawLinks position =
     let
         drawLink : Link -> Svg msg
         drawLink ( _, ( from, to ) ) =
             Svg.line
-                [ SA.x1 <| coordProp from.x
-                , SA.y1 <| coordProp from.y
-                , SA.x2 <| coordProp to.x
-                , SA.y2 <| coordProp to.y
+                [ SA.x1 <| String.fromInt from.x
+                , SA.y1 <| String.fromInt from.y
+                , SA.x2 <| String.fromInt to.x
+                , SA.y2 <| String.fromInt to.y
                 , SA.stroke "black"
                 , SA.strokeWidth ".1"
                 ]
@@ -273,13 +268,13 @@ drawPegs size position lastMove onMove playMsg =
             pegDict position.pegs
 
         coordProps coords =
-            [ SA.cx <| coordProp coords.x
-            , SA.cy <| coordProp coords.y
+            [ SA.cx <| String.fromInt coords.x
+            , SA.cy <| String.fromInt coords.y
             ]
 
         isClickable : G.Player -> Int -> Bool
         isClickable player dirCoord =
-            onMove == player && dirCoord /= 0 && dirCoord /= (size - 1)
+            onMove == player && dirCoord /= 1 && dirCoord /= size
 
         styleProps coords =
             case Dict.get ( coords.x, coords.y ) pegs of

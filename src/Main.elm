@@ -56,6 +56,9 @@ testReplay =
                 ++ ";b[ku];r[kw];b[ky];r[lu];b[mt];r[jy];b[nv];r[oy];b[resign])"
                 |> LittleGolem.parse
                 |> Result.withDefault G.empty
+
+        smallRecord =
+            "(;FF[4]EV[twixt]PB[black]PW[white]SZ[12];b[dc];r[bb];b[ee])" |> LittleGolem.parse |> Result.withDefault G.empty
     in
     R.emptyReplay record
 
@@ -166,7 +169,7 @@ view model =
     , body =
         [ H.div [ HA.class "pure-g" ]
             [ Svg.svg
-                [ SA.viewBox (intsToStr [ -1, -1, size + 1, size + 1 ])
+                [ SA.viewBox (intsToStr [ 0, 0, size + 1, size + 1 ])
                 , SA.width "100%"
                 , SA.class "pure-u-md-2-3"
                 ]
