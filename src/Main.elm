@@ -169,9 +169,8 @@ view model =
                 [ HA.class "pure-u-md-1-3" ]
                 [ H.div [ HA.class "game-info" ]
                     ([ H.div []
-                        [ H.a [ HA.href "#", HE.onClick Backward ] [ H.text "prev" ]
-                        , H.text " "
-                        , H.a [ HA.href "#", HE.onClick Forward ] [ H.text "next" ]
+                        [ H.button [ HE.onClick Backward ] [ H.text "prev" ]
+                        , H.button [ HE.onClick Forward ] [ H.text "next" ]
                         ]
                      ]
                         ++ replayView model.replay

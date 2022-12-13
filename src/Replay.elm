@@ -167,9 +167,9 @@ viewMove highlight moveNum { player, play } =
             else
                 ""
     in
-    [ H.span [ HA.class (class ++ highlightClass) ]
+    [ H.button
+        [ HA.class (class ++ highlightClass) ]
         [ H.text <| String.fromInt moveNum ++ "." ++ moveStr ]
-    , H.text " "
     ]
 
 
