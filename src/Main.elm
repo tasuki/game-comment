@@ -5,6 +5,7 @@ import Browser.Events
 import GameRecord as G
 import Html as H
 import Html.Attributes as HA
+import Html.Events as HE
 import Json.Decode as D
 import LittleGolem
 import Replay as R
@@ -166,7 +167,16 @@ view model =
                 (boardView model.replay)
             , H.div
                 [ HA.class "pure-u-md-1-3" ]
-                [ H.div [ HA.class "game-info" ] (replayView model.replay) ]
+                [ H.div [ HA.class "game-info" ]
+                    ([ H.div []
+                        [ H.a [ HA.href "#", HE.onClick Backward ] [ H.text "prev" ]
+                        , H.text " "
+                        , H.a [ HA.href "#", HE.onClick Forward ] [ H.text "next" ]
+                        ]
+                     ]
+                        ++ replayView model.replay
+                    )
+                ]
             ]
         ]
     }
