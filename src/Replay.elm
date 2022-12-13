@@ -94,7 +94,11 @@ addMoveToVar move replay =
     let
         var =
             if replay.lookingAt.variation then
-                replay.variation
+                let
+                    variation =
+                        replay.variation
+                in
+                { variation | moves = A.slice 0 (replay.lookingAt.move - variation.fromMove) variation.moves }
 
             else
                 { emptyVariation | fromMove = replay.lookingAt.move }
