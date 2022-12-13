@@ -69,6 +69,7 @@ type Msg
     | Play G.Coords
     | Forward
     | Backward
+    | Jump R.LookAt
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -88,6 +89,11 @@ update msg model =
             case model.replay of
                 TwixTReplay replay ->
                     ( { model | replay = TwixTReplay <| R.next replay }, Cmd.none )
+
+        Jump lookAt ->
+            case model.replay of
+                TwixTReplay replay ->
+                    ( { model | replay = TwixTReplay <| R.jump lookAt replay }, Cmd.none )
 
         Play coords ->
             case model.replay of
@@ -143,7 +149,7 @@ replayView : GameReplay -> List (H.Html Msg)
 replayView gr =
     case gr of
         TwixTReplay replay ->
-            R.view replay
+            R.view Jump replay
 
 
 view : Model -> Browser.Document Msg

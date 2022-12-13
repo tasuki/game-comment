@@ -4,14 +4,20 @@ import Array as A exposing (Array)
 import GameRecord as G
 import Html as H
 import Html.Attributes as HA
+import Html.Events as HE
 import List.Extra
 
 
 type alias Replay =
     { record : G.Record
-    , currentMove : Int
-    , inVariation : Bool
+    , lookingAt : LookAt
     , variation : Variation
+    }
+
+
+type alias LookAt =
+    { variation : Bool
+    , move : Int
     }
 
 
@@ -24,8 +30,7 @@ type alias Variation =
 emptyReplay : G.Record -> Replay
 emptyReplay record =
     { record = record
-    , currentMove = 0
-    , inVariation = False
+    , lookingAt = { variation = False, move = 0 }
     , variation = emptyVariation
     }
 
@@ -33,6 +38,20 @@ emptyReplay record =
 emptyVariation : Variation
 emptyVariation =
     { fromMove = 0, moves = A.empty }
+
+
+lookNext : LookAt -> LookAt
+lookNext lookingAt =
+    { lookingAt | move = lookingAt.move + 1 }
+
+
+lookPrev : LookAt -> LookAt
+lookPrev lookingAt =
+    { lookingAt | move = lookingAt.move - 1 }
+
+
+
+-- Moves from replay
 
 
 allMoves : Replay -> List G.Move
@@ -44,7 +63,7 @@ allMoves replay =
         fromVar =
             A.toList replay.variation.moves
     in
-    if replay.inVariation then
+    if replay.lookingAt.variation then
         List.append fromMain fromVar
 
     else
@@ -53,36 +72,39 @@ allMoves replay =
 
 currentMoves : Replay -> List G.Move
 currentMoves replay =
-    allMoves replay |> List.take replay.currentMove
+    allMoves replay |> List.take replay.lookingAt.move
 
 
 lastMove : Replay -> Maybe G.Move
 lastMove replay =
-    allMoves replay |> List.take replay.currentMove |> List.Extra.last
+    allMoves replay |> List.take replay.lookingAt.move |> List.Extra.last
 
 
 nextMove : Replay -> Maybe G.Move
 nextMove replay =
-    allMoves replay |> List.drop replay.currentMove |> List.head
+    allMoves replay |> List.drop replay.lookingAt.move |> List.head
+
+
+
+-- Replay manipulations
 
 
 addMoveToVar : G.Move -> Replay -> Replay
 addMoveToVar move replay =
     let
         var =
-            if replay.inVariation then
+            if replay.lookingAt.variation then
                 replay.variation
 
             else
-                { emptyVariation | fromMove = replay.currentMove }
+                { emptyVariation | fromMove = replay.lookingAt.move }
 
         addMove : G.Move -> Variation -> Variation
         addMove m variation =
             { variation | moves = A.push m variation.moves }
     in
     { replay
-        | currentMove = replay.currentMove + 1
-        , inVariation = True
+        | lookingAt = { variation = True, move = replay.lookingAt.move + 1 }
         , variation = addMove move var
     }
 
@@ -92,7 +114,7 @@ playCoords coords replay =
     let
         move : G.Move
         move =
-            { player = G.onMove replay.currentMove, play = G.Place coords }
+            { player = G.onMove replay.lookingAt.move, play = G.Place coords }
     in
     if Just move == nextMove replay then
         next replay
@@ -108,21 +130,30 @@ next replay =
             replay
 
         Just _ ->
-            { replay | currentMove = replay.currentMove + 1 }
+            { replay | lookingAt = lookNext replay.lookingAt }
 
 
 prev : Replay -> Replay
 prev replay =
+    let
+        lookAtPrev =
+            lookPrev replay.lookingAt
+    in
     case lastMove replay of
         Nothing ->
             replay
 
         Just _ ->
-            if replay.inVariation && (replay.currentMove - 1) <= replay.variation.fromMove then
-                { replay | currentMove = replay.currentMove - 1, inVariation = False }
+            if replay.lookingAt.variation && (replay.lookingAt.move - 1) <= replay.variation.fromMove then
+                { replay | lookingAt = { lookAtPrev | variation = False } }
 
             else
-                { replay | currentMove = replay.currentMove - 1 }
+                { replay | lookingAt = lookAtPrev }
+
+
+jump : LookAt -> Replay -> Replay
+jump lookAt replay =
+    { replay | lookingAt = lookAt }
 
 
 
@@ -134,8 +165,8 @@ chars =
     String.toList "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
-viewMove : Bool -> Int -> G.Move -> List (H.Html msg)
-viewMove highlight moveNum { player, play } =
+viewMoveHtml : msg -> Bool -> Int -> G.Move -> List (H.Html msg)
+viewMoveHtml jumpMsg highlight moveNum { player, play } =
     let
         char : Int -> Char
         char coord =
@@ -168,31 +199,49 @@ viewMove highlight moveNum { player, play } =
                 ""
     in
     [ H.button
-        [ HA.class (class ++ highlightClass) ]
+        [ HE.onClick jumpMsg, HA.class (class ++ highlightClass) ]
         [ H.text <| String.fromInt moveNum ++ "." ++ moveStr ]
     ]
 
 
-view : Replay -> List (H.Html msg)
-view replay =
+viewMove : (LookAt -> msg) -> Bool -> Replay -> Int -> G.Move -> List (H.Html msg)
+viewMove jumpMsg inVar replay i =
     let
-        viewMoves indexFun highlightFun moves =
-            List.indexedMap (\i -> viewMove (highlightFun (i + 1)) (indexFun (i + 1))) moves
+        moveNum =
+            if inVar then
+                replay.variation.fromMove + i
+
+            else
+                i
+
+        highlight =
+            if inVar then
+                replay.lookingAt.variation
+                    && (replay.lookingAt.move == replay.variation.fromMove + i)
+
+            else
+                not replay.lookingAt.variation
+                    && (replay.lookingAt.move == i)
+    in
+    viewMoveHtml
+        (jumpMsg { variation = inVar, move = moveNum })
+        highlight
+        moveNum
+
+
+view : (LookAt -> msg) -> Replay -> List (H.Html msg)
+view jumpMsg replay =
+    let
+        viewMoves : Bool -> List G.Move -> List (H.Html msg)
+        viewMoves inVar moves =
+            List.indexedMap (\i -> viewMove jumpMsg inVar replay (i + 1)) moves
                 |> List.concat
     in
     [ H.div [ HA.class "player-black" ] [ H.text replay.record.black ]
     , H.div [ HA.class "player-white" ] [ H.text replay.record.white ]
     , H.div [ HA.class "clear" ] []
     , H.div [ HA.class "replay" ]
-        (viewMoves
-            identity
-            (\i -> not replay.inVariation && replay.currentMove == i)
-            replay.record.moves
-        )
+        (viewMoves False replay.record.moves)
     , H.div [ HA.class "replay" ]
-        (viewMoves
-            (\i -> replay.variation.fromMove + i)
-            (\i -> replay.inVariation && replay.currentMove == replay.variation.fromMove + i)
-            (A.toList replay.variation.moves)
-        )
+        (viewMoves True (A.toList replay.variation.moves))
     ]
