@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import ApiClient as AC
 import Browser
 import Browser.Events
 import GameRecord as G
@@ -28,7 +29,9 @@ main =
 
 
 type alias Model =
-    { replay : GameReplay }
+    { replay : GameReplay
+    , message : String
+    }
 
 
 type GameReplay
@@ -37,12 +40,13 @@ type GameReplay
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( empty, Cmd.none )
+    -- ( empty, Cmd.none )
+    ( empty, AC.getLittleGolemSgf Fetched "1107581" )
 
 
 empty : Model
 empty =
-    { replay = TwixTReplay testReplay }
+    { replay = TwixTReplay testReplay, message = "hi" }
 
 
 testReplay : R.Replay
@@ -73,6 +77,8 @@ type Msg
     | Forward
     | Backward
     | Jump R.LookAt
+    | Fetch String
+    | Fetched AC.SgfResult
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -105,8 +111,20 @@ update msg model =
                     , Cmd.none
                     )
 
+        Fetch gameId ->
+            ( model, AC.getLittleGolemSgf Fetched gameId )
+
+        Fetched result ->
+            case result of
+                Ok record ->
+                    ( model, Cmd.none )
+
+                Err error ->
+                    ( { model | message = "Could not load game..." }, Cmd.none )
 
 
+
+-- COMMANDS
 -- SUBSCRIPTIONS
 
 
@@ -184,6 +202,7 @@ view model =
                      ]
                         ++ replayView model.replay
                     )
+                , H.div [] [ H.text model.message ]
                 ]
             ]
         ]
