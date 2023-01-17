@@ -1,6 +1,12 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main (main) where
 
-import Lib
+import Web.Scotty
 
-main :: IO ()
-main = someFunc
+main = do
+    putStrLn "Starting Server..."
+    scotty 6483 $ do
+        get "/game/:gameId" $ do
+            gameId <- param "gameId"
+            text $ "hello " <> gameId <> " world"
