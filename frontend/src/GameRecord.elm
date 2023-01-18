@@ -70,11 +70,11 @@ type alias Record =
     }
 
 
-empty : Record
-empty =
+empty : Game -> Record
+empty game =
     { black = ""
     , white = ""
-    , game = TwixT
+    , game = game
     , size = 19
     , result = ""
     , moves = []

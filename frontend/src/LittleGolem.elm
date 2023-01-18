@@ -170,7 +170,7 @@ nodesToRecord nodes =
             gameToRecord game first rest
 
         ( Nothing, _ ) ->
-            Err "Could not determine game type"
+            Err "We don't support this game (or perhaps could not determine the type of game record)"
 
         ( _, Nothing ) ->
             Err "This game seems to have no moves"
