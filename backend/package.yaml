@@ -5,13 +5,13 @@ github: "tasuki/game-comment"
 dependencies:
     - base >= 4.7 && < 5
     - scotty
+    - bytestring
     - http-client
     - http-client-tls
+    - http-types
 
 executables:
     game-comment-backend:
         main: Main.hs
         source-dirs: .
         ghc-options: -threaded -rtsopts -with-rtsopts=-N
-        dependencies:
-            - bytestring
