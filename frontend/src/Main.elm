@@ -29,13 +29,9 @@ main =
 
 
 type alias Model =
-    { replay : GameReplay
+    { replay : Maybe R.Replay
     , message : String
     }
-
-
-type GameReplay
-    = TwixTReplay R.Replay
 
 
 init : () -> ( Model, Cmd Msg )
@@ -46,7 +42,7 @@ init _ =
 
 empty : Model
 empty =
-    { replay = TwixTReplay testReplay, message = "hi" }
+    { replay = Just testReplay, message = "You can use the left/right key to explore the game." }
 
 
 testReplay : R.Replay
@@ -83,33 +79,21 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    -- TODO this is horrid!
-    -- not trivial to dedupe because of let-polymorphism?
     case msg of
         Noop ->
             ( model, Cmd.none )
 
         Backward ->
-            case model.replay of
-                TwixTReplay replay ->
-                    ( { model | replay = TwixTReplay <| R.prev replay }, Cmd.none )
+            ( { model | replay = Maybe.map R.prev model.replay }, Cmd.none )
 
         Forward ->
-            case model.replay of
-                TwixTReplay replay ->
-                    ( { model | replay = TwixTReplay <| R.next replay }, Cmd.none )
+            ( { model | replay = Maybe.map R.next model.replay }, Cmd.none )
 
         Jump lookAt ->
-            case model.replay of
-                TwixTReplay replay ->
-                    ( { model | replay = TwixTReplay <| R.jump lookAt replay }, Cmd.none )
+            ( { model | replay = Maybe.map (R.jump lookAt) model.replay }, Cmd.none )
 
         Play coords ->
-            case model.replay of
-                TwixTReplay replay ->
-                    ( { model | replay = TwixTReplay <| R.playCoords coords replay }
-                    , Cmd.none
-                    )
+            ( { model | replay = Maybe.map (R.playCoords coords) model.replay }, Cmd.none )
 
         Fetch gameId ->
             ( model, AC.getLittleGolemSgf Fetched gameId )
@@ -117,14 +101,13 @@ update msg model =
         Fetched result ->
             case result of
                 Ok record ->
-                    ( { model | replay = TwixTReplay <| R.emptyReplay record }, Cmd.none )
+                    ( { model | replay = Just <| R.emptyReplay record }, Cmd.none )
 
                 Err error ->
                     ( { model | message = "Could not load game..." }, Cmd.none )
 
 
 
--- COMMANDS
 -- SUBSCRIPTIONS
 
 
@@ -152,58 +135,67 @@ keydown keycode =
 -- VIEW
 
 
-getRecord : GameReplay -> G.Record
-getRecord gr =
-    case gr of
-        TwixTReplay replay ->
-            replay.record
+mainView : Maybe R.Replay -> List (H.Html Msg)
+mainView maybeReplay =
+    case maybeReplay of
+        Just replay ->
+            let
+                intsToStr : List Int -> String
+                intsToStr ints =
+                    List.map String.fromInt ints |> String.join " "
+
+                size =
+                    replay.record.size
+
+                specificView : R.Replay -> (G.Coords -> msg) -> List (Svg msg)
+                specificView =
+                    case replay.record.game of
+                        G.TwixT ->
+                            TwixT.view
+
+                        _ ->
+                            TwixT.view
+            in
+            [ Svg.svg
+                [ SA.viewBox (intsToStr [ 0, 0, size + 1, size + 1 ]) ]
+                (specificView replay Play)
+            ]
+
+        Nothing ->
+            []
 
 
-boardView : GameReplay -> List (Svg Msg)
-boardView gr =
-    case gr of
-        TwixTReplay replay ->
-            TwixT.view replay Play
+sideView : Model -> List (H.Html Msg)
+sideView model =
+    let
+        prevNext =
+            [ H.div []
+                [ H.button [ HE.onClick Backward ] [ H.text "prev" ]
+                , H.button [ HE.onClick Forward ] [ H.text "next" ]
+                ]
+            ]
 
+        replayView : Maybe R.Replay -> List (H.Html Msg)
+        replayView maybeReplay =
+            case maybeReplay of
+                Just replay ->
+                    R.view Jump replay
 
-replayView : GameReplay -> List (H.Html Msg)
-replayView gr =
-    case gr of
-        TwixTReplay replay ->
-            R.view Jump replay
+                Nothing ->
+                    []
+    in
+    [ H.div [ HA.class "game-info" ] (prevNext ++ replayView model.replay)
+    , H.div [ HA.class "message" ] [ H.text model.message ]
+    ]
 
 
 view : Model -> Browser.Document Msg
 view model =
-    let
-        size =
-            getRecord model.replay |> .size
-
-        intsToStr : List Int -> String
-        intsToStr ints =
-            List.map String.fromInt ints |> String.join " "
-    in
     { title = "Game Comment"
     , body =
         [ H.div [ HA.class "pure-g" ]
-            [ Svg.svg
-                [ SA.viewBox (intsToStr [ 0, 0, size + 1, size + 1 ])
-                , SA.width "100%"
-                , SA.class "pure-u-md-2-3"
-                ]
-                (boardView model.replay)
-            , H.div
-                [ HA.class "pure-u-md-1-3" ]
-                [ H.div [ HA.class "game-info" ]
-                    ([ H.div []
-                        [ H.button [ HE.onClick Backward ] [ H.text "prev" ]
-                        , H.button [ HE.onClick Forward ] [ H.text "next" ]
-                        ]
-                     ]
-                        ++ replayView model.replay
-                    )
-                , H.div [] [ H.text model.message ]
-                ]
+            [ H.div [ HA.class "pure-u-md-2-3", HA.class "grow" ] (mainView model.replay)
+            , H.div [ HA.class "pure-u-md-1-3" ] (sideView model)
             ]
         ]
     }
