@@ -2,6 +2,7 @@
 
 module Main (main) where
 
+import Config
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.ByteString.Lazy.Char8 as L8
 import Network.HTTP.Client
@@ -25,5 +26,5 @@ main = do
             (responseStatus, response) <- liftIO $ fetchGameRecord gameId
             status responseStatus -- we don't mind too bad if this is off
             setHeader "Content-Type" "application/sgf; charset=iso-8859-1"
-            setHeader "Access-Control-Allow-Origin" "*" -- TODO!
+            setHeader "Access-Control-Allow-Origin" allowOrigin
             raw $ response

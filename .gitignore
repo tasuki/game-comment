@@ -1,4 +1,6 @@
 backend/.stack-work/
 backend/game-comment-backend.cabal
+backend/Config.hs
 frontend/elm-stuff/
 frontend/gc.js
+frontend/src/Config.elm

@@ -1,12 +1,13 @@
 module ApiClient exposing (..)
 
+import Config
 import GameRecord as G
 import Http
 import LittleGolem as LG
 
 
 baseUrl =
-    "http://localhost:6483" -- TODO!
+    Config.apiBaseUrl
 
 
 type alias SgfResult =
