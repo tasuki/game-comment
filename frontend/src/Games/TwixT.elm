@@ -1,4 +1,4 @@
-module TwixT exposing (..)
+module Games.TwixT exposing (..)
 
 import Dict exposing (Dict)
 import GameRecord as G

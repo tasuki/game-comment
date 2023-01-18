@@ -4,15 +4,14 @@ import ApiClient as AC
 import Browser
 import Browser.Events
 import GameRecord as G
+import Games.TwixT
 import Html as H
 import Html.Attributes as HA
 import Html.Events as HE
 import Json.Decode as D
-import LittleGolem
 import Replay as R
 import Svg exposing (Svg)
 import Svg.Attributes as SA
-import TwixT
 
 
 main =
@@ -36,31 +35,12 @@ type alias Model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    -- ( empty, Cmd.none )
-    ( empty, AC.getLittleGolemSgf Fetched "1107581" )
+    ( empty, Cmd.none )
 
 
 empty : Model
 empty =
-    { replay = Just testReplay, message = "You can use the left/right key to explore the game." }
-
-
-testReplay : R.Replay
-testReplay =
-    let
-        record : G.Record
-        record =
-            "(;FF[4]EV[twixt.ld.SIZE30]PB[tasuki]PW[David J Bush]SZ[30]SO[https://www.littlegolem.net]"
-                ++ ";b[dc];r[op];b[qp];r[ol];b[sk];r[qt];b[us];r[tm];b[vq];r[rl];b[xl];r[wf];b[xh]"
-                ++ ";r[ye];b[ug];r[vl];b[kl];r[qx];b[iq];r[it];b[wx];r[qj];b[mp];r[qq];b[oo];r[sp]"
-                ++ ";b[ku];r[kw];b[ky];r[lu];b[mt];r[jy];b[nv];r[oy];b[resign])"
-                |> LittleGolem.parse
-                |> Result.withDefault G.empty
-
-        smallRecord =
-            "(;FF[4]EV[twixt]PB[black]PW[white]SZ[12];b[dc];r[bb];b[ee])" |> LittleGolem.parse |> Result.withDefault G.empty
-    in
-    R.emptyReplay record
+    { replay = Nothing, message = "You can use the left/right key to explore the game." }
 
 
 
@@ -151,10 +131,10 @@ mainView maybeReplay =
                 specificView =
                     case replay.record.game of
                         G.TwixT ->
-                            TwixT.view
+                            Games.TwixT.view
 
                         _ ->
-                            TwixT.view
+                            Games.TwixT.view
             in
             [ Svg.svg
                 [ SA.viewBox (intsToStr [ 0, 0, size + 1, size + 1 ]) ]
