@@ -117,7 +117,7 @@ update msg model =
         Fetched result ->
             case result of
                 Ok record ->
-                    ( model, Cmd.none )
+                    ( { model | replay = TwixTReplay <| R.emptyReplay record }, Cmd.none )
 
                 Err error ->
                     ( { model | message = "Could not load game..." }, Cmd.none )

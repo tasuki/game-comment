@@ -1,27 +1,45 @@
 module ApiClient exposing (..)
 
-import GameRecord exposing (Record, empty)
+import GameRecord as G
 import Http
-import Json.Decode as D
+import LittleGolem as LG
 
 
 baseUrl =
-    "https://www.littlegolem.net"
+    "http://localhost:6483" -- TODO!
 
 
 type alias SgfResult =
-    Result Http.Error Record
+    Result String G.Record
 
 
-sgfResultDecoder : D.Decoder Record
-sgfResultDecoder =
-    -- TODO!!!
-    D.succeed empty
+httpErrorToString : Http.Error -> String
+httpErrorToString error =
+    case error of
+        Http.BadUrl url ->
+            "Bad url: " ++ url
+
+        Http.Timeout ->
+            "Timeout error"
+
+        Http.NetworkError ->
+            "Network error"
+
+        Http.BadStatus status ->
+            "Bad status: " ++ (String.fromInt status)
+
+        Http.BadBody body ->
+            "Bad boy"
+
+
+decodeResult : Result Http.Error String -> SgfResult
+decodeResult result =
+    Result.mapError httpErrorToString result |> Result.andThen LG.parse
 
 
 getLittleGolemSgf : (SgfResult -> msg) -> String -> Cmd msg
-getLittleGolemSgf ctor gameId =
+getLittleGolemSgf msg gameId =
     Http.get
-        { url = baseUrl ++ "/servlet/sgf/" ++ gameId ++ "/game.sgf"
-        , expect = Http.expectJson ctor sgfResultDecoder
+        { url = baseUrl ++ "/game/" ++ gameId
+        , expect = Http.expectString (decodeResult >> msg)
         }
