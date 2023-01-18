@@ -40,6 +40,16 @@ onMove moveNum =
         Black
 
 
+otherPlayer : Player -> Player
+otherPlayer player =
+    case player of
+        Black ->
+            White
+
+        White ->
+            Black
+
+
 color : Player -> String
 color p =
     case p of

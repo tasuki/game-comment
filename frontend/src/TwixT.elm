@@ -118,6 +118,11 @@ newLinks player newPeg position =
         |> List.filter (\l -> not <| crossesOpponentLink l)
 
 
+mirror : Peg -> Peg
+mirror ( player, coords ) =
+    ( G.otherPlayer player, { x = coords.y, y = coords.x } )
+
+
 add : G.Move -> Position -> Position
 add { player, play } position =
     case play of
@@ -126,6 +131,10 @@ add { player, play } position =
                 | pegs = ( player, coords ) :: position.pegs
                 , links = List.append (newLinks player coords position) position.links
             }
+
+        G.Swap ->
+            -- IF a swap can only happen on the second move, there are no links
+            { position | pegs = List.map mirror position.pegs }
 
         _ ->
             position
