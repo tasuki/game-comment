@@ -27,8 +27,16 @@ main =
 -- MODEL
 
 
+type alias Picker =
+    { game : Maybe G.Game
+    , size : Int
+    , identifier : String
+    }
+
+
 type alias Model =
     { replay : Maybe R.Replay
+    , picker : Picker
     , message : String
     }
 
@@ -40,7 +48,7 @@ init _ =
 
 empty : Model
 empty =
-    { replay = Nothing, message = "You can use the left/right key to explore the game." }
+    { replay = Nothing, picker = { game = Nothing, size = 0, identifier = "" }, message = "You can use the left/right key to explore the game." }
 
 
 
@@ -49,12 +57,16 @@ empty =
 
 type Msg
     = Noop
+    | PickGame G.Game
+    | PickBoardSize String
+    | CreateBoard
+    | EnterIdentifier String
+    | Fetch String
+    | Fetched AC.SgfResult
     | Play G.Coords
     | Forward
     | Backward
     | Jump R.LookAt
-    | Fetch String
-    | Fetched AC.SgfResult
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -62,6 +74,50 @@ update msg model =
     case msg of
         Noop ->
             ( model, Cmd.none )
+
+        PickGame game ->
+            let
+                picker =
+                    { game = Just game, size = G.defaultSize game, identifier = model.picker.identifier }
+            in
+            ( { model | picker = picker }, Cmd.none )
+
+        PickBoardSize size ->
+            let
+                picker =
+                    model.picker
+            in
+            ( { model | picker = { picker | size = Maybe.withDefault 3 (String.toInt size) } }, Cmd.none )
+
+        CreateBoard ->
+            case model.picker.game of
+                Just game ->
+                    let
+                        record =
+                            G.empty game model.picker.size
+                    in
+                    ( { model | replay = Just <| R.emptyReplay record }, Cmd.none )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        EnterIdentifier identifier ->
+            let
+                picker =
+                    model.picker
+            in
+            ( { model | picker = { picker | identifier = identifier } }, Cmd.none )
+
+        Fetch gameId ->
+            ( model, AC.getLittleGolemSgf Fetched gameId )
+
+        Fetched result ->
+            case result of
+                Ok record ->
+                    ( { model | replay = Just <| R.emptyReplay record }, Cmd.none )
+
+                Err error ->
+                    ( { model | message = "Could not load game..." }, Cmd.none )
 
         Backward ->
             ( { model | replay = Maybe.map R.prev model.replay }, Cmd.none )
@@ -74,17 +130,6 @@ update msg model =
 
         Play coords ->
             ( { model | replay = Maybe.map (R.playCoords coords) model.replay }, Cmd.none )
-
-        Fetch gameId ->
-            ( model, AC.getLittleGolemSgf Fetched gameId )
-
-        Fetched result ->
-            case result of
-                Ok record ->
-                    ( { model | replay = Just <| R.emptyReplay record }, Cmd.none )
-
-                Err error ->
-                    ( { model | message = "Could not load game..." }, Cmd.none )
 
 
 
@@ -115,9 +160,9 @@ keydown keycode =
 -- VIEW
 
 
-mainView : Maybe R.Replay -> List (H.Html Msg)
-mainView maybeReplay =
-    case maybeReplay of
+mainView : Model -> H.Html Msg
+mainView model =
+    case model.replay of
         Just replay ->
             let
                 intsToStr : List Int -> String
@@ -136,13 +181,54 @@ mainView maybeReplay =
                         _ ->
                             Games.TwixT.view
             in
-            [ Svg.svg
+            Svg.svg
                 [ SA.viewBox (intsToStr [ 0, 0, size + 1, size + 1 ]) ]
                 (specificView replay Play)
-            ]
 
         Nothing ->
+            H.div [ HA.class "picker" ] (viewPicker model.picker)
+
+
+viewPicker : Picker -> List (H.Html Msg)
+viewPicker picker =
+    let
+        gamePicker : G.Game -> H.Html Msg
+        gamePicker game =
+            H.button [ HE.onClick <| PickGame game ] [ H.text <| G.gameString game ]
+
+        sizePicker : List (H.Html Msg)
+        sizePicker =
+            case picker.game of
+                Just _ ->
+                    [ H.input
+                        [ HA.type_ "number"
+                        , HA.min "5"
+                        , HA.max "50"
+                        , HA.value <| String.fromInt picker.size
+                        , HE.onInput PickBoardSize
+                        ]
+                        []
+                    ]
+
+                Nothing ->
+                    []
+    in
+    [ H.div [] (List.map gamePicker G.games)
+    , H.div [] [ H.label [] sizePicker ]
+    , H.div [] [ H.button [ HE.onClick CreateBoard ] [ H.text "Create empty board" ] ]
+    , H.hr [] []
+    , H.div []
+        [ H.input
+            [ HA.placeholder "LittleGolem game number or url"
+            , HA.type_ "text"
+            , HA.size 40
+            , HA.value <| picker.identifier
+            , HE.onInput EnterIdentifier
+            ]
             []
+        ]
+    , H.div [] [ H.button [ HE.onClick <| Fetch picker.identifier ] [ H.text "Load game" ] ]
+    ]
 
 
 sideView : Model -> List (H.Html Msg)
@@ -174,7 +260,7 @@ view model =
     { title = "Game Comment"
     , body =
         [ H.div [ HA.class "pure-g" ]
-            [ H.div [ HA.class "pure-u-md-2-3", HA.class "grow" ] (mainView model.replay)
+            [ H.div [ HA.class "pure-u-md-2-3", HA.class "grow" ] [ mainView model ]
             , H.div [ HA.class "pure-u-md-1-3" ] (sideView model)
             ]
         ]

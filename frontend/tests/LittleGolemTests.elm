@@ -84,7 +84,7 @@ recordMoves : String -> ( Record, List Move )
 recordMoves game =
     let
         record =
-            parse game |> Result.withDefault (GameRecord.empty GameRecord.TwixT)
+            parse game |> Result.withDefault (GameRecord.empty GameRecord.TwixT 24)
     in
     ( record, record.moves )
 

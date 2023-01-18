@@ -60,6 +60,43 @@ color p =
             "white"
 
 
+games : List Game
+games =
+    [ TwixT, Hex, ToroidGo, Go ]
+
+
+gameString : Game -> String
+gameString g =
+    case g of
+        Go ->
+            "Go"
+
+        ToroidGo ->
+            "Torus Go"
+
+        TwixT ->
+            "TwixT"
+
+        Hex ->
+            "Hex"
+
+
+defaultSize : Game -> Int
+defaultSize g =
+    case g of
+        Go ->
+            19
+
+        ToroidGo ->
+            11
+
+        TwixT ->
+            24
+
+        Hex ->
+            13
+
+
 type alias Record =
     { black : String
     , white : String
@@ -70,12 +107,12 @@ type alias Record =
     }
 
 
-empty : Game -> Record
-empty game =
-    { black = ""
-    , white = ""
+empty : Game -> Int -> Record
+empty game size =
+    { black = "Black"
+    , white = "White"
     , game = game
-    , size = 19
+    , size = size
     , result = ""
     , moves = []
     }
