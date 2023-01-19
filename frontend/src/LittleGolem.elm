@@ -183,9 +183,27 @@ showDeadEnd de =
 
 showDeadEnds : List DeadEnd -> String
 showDeadEnds deadEnds =
-    "Problem when parsing SGF: [" ++ (List.map showDeadEnd deadEnds |> String.join ", ") ++ "]"
+    "Problem when parsing: [ " ++ (List.map showDeadEnd deadEnds |> String.join ", ") ++ " ]"
 
 
 parse : String -> Result String Record
 parse input =
     Parser.run parser input |> Result.mapError showDeadEnds |> Result.andThen nodesToRecord
+
+
+gameIdParser : Parser String
+gameIdParser =
+    oneOf
+        [ succeed identity
+            |= (getChompedString <| chompWhile Char.isDigit)
+            |. end
+        , succeed identity
+            |. chompUntil "gid="
+            |. symbol "gid="
+            |= (getChompedString <| chompWhile Char.isDigit)
+        ]
+
+
+toGameId : String -> Result String String
+toGameId identifier =
+    Parser.run gameIdParser identifier |> Result.mapError showDeadEnds

@@ -192,3 +192,30 @@ parseTest =
                 , \_ -> Expect.equal (Just { player = White, play = Place <| Coords 6 6 }) (getMove moves 2)
                 ]
         ]
+
+
+
+-- test getting identifier
+
+
+toGameIdTest =
+    describe "toGameId"
+        [ test "Can return simple id" <|
+            \_ ->
+                Expect.equal
+                    (Ok "2221003")
+                    (toGameId "2221003")
+        , test "Can return id from full url" <|
+            \_ ->
+                Expect.equal
+                    (Ok "2221003")
+                    (toGameId "https://www.littlegolem.net/jsp/game/game.jsp?gid=2221003")
+        , test "Can return id from messed up url" <|
+            \_ ->
+                Expect.equal
+                    (Ok "2221003")
+                    (toGameId "littlegolem.net/jsp/game/game.jsp?gid=2221003&whatever=whatever")
+        , test "Fails when given a random url" <|
+            \_ ->
+                Expect.err (toGameId "https://blog.tasuki.org/variations/")
+        ]

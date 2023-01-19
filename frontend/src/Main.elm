@@ -9,6 +9,7 @@ import Html as H
 import Html.Attributes as HA
 import Html.Events as HE
 import Json.Decode as D
+import LittleGolem as LG
 import Replay as R
 import Svg exposing (Svg)
 import Svg.Attributes as SA
@@ -108,16 +109,21 @@ update msg model =
             in
             ( { model | picker = { picker | identifier = identifier } }, Cmd.none )
 
-        Fetch gameId ->
-            ( model, AC.getLittleGolemSgf Fetched gameId )
+        Fetch identifier ->
+            case LG.toGameId identifier of
+                Ok gameId ->
+                    ( model, AC.getLittleGolemSgf Fetched gameId )
+
+                Err error ->
+                    ( { model | message = "Could not read game id from the text you entered: [ " ++ error ++ " ]" }, Cmd.none )
 
         Fetched result ->
             case result of
                 Ok record ->
-                    ( { model | replay = Just <| R.emptyReplay record }, Cmd.none )
+                    ( { model | replay = Just <| R.emptyReplay record, message = empty.message }, Cmd.none )
 
                 Err error ->
-                    ( { model | message = "Could not load game..." }, Cmd.none )
+                    ( { model | message = "Could not load game: [ " ++ error ++ " ]" }, Cmd.none )
 
         Backward ->
             ( { model | replay = Maybe.map R.prev model.replay }, Cmd.none )
