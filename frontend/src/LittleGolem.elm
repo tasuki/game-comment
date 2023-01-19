@@ -65,27 +65,52 @@ doFind node key =
     find node key |> Maybe.withDefault ""
 
 
-parseMove : Player -> String -> Result String Move
-parseMove player move =
+coordParser : Parser Int
+coordParser =
     let
-        charToCoord char =
-            Char.toCode char - 96
+        decrease : Int -> Int
+        decrease i =
+            i - 96
+
+        charToCoord : String -> Int
+        charToCoord str =
+            -- actually is one char as per chompIf _ -> True
+            String.toList str
+                |> List.head
+                |> Maybe.withDefault 'a'
+                |> Char.toCode
     in
-    case String.toList move of
-        [ col, row ] ->
-            Ok { player = player, play = Place <| Coords (charToCoord col) (charToCoord row) }
+    oneOf
+        [ succeed decrease
+            |. symbol "{{"
+            |= int
+            |. symbol "}}"
+        , succeed (charToCoord >> decrease)
+            |= (getChompedString <| chompIf (\_ -> True))
+        ]
 
-        [ col, row, '|', 'd', 'r', 'a', 'w' ] ->
-            Ok { player = player, play = Place <| Coords (charToCoord col) (charToCoord row) }
 
-        [ 's', 'w', 'a', 'p' ] ->
-            Ok { player = player, play = Swap }
+playParser : Parser Play
+playParser =
+    oneOf
+        [ succeed Swap |. symbol "swap"
+        , succeed Resign |. symbol "resign"
+        , succeed (\x y -> Place { x = x, y = y })
+            |= coordParser
+            |= coordParser
+            |. oneOf
+                [ succeed identity |. symbol "|draw"
+                , succeed identity |. symbol ""
+                ]
+            |. end
+        ]
 
-        [ 'r', 'e', 's', 'i', 'g', 'n' ] ->
-            Ok { player = player, play = Resign }
 
-        _ ->
-            Err <| "Can't parse a move: " ++ move
+parseMove : Player -> String -> Result String Move
+parseMove player play =
+    Parser.run playParser play
+        |> Result.mapError showDeadEnds
+        |> Result.map (\p -> { player = player, play = p })
 
 
 getMove : String -> String -> Node -> Result String Move

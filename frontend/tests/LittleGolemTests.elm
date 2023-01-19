@@ -12,6 +12,41 @@ import Test exposing (..)
 -- parser tests
 
 
+playParserTest =
+    describe "PlayParser"
+        [ test "Can parse swap" <|
+            \_ ->
+                Expect.equal
+                    (Ok Swap)
+                    (Parser.run playParser "swap")
+        , test "Can parse simple move" <|
+            \_ ->
+                Expect.equal
+                    (Ok <| Place { x = 1, y = 2 })
+                    (Parser.run playParser "ab")
+        , test "Can parse a move with first part encoded" <|
+            \_ ->
+                Expect.equal
+                    (Ok <| Place { x = 100, y = 5 })
+                    (Parser.run playParser "{{196}}e")
+        , test "Can parse a move with second part encoded" <|
+            \_ ->
+                Expect.equal
+                    (Ok <| Place { x = 1, y = 100 })
+                    (Parser.run playParser "a{{196}}")
+        , test "Can parse a move with both parts encoded" <|
+            \_ ->
+                Expect.equal
+                    (Ok <| Place { x = 90, y = 100 })
+                    (Parser.run playParser "{{186}}{{196}}")
+        , test "Can parse move with draw offered" <|
+            \_ ->
+                Expect.equal
+                    (Ok <| Place { x = 1, y = 100 })
+                    (Parser.run playParser "a{{196}}|draw")
+        ]
+
+
 propertyParserTest =
     describe "PropertyParser"
         [ test "Can parse a property" <|
