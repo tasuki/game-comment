@@ -1,6 +1,7 @@
-module Games.TwixT exposing (..)
+module Games.TwixT exposing (view)
 
 import Dict exposing (Dict)
+import GameHelpers as GH
 import GameRecord as G
 import Replay as R
 import Svg exposing (Svg)
@@ -229,13 +230,7 @@ drawGuidelines size =
 
 coordList : Int -> List G.Coords
 coordList size =
-    let
-        nodes : List Int
-        nodes =
-            List.range 1 size
-    in
-    List.concatMap (\x -> List.map (G.Coords x) nodes) nodes
-        |> List.filter (isOnBoard size)
+    GH.coordList 1 size |> List.filter (isOnBoard size)
 
 
 drawPoints : Int -> List (Svg msg)
@@ -300,23 +295,12 @@ drawPegs size position lastMove onMove playMsg =
                         []
 
                 Just player ->
-                    classesProps player coords
+                    GH.classesProps lastMove player coords
                         ++ [ SA.r "0.35"
                            , SA.stroke "black"
                            , SA.strokeWidth "0.1"
                            , SA.fill <| G.color player
                            ]
-
-        classesProps player coords =
-            if Maybe.map .play lastMove == Just (G.Place coords) then
-                if player == G.Black then
-                    [ SA.class "last-move black" ]
-
-                else
-                    [ SA.class "last-move white" ]
-
-            else
-                []
 
         drawCoords : G.Coords -> Svg msg
         drawCoords coords =
@@ -325,7 +309,7 @@ drawPegs size position lastMove onMove playMsg =
     List.map drawCoords (coordList size)
 
 
-view : R.Replay -> (G.Coords -> msg) -> List (Svg msg)
+view : R.Replay -> (G.Coords -> msg) -> Svg msg
 view replay playMsg =
     let
         size =
@@ -334,14 +318,17 @@ view replay playMsg =
         position =
             positionFromMoves (R.currentMoves replay)
     in
-    background size
-        ++ drawBorders size
-        ++ drawGuidelines size
-        ++ drawPoints size
-        ++ drawLinks position
-        ++ drawPegs
-            size
-            position
-            (R.lastMove replay)
-            (G.onMove replay.lookingAt.move)
-            playMsg
+    Svg.svg
+        [ SA.viewBox (GH.intsToStr [ 0, 0, size + 1, size + 1 ]), SA.class "twixt" ]
+        (background size
+            ++ drawBorders size
+            ++ drawGuidelines size
+            ++ drawPoints size
+            ++ drawLinks position
+            ++ drawPegs
+                size
+                position
+                (R.lastMove replay)
+                (G.onMove replay.lookingAt.move)
+                playMsg
+        )

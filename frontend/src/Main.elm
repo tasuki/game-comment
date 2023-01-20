@@ -4,6 +4,7 @@ import ApiClient as AC
 import Browser
 import Browser.Events
 import GameRecord as G
+import Games.ToroidGo
 import Games.TwixT
 import Html as H
 import Html.Attributes as HA
@@ -12,7 +13,6 @@ import Json.Decode as D
 import LittleGolem as LG
 import Replay as R
 import Svg exposing (Svg)
-import Svg.Attributes as SA
 
 
 main =
@@ -189,25 +189,19 @@ mainView model =
     case model.replay of
         Just replay ->
             let
-                intsToStr : List Int -> String
-                intsToStr ints =
-                    List.map String.fromInt ints |> String.join " "
-
-                size =
-                    replay.record.size
-
-                specificView : R.Replay -> (G.Coords -> msg) -> List (Svg msg)
+                specificView : R.Replay -> (G.Coords -> msg) -> Svg msg
                 specificView =
                     case replay.record.game of
                         G.TwixT ->
                             Games.TwixT.view
 
+                        G.ToroidGo ->
+                            Games.ToroidGo.view
+
                         _ ->
-                            Games.TwixT.view
+                            \_ _ -> Svg.svg [] []
             in
-            Svg.svg
-                [ SA.viewBox (intsToStr [ 0, 0, size + 1, size + 1 ]) ]
-                (specificView replay Play)
+            specificView replay Play
 
         Nothing ->
             H.div [ HA.class "picker" ] (viewPicker model.picker)
