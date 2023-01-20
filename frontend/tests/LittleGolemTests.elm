@@ -44,6 +44,10 @@ playParserTest =
                 Expect.equal
                     (Ok <| Place { x = 1, y = 100 })
                     (Parser.run playParser "a{{196}}|draw")
+        , test "Can't parse move in unknown format" <|
+            \_ ->
+                Expect.err
+                    (Parser.run playParser "a{{196}}|x")
         ]
 
 

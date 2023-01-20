@@ -100,7 +100,7 @@ playParser =
             |= coordParser
             |. oneOf
                 [ succeed identity |. symbol "|draw"
-                , succeed identity |. symbol ""
+                , succeed identity
                 ]
             |. end
         ]
