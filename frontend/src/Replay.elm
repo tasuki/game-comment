@@ -97,8 +97,11 @@ addMoveToVar move replay =
                 let
                     variation =
                         replay.variation
+
+                    till =
+                        replay.lookingAt.move - variation.fromMove
                 in
-                { variation | moves = A.slice 0 (replay.lookingAt.move - variation.fromMove) variation.moves }
+                { variation | moves = A.slice 0 till variation.moves }
 
             else
                 { emptyVariation | fromMove = replay.lookingAt.move }
@@ -142,13 +145,16 @@ prev replay =
     let
         lookAtPrev =
             lookPrev replay.lookingAt
+
+        lookingEarlierThanVariation =
+            (replay.lookingAt.move - 1) <= replay.variation.fromMove
     in
     case lastMove replay of
         Nothing ->
             replay
 
         Just _ ->
-            if replay.lookingAt.variation && (replay.lookingAt.move - 1) <= replay.variation.fromMove then
+            if replay.lookingAt.variation && lookingEarlierThanVariation then
                 { replay | lookingAt = { lookAtPrev | variation = False } }
 
             else

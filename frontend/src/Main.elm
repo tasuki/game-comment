@@ -49,7 +49,10 @@ init _ =
 
 empty : Model
 empty =
-    { replay = Nothing, picker = { game = Nothing, size = 0, identifier = "" }, message = "You can use the left/right key to explore the game." }
+    { replay = Nothing
+    , picker = { game = Nothing, size = 0, identifier = "" }
+    , message = "You can use the left/right key to explore the game."
+    }
 
 
 
@@ -79,7 +82,10 @@ update msg model =
         PickGame game ->
             let
                 picker =
-                    { game = Just game, size = G.defaultSize game, identifier = model.picker.identifier }
+                    { game = Just game
+                    , size = G.defaultSize game
+                    , identifier = model.picker.identifier
+                    }
             in
             ( { model | picker = picker }, Cmd.none )
 
@@ -88,7 +94,9 @@ update msg model =
                 picker =
                     model.picker
             in
-            ( { model | picker = { picker | size = Maybe.withDefault 3 (String.toInt size) } }, Cmd.none )
+            ( { model | picker = { picker | size = Maybe.withDefault 3 (String.toInt size) } }
+            , Cmd.none
+            )
 
         CreateBoard ->
             case model.picker.game of
@@ -115,12 +123,22 @@ update msg model =
                     ( model, AC.getLittleGolemSgf Fetched gameId )
 
                 Err error ->
-                    ( { model | message = "Could not read game id from the text you entered: [ " ++ error ++ " ]" }, Cmd.none )
+                    ( { model
+                        | message =
+                            "Could not read game id from the text you entered: [ " ++ error ++ " ]"
+                      }
+                    , Cmd.none
+                    )
 
         Fetched result ->
             case result of
                 Ok record ->
-                    ( { model | replay = Just <| R.emptyReplay record, message = empty.message }, Cmd.none )
+                    ( { model
+                        | replay = Just <| R.emptyReplay record
+                        , message = empty.message
+                      }
+                    , Cmd.none
+                    )
 
                 Err error ->
                     ( { model | message = "Could not load game: [ " ++ error ++ " ]" }, Cmd.none )
@@ -198,9 +216,19 @@ mainView model =
 viewPicker : Picker -> List (H.Html Msg)
 viewPicker picker =
     let
+        gameClass : G.Game -> String
+        gameClass game =
+            if picker.game == Just game then
+                "active"
+
+            else
+                ""
+
         gamePicker : G.Game -> H.Html Msg
         gamePicker game =
-            H.button [ HE.onClick <| PickGame game ] [ H.text <| G.gameString game ]
+            H.button
+                [ HA.class <| gameClass game, HE.onClick <| PickGame game ]
+                [ H.text <| G.gameString game ]
 
         sizePicker : List (H.Html Msg)
         sizePicker =
@@ -220,8 +248,12 @@ viewPicker picker =
                     []
     in
     [ H.div [] (List.map gamePicker G.games)
-    , H.div [] [ H.label [] sizePicker ]
-    , H.div [] [ H.button [ HE.onClick CreateBoard ] [ H.text "Create empty board" ] ]
+    , H.div [] sizePicker
+    , H.div []
+        [ H.button
+            [ HE.onClick CreateBoard ]
+            [ H.text "Create empty board" ]
+        ]
     , H.hr [] []
     , H.div []
         [ H.input
@@ -233,7 +265,11 @@ viewPicker picker =
             ]
             []
         ]
-    , H.div [] [ H.button [ HE.onClick <| Fetch picker.identifier ] [ H.text "Load game" ] ]
+    , H.div []
+        [ H.button
+            [ HE.onClick <| Fetch picker.identifier ]
+            [ H.text "Load game" ]
+        ]
     ]
 
 

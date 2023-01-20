@@ -208,12 +208,18 @@ showDeadEnd de =
 
 showDeadEnds : List DeadEnd -> String
 showDeadEnds deadEnds =
-    "Problem when parsing: [ " ++ (List.map showDeadEnd deadEnds |> String.join ", ") ++ " ]"
+    let
+        deadEndsString =
+            List.map showDeadEnd deadEnds |> String.join ", "
+    in
+    "Problem when parsing: [ " ++ deadEndsString ++ " ]"
 
 
 parse : String -> Result String Record
 parse input =
-    Parser.run parser input |> Result.mapError showDeadEnds |> Result.andThen nodesToRecord
+    Parser.run parser input
+        |> Result.mapError showDeadEnds
+        |> Result.andThen nodesToRecord
 
 
 gameIdParser : Parser String

@@ -12,9 +12,10 @@
         body { max-width: 1024px; margin: auto; }
         button { background-color: transparent; border: none; margin: 0; }
         label { padding: 10px 20px; line-height: 3; }
-        input { vertical-align: middle; }
         .grow { flex-grow: 1; }
-        .picker button { background-color: #EEE; border: 1px solid #333; margin: 10px; padding: 5px 10px; }
+        .picker button, .picker input { background-color: #EEE; border: 1px solid #333; margin: 10px; padding: 5px 10px; }
+        .picker input { background-color: #FFF; }
+        .picker .active { color: #FFF; background-color: #666; }
         .clickable { cursor: pointer; }
         .last-move.white { stroke: #F00; }
         .last-move.black { stroke: #F00; fill: #F00; }
