@@ -73,6 +73,7 @@ newLinks player newPeg position =
 
         crosses : Link -> Link -> Bool
         crosses new old =
+            -- https://stackoverflow.com/a/62625458/2591473
             let
                 ( newA, newB ) =
                     Tuple.second new
@@ -104,7 +105,7 @@ newLinks player newPeg position =
                 p3 =
                     dyNew * (newB.x - oldB.x) - dxNew * (newB.y - oldB.y)
             in
-            (p0 * p1 <= 0) && (p2 * p3 <= 0)
+            (p0 * p1 < 0) && (p2 * p3 < 0)
 
         crossesOpponentLink : Link -> Bool
         crossesOpponentLink new =
