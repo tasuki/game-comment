@@ -230,8 +230,8 @@ viewPicker picker =
                 [ HA.class <| gameClass game, HE.onClick <| PickGame game ]
                 [ H.text <| G.gameString game ]
 
-        sizePicker : List (H.Html Msg)
-        sizePicker =
+        sizePickerAndCreateButton : List (H.Html Msg)
+        sizePickerAndCreateButton =
             case picker.game of
                 Just _ ->
                     [ H.input
@@ -242,18 +242,16 @@ viewPicker picker =
                         , HE.onInput PickBoardSize
                         ]
                         []
+                    , H.button
+                        [ HE.onClick CreateBoard ]
+                        [ H.text "Create empty board" ]
                     ]
 
                 Nothing ->
                     []
     in
     [ H.div [] (List.map gamePicker G.games)
-    , H.div [] sizePicker
-    , H.div []
-        [ H.button
-            [ HE.onClick CreateBoard ]
-            [ H.text "Create empty board" ]
-        ]
+    , H.div [] sizePickerAndCreateButton
     , H.hr [] []
     , H.div []
         [ H.input
