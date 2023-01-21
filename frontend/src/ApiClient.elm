@@ -61,6 +61,6 @@ decodeResult result =
 getLittleGolemSgf : (SgfResult -> msg) -> String -> Cmd msg
 getLittleGolemSgf msg gameId =
     Http.get
-        { url = baseUrl ++ "/game/" ++ gameId
+        { url = baseUrl ++ "/game/lg/" ++ gameId
         , expect = Http.expectBytesResponse (decodeResult >> msg) responseToResult
         }

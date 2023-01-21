@@ -21,7 +21,7 @@ fetchGameRecord gameId = do
 main :: IO ()
 main = do
     scotty 6483 $ do
-        get "/game/:gameId" $ do
+        get "/game/lg/:gameId" $ do
             gameId <- param "gameId"
             (responseStatus, response) <- liftIO $ fetchGameRecord gameId
             status responseStatus -- we don't mind too bad if this is off
