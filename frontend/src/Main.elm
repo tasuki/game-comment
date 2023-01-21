@@ -3,9 +3,9 @@ module Main exposing (..)
 import ApiClient as AC
 import Browser
 import Browser.Events
+import Game.ToroidGo
+import Game.TwixT
 import GameRecord as G
-import Games.ToroidGo
-import Games.TwixT
 import Html as H
 import Html.Attributes as HA
 import Html.Events as HE
@@ -193,10 +193,10 @@ mainView model =
                 specificView =
                     case replay.record.game of
                         G.TwixT ->
-                            Games.TwixT.view
+                            Game.TwixT.view
 
                         G.ToroidGo ->
-                            Games.ToroidGo.view
+                            Game.ToroidGo.view
 
                         _ ->
                             \_ _ -> Svg.svg [] []

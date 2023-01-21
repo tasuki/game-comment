@@ -1,4 +1,4 @@
-module Games.TwixT exposing (view)
+module Game.TwixT exposing (view)
 
 import Dict exposing (Dict)
 import GameHelpers as GH

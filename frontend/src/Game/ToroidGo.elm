@@ -1,4 +1,4 @@
-module Games.ToroidGo exposing (..)
+module Game.ToroidGo exposing (..)
 
 import Array exposing (Array)
 import GameHelpers as GH
