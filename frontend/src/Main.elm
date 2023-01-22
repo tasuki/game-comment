@@ -1,26 +1,24 @@
 module Main exposing (..)
 
-import ApiClient as AC
 import Browser
-import Browser.Events
-import Game.ToroidGo
-import Game.TwixT
-import GameRecord as G
+import Browser.Navigation as Nav
 import Html as H
-import Html.Attributes as HA
-import Html.Events as HE
-import Json.Decode as D
-import LittleGolem as LG
-import Replay as R
-import Svg exposing (Svg)
+import Page.Game
+import Page.Home
+import Route
+import Session exposing (Session)
+import Url
+import Url.Parser
 
 
 main =
-    Browser.document
+    Browser.application
         { init = init
+        , view = view
         , update = update
         , subscriptions = subscriptions
-        , view = view
+        , onUrlRequest = LinkClicked
+        , onUrlChange = UrlChanged
         }
 
 
@@ -28,31 +26,30 @@ main =
 -- MODEL
 
 
-type alias Picker =
-    { game : Maybe G.Game
-    , size : Int
-    , identifier : String
-    }
+type Page
+    = NotFound Session
+    | Home Page.Home.Model
+    | Game Page.Game.Model
 
 
 type alias Model =
-    { replay : Maybe R.Replay
-    , picker : Picker
+    { key : Nav.Key
+    , page : Page
     , message : String
     }
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( empty, Cmd.none )
-
-
-empty : Model
-empty =
-    { replay = Nothing
-    , picker = { game = Nothing, size = 0, identifier = "" }
-    , message = "You can use the left/right key to explore the game."
-    }
+init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init _ url key =
+    let
+        session =
+            { navKey = key }
+    in
+    changeRouteTo url
+        { key = key
+        , page = NotFound session
+        , message = ""
+        }
 
 
 
@@ -61,99 +58,86 @@ empty =
 
 type Msg
     = Noop
-    | PickGame G.Game
-    | PickBoardSize String
-    | CreateBoard
-    | EnterIdentifier String
-    | Fetch String
-    | Fetched AC.SgfResult
-    | Play G.Coords
-    | Forward
-    | Backward
-    | Jump R.LookAt
+    | UrlChanged Url.Url
+    | LinkClicked Browser.UrlRequest
+    | HomeMsg Page.Home.Msg
+    | GameMsg Page.Game.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        Noop ->
+update message model =
+    case ( message, model.page ) of
+        ( Noop, _ ) ->
             ( model, Cmd.none )
 
-        PickGame game ->
-            let
-                picker =
-                    { game = Just game
-                    , size = G.defaultSize game
-                    , identifier = model.picker.identifier
-                    }
-            in
-            ( { model | picker = picker }, Cmd.none )
+        ( LinkClicked urlRequest, _ ) ->
+            case urlRequest of
+                Browser.Internal url ->
+                    ( model
+                    , Nav.pushUrl (getSession model.page).navKey (Url.toString url)
+                    )
 
-        PickBoardSize size ->
-            let
-                picker =
-                    model.picker
-            in
-            ( { model | picker = { picker | size = Maybe.withDefault 3 (String.toInt size) } }
+                Browser.External href ->
+                    ( model
+                    , Nav.load href
+                    )
+
+        ( UrlChanged url, _ ) ->
+            changeRouteTo url model
+
+        ( HomeMsg msg, Home m ) ->
+            Page.Home.update msg m |> updateWith Home HomeMsg model
+
+        ( GameMsg msg, Game m ) ->
+            Page.Game.update msg m |> updateWith Game GameMsg model
+
+        ( _, _ ) ->
+            ( model, Cmd.none )
+
+
+updateWith : (subModel -> Page) -> (subMsg -> Msg) -> Model -> ( subModel, Cmd subMsg ) -> ( Model, Cmd Msg )
+updateWith toPage toMsg model ( subModel, subCmd ) =
+    ( { model | page = toPage subModel }
+    , Cmd.map toMsg subCmd
+    )
+
+
+getSession : Page -> Session
+getSession page =
+    case page of
+        NotFound session ->
+            session
+
+        Home m ->
+            m.session
+
+        Game m ->
+            m.session
+
+
+changeRouteTo : Url.Url -> Model -> ( Model, Cmd Msg )
+changeRouteTo url model =
+    let
+        session =
+            getSession model.page
+    in
+    case Url.Parser.parse Route.parser url of
+        Just Route.Home ->
+            Page.Home.init session
+                |> updateWith Home HomeMsg model
+
+        Just (Route.EmptyGame game size) ->
+            Page.Game.init session
+                |> updateWith Game GameMsg model
+
+        Just (Route.LittleGolemGame id) ->
+            Page.Game.init session
+                |> updateWith Game GameMsg model
+
+        Nothing ->
+            ( { model | page = NotFound session }
             , Cmd.none
             )
-
-        CreateBoard ->
-            case model.picker.game of
-                Just game ->
-                    let
-                        record =
-                            G.empty game model.picker.size
-                    in
-                    ( { model | replay = Just <| R.emptyReplay record }, Cmd.none )
-
-                Nothing ->
-                    ( model, Cmd.none )
-
-        EnterIdentifier identifier ->
-            let
-                picker =
-                    model.picker
-            in
-            ( { model | picker = { picker | identifier = identifier } }, Cmd.none )
-
-        Fetch identifier ->
-            case LG.toGameId identifier of
-                Ok gameId ->
-                    ( model, AC.getLittleGolemSgf Fetched gameId )
-
-                Err error ->
-                    ( { model
-                        | message =
-                            "Could not read game id from the text you entered: [ " ++ error ++ " ]"
-                      }
-                    , Cmd.none
-                    )
-
-        Fetched result ->
-            case result of
-                Ok record ->
-                    ( { model
-                        | replay = Just <| R.emptyReplay record
-                        , message = empty.message
-                      }
-                    , Cmd.none
-                    )
-
-                Err error ->
-                    ( { model | message = "Could not load game: [ " ++ error ++ " ]" }, Cmd.none )
-
-        Backward ->
-            ( { model | replay = Maybe.map R.prev model.replay }, Cmd.none )
-
-        Forward ->
-            ( { model | replay = Maybe.map R.next model.replay }, Cmd.none )
-
-        Jump lookAt ->
-            ( { model | replay = Maybe.map (R.jump lookAt) model.replay }, Cmd.none )
-
-        Play coords ->
-            ( { model | replay = Maybe.map (R.playCoords coords) model.replay }, Cmd.none )
 
 
 
@@ -161,141 +145,36 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions m =
-    Sub.batch
-        [ Browser.Events.onKeyDown (D.map keydown <| D.field "key" D.string)
-        ]
-
-
-keydown : String -> Msg
-keydown keycode =
-    case keycode of
-        "ArrowLeft" ->
-            Backward
-
-        "ArrowRight" ->
-            Forward
+subscriptions model =
+    case model.page of
+        Game m ->
+            Sub.map GameMsg (Page.Game.subscriptions m)
 
         _ ->
-            Noop
+            Sub.none
 
 
 
 -- VIEW
 
 
-mainView : Model -> H.Html Msg
-mainView model =
-    case model.replay of
-        Just replay ->
-            let
-                specificView : R.Replay -> (G.Coords -> msg) -> Svg msg
-                specificView =
-                    case replay.record.game of
-                        G.TwixT ->
-                            Game.TwixT.view
-
-                        G.ToroidGo ->
-                            Game.ToroidGo.view
-
-                        _ ->
-                            \_ _ -> Svg.svg [] []
-            in
-            specificView replay Play
-
-        Nothing ->
-            H.div [ HA.class "picker" ] (viewPicker model.picker)
-
-
-viewPicker : Picker -> List (H.Html Msg)
-viewPicker picker =
-    let
-        gameClass : G.Game -> String
-        gameClass game =
-            if picker.game == Just game then
-                "active"
-
-            else
-                ""
-
-        gamePicker : G.Game -> H.Html Msg
-        gamePicker game =
-            H.button
-                [ HA.class <| gameClass game, HE.onClick <| PickGame game ]
-                [ H.text <| G.gameString game ]
-
-        sizePickerAndCreateButton : List (H.Html Msg)
-        sizePickerAndCreateButton =
-            case picker.game of
-                Just _ ->
-                    [ H.input
-                        [ HA.type_ "number"
-                        , HA.min "5"
-                        , HA.max "50"
-                        , HA.value <| String.fromInt picker.size
-                        , HE.onInput PickBoardSize
-                        ]
-                        []
-                    , H.button
-                        [ HE.onClick CreateBoard ]
-                        [ H.text "Create empty board" ]
-                    ]
-
-                Nothing ->
-                    []
-    in
-    [ H.div [] (List.map gamePicker G.games)
-    , H.div [] sizePickerAndCreateButton
-    , H.hr [] []
-    , H.div []
-        [ H.input
-            [ HA.placeholder "LittleGolem game number or url"
-            , HA.type_ "text"
-            , HA.size 40
-            , HA.value <| picker.identifier
-            , HE.onInput EnterIdentifier
-            ]
-            []
-        ]
-    , H.div []
-        [ H.button
-            [ HE.onClick <| Fetch picker.identifier ]
-            [ H.text "Load game" ]
-        ]
-    ]
-
-
-sideView : Model -> List (H.Html Msg)
-sideView model =
-    let
-        prevNext =
-            [ H.div []
-                [ H.button [ HE.onClick Backward ] [ H.text "prev" ]
-                , H.button [ HE.onClick Forward ] [ H.text "next" ]
-                ]
-            ]
-
-        replayView : Maybe R.Replay -> List (H.Html Msg)
-        replayView maybeReplay =
-            case maybeReplay of
-                Just replay ->
-                    R.view Jump replay
-
-                Nothing ->
-                    []
-    in
-    [ H.div [ HA.class "game-info" ] (prevNext ++ replayView model.replay)
-    , H.div [ HA.class "message" ] [ H.text model.message ]
-    ]
-
-
 view : Model -> Browser.Document Msg
 view model =
+    let
+        viewPage toMsg pageView =
+            List.map (H.map toMsg) pageView
+
+        body =
+            case model.page of
+                Home m ->
+                    viewPage HomeMsg (Page.Home.view m)
+
+                Game m ->
+                    viewPage GameMsg (Page.Game.view m)
+
+                NotFound _ ->
+                    [ H.h2 [] [ H.text "We haven't found it!" ] ]
+    in
     { title = "Game Comment"
-    , body =
-        [ H.div [ HA.class "pure-g" ]
-            [ H.div [ HA.class "pure-u-md-2-3", HA.class "grow" ] [ mainView model ]
-            , H.div [ HA.class "pure-u-md-1-3" ] (sideView model)
-            ]
-        ]
+    , body = body
     }
