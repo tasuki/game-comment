@@ -55,6 +55,8 @@ type Msg
     | Play G.Coords
     | Forward
     | Backward
+    | Start
+    | End
     | Jump R.LookAt
 
 
@@ -76,11 +78,17 @@ update msg model =
                 Err error ->
                     ( { model | message = "Could not load game: [ " ++ error ++ " ]" }, Cmd.none )
 
+        Start ->
+            ( { model | replay = Maybe.map R.start model.replay }, Cmd.none )
+
         Backward ->
             ( { model | replay = Maybe.map R.prev model.replay }, Cmd.none )
 
         Forward ->
             ( { model | replay = Maybe.map R.next model.replay }, Cmd.none )
+
+        End ->
+            ( { model | replay = Maybe.map R.end model.replay }, Cmd.none )
 
         Jump lookAt ->
             ( { model | replay = Maybe.map (R.jump lookAt) model.replay }, Cmd.none )
@@ -108,6 +116,12 @@ keydown keycode =
 
         "ArrowRight" ->
             Forward
+
+        "ArrowUp" ->
+            Start
+
+        "ArrowDown" ->
+            End
 
         _ ->
             Noop

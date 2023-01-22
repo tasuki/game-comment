@@ -161,6 +161,25 @@ prev replay =
                 { replay | lookingAt = lookAtPrev }
 
 
+start : Replay -> Replay
+start replay =
+    let
+        lookAt =
+            replay.lookingAt
+    in
+    jump { lookAt | move = 0 } replay
+
+
+end : Replay -> Replay
+end replay =
+    case nextMove replay of
+        Nothing ->
+            replay
+
+        Just _ ->
+            end { replay | lookingAt = lookNext replay.lookingAt }
+
+
 jump : LookAt -> Replay -> Replay
 jump lookAt replay =
     { replay | lookingAt = lookAt }
