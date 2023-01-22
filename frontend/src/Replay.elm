@@ -121,7 +121,7 @@ playCoords coords replay =
     let
         move : G.Move
         move =
-            { player = G.onMove replay.lookingAt.move, play = G.Place coords }
+            { player = G.onMove replay.lookingAt.move replay.record.game, play = G.Place coords }
     in
     if Just move == nextMove replay then
         next replay

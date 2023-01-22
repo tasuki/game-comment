@@ -123,23 +123,9 @@ drawLines min max =
     horizontal ++ vertical
 
 
-drawStones : Int -> Int -> Position -> Maybe G.Move -> List (Svg msg)
-drawStones min max position lastMove =
+drawStones : Int -> Int -> Position -> Maybe G.Move -> (G.Coords -> msg) -> List (Svg msg)
+drawStones min max position lastMove playMsg =
     let
-        showStone : G.Coords -> List (H.Attribute msg) -> G.Player -> Svg msg
-        showStone coords class player =
-            Svg.circle
-                (class
-                    ++ [ SA.cx <| String.fromInt coords.x
-                       , SA.cy <| String.fromInt coords.y
-                       , SA.r "0.48"
-                       , SA.stroke "black"
-                       , SA.strokeWidth "0.07"
-                       , SA.fill <| G.color player
-                       ]
-                )
-                []
-
         normaliseCoord : Int -> Int
         normaliseCoord coord =
             if coord < 1 then
@@ -151,11 +137,14 @@ drawStones min max position lastMove =
             else
                 coord
 
-        maybeShowStone : G.Coords -> Maybe (Svg msg)
+        maybeShowStone : G.Coords -> Svg msg
         maybeShowStone coords =
             let
                 ( normX, normY ) =
                     ( normaliseCoord coords.x, normaliseCoord coords.y )
+
+                normCoords =
+                    { x = normX, y = normY }
 
                 stone : Stone
                 stone =
@@ -163,13 +152,34 @@ drawStones min max position lastMove =
 
                 class : List (H.Attribute msg)
                 class =
-                    Maybe.map (\p -> GH.classesProps lastMove p { x = normX, y = normY }) stone
+                    Maybe.map (\p -> GH.classesProps lastMove p normCoords) stone
                         |> Maybe.withDefault []
             in
-            Maybe.map (showStone coords class) stone
+            case stone of
+                Just player ->
+                    Svg.circle
+                        (class
+                            ++ [ SA.cx <| String.fromInt coords.x
+                               , SA.cy <| String.fromInt coords.y
+                               , SA.r "0.48"
+                               , SA.stroke "black"
+                               , SA.strokeWidth "0.07"
+                               , SA.fill <| G.color player
+                               ]
+                        )
+                        []
+
+                Nothing ->
+                    Svg.circle
+                        [ SA.cx <| String.fromInt coords.x
+                        , SA.cy <| String.fromInt coords.y
+                        , SA.r "0.45"
+                        , SA.fill "transparent"
+                        , SE.onClick <| playMsg normCoords
+                        ]
+                        []
     in
     List.map maybeShowStone (GH.coordList min max)
-        |> List.filterMap identity
 
 
 view : R.Replay -> (G.Coords -> msg) -> Svg msg
@@ -188,5 +198,10 @@ view replay playMsg =
         [ SA.viewBox (GH.intsToStr [ -3, -3, size + 7, size + 7 ]), SA.class "go" ]
         (background size
             ++ drawLines min max
-            ++ drawStones min max position (R.lastMove replay)
+            ++ drawStones
+                min
+                max
+                position
+                (R.lastMove replay)
+                playMsg
         )

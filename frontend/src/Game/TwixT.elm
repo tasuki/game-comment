@@ -329,6 +329,6 @@ view replay playMsg =
                 size
                 position
                 (R.lastMove replay)
-                (G.onMove replay.lookingAt.move)
+                (G.onMove replay.lookingAt.move G.TwixT)
                 playMsg
         )

@@ -31,13 +31,22 @@ type alias Move =
     }
 
 
-onMove : Int -> Player
-onMove moveNum =
+onMove : Int -> Game -> Player
+onMove moveNum game =
+    let
+        firstPlayer =
+            case game of
+                TwixT ->
+                    White
+
+                _ ->
+                    Black
+    in
     if modBy 2 moveNum == 0 then
-        White
+        firstPlayer
 
     else
-        Black
+        otherPlayer firstPlayer
 
 
 otherPlayer : Player -> Player
