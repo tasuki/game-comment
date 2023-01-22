@@ -127,11 +127,11 @@ changeRouteTo url model =
                 |> updateWith Home HomeMsg model
 
         Just (Route.EmptyGame game size) ->
-            Page.Game.init session
+            Page.Game.initEmpty game size session
                 |> updateWith Game GameMsg model
 
-        Just (Route.LittleGolemGame id) ->
-            Page.Game.init session
+        Just (Route.LittleGolemGame lgId) ->
+            Page.Game.initLg lgId session
                 |> updateWith Game GameMsg model
 
         Nothing ->

@@ -75,7 +75,6 @@ update msg model =
         CreateBoard ->
             case ( model.picker.game, model.picker.size ) of
                 ( Just game, size ) ->
-                    -- TODO ( { model | replay = Just <| R.emptyReplay record }, Cmd.none )
                     ( model, Nav.pushUrl model.session.navKey (Route.toUrl <| Route.EmptyGame game size) )
 
                 ( Nothing, _ ) ->
@@ -91,7 +90,6 @@ update msg model =
         Fetch identifier ->
             case LG.toGameId identifier of
                 Ok gameId ->
-                    -- TODO ( model, AC.getLittleGolemSgf Fetched gameId )
                     ( model, Nav.pushUrl model.session.navKey (Route.toUrl <| Route.LittleGolemGame gameId) )
 
                 Err error ->

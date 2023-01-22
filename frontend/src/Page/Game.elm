@@ -25,13 +25,23 @@ type alias Model =
     }
 
 
-init : Session -> ( Model, Cmd Msg )
-init session =
+initEmpty : G.Game -> Int -> Session -> ( Model, Cmd Msg )
+initEmpty game size session =
+    ( { session = session
+      , replay = Just <| R.emptyReplay <| G.empty game size
+      , message = "You can use the left/right key to explore the game."
+      }
+    , Cmd.none
+    )
+
+
+initLg : String -> Session -> ( Model, Cmd Msg )
+initLg lgId session =
     ( { session = session
       , replay = Nothing
       , message = "You can use the left/right key to explore the game."
       }
-    , Cmd.none
+    , AC.getLittleGolemSgf Fetched lgId
     )
 
 
