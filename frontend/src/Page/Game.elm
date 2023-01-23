@@ -2,6 +2,7 @@ module Page.Game exposing (..)
 
 import ApiClient as AC
 import Browser.Events
+import Game.Go
 import Game.ToroidGo
 import Game.TwixT
 import GameRecord as G
@@ -12,6 +13,7 @@ import Json.Decode as D
 import Replay as R
 import Session exposing (Session)
 import Svg exposing (Svg)
+import Svg.Attributes as SA
 
 
 
@@ -144,6 +146,9 @@ boardView model =
 
                         G.ToroidGo ->
                             Game.ToroidGo.view
+
+                        G.Go ->
+                            Game.Go.view
 
                         _ ->
                             \_ _ -> Svg.svg [] []
