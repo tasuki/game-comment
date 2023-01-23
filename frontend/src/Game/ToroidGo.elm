@@ -61,7 +61,7 @@ allCoords : Position -> List G.Coords
 allCoords position =
     let
         toSize =
-            List.range 0 (position.size - 1)
+            List.range 1 position.size
     in
     List.concatMap (\x -> List.map (\y -> { x = x, y = y }) toSize) toSize
 
