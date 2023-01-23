@@ -11,6 +11,10 @@ import Svg.Attributes as SA
 import Svg.Events as SE
 
 
+context =
+    5
+
+
 type alias Move =
     ( G.Player, G.Coords )
 
@@ -212,10 +216,10 @@ normaliseCoords position coords =
 background : Int -> List (Svg msg)
 background size =
     [ Svg.rect
-        [ SA.x "-2.5"
-        , SA.y "-2.5"
-        , SA.width <| String.fromInt <| size + 6
-        , SA.height <| String.fromInt <| size + 6
+        [ SA.x <| String.fromFloat (0.5 - context)
+        , SA.y <| String.fromFloat (0.5 - context)
+        , SA.width <| String.fromInt <| size + (context * 2)
+        , SA.height <| String.fromInt <| size + (context * 2)
         , SA.fill "#BBB"
         ]
         []
@@ -316,13 +320,22 @@ view replay playMsg =
             replay.record.size
 
         ( min, max ) =
-            ( -2, size + 3 )
+            ( 1 - context, size + context )
 
         position =
             positionFromMoves size (R.currentMoves replay)
     in
     Svg.svg
-        [ SA.viewBox (GH.intsToStr [ -3, -3, size + 7, size + 7 ]), SA.class "go" ]
+        [ SA.viewBox
+            (GH.intsToStr
+                [ -context
+                , -context
+                , size + 1 + (2 * context)
+                , size + 1 + (2 * context)
+                ]
+            )
+        , SA.class "go"
+        ]
         (background size
             ++ drawLines min max
             ++ drawStones
