@@ -187,6 +187,9 @@ nodesToRecord nodes =
             else if String.contains "go" vr then
                 Just Go
 
+            else if String.contains "sunjang" vr then
+                Just Go
+
             else
                 Nothing
     in
