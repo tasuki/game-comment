@@ -266,51 +266,50 @@ drawLines min max =
 drawStones : Int -> Int -> Position -> Maybe G.Move -> G.Player -> (G.Coords -> msg) -> List (Svg msg)
 drawStones min max position lastMove onMove playMsg =
     let
-        maybeShowStone : G.Coords -> Svg msg
-        maybeShowStone coords =
-            let
-                normCoords =
-                    normaliseCoords position coords
+        showStone : G.Coords -> G.Coords -> G.Player -> Svg msg
+        showStone coords normCoords player =
+            Svg.circle
+                (GH.classesProps lastMove player normCoords
+                    ++ [ SA.cx <| String.fromInt coords.x
+                       , SA.cy <| String.fromInt coords.y
+                       , SA.r "0.48"
+                       , SA.stroke "black"
+                       , SA.strokeWidth "0.07"
+                       , SA.fill <| G.color player
+                       ]
+                )
+                []
 
-                stone : Stone
-                stone =
-                    getStone normCoords position
-
-                class : List (H.Attribute msg)
-                class =
-                    Maybe.map (\p -> GH.classesProps lastMove p normCoords) stone
-                        |> Maybe.withDefault []
-            in
-            case stone of
-                Just player ->
+        showEmpty : G.Coords -> G.Coords -> Svg msg
+        showEmpty coords normCoords =
+            case maybePlay onMove coords position of
+                Just _ ->
                     Svg.circle
-                        (class
-                            ++ [ SA.cx <| String.fromInt coords.x
-                               , SA.cy <| String.fromInt coords.y
-                               , SA.r "0.48"
-                               , SA.stroke "black"
-                               , SA.strokeWidth "0.07"
-                               , SA.fill <| G.color player
-                               ]
-                        )
+                        [ SA.cx <| String.fromInt coords.x
+                        , SA.cy <| String.fromInt coords.y
+                        , SA.r "0.45"
+                        , SA.fill "transparent"
+                        , SE.onClick <| playMsg normCoords
+                        ]
                         []
 
                 Nothing ->
-                    case maybePlay onMove coords position of
-                        Just _ ->
-                            Svg.circle
-                                [ SA.cx <| String.fromInt coords.x
-                                , SA.cy <| String.fromInt coords.y
-                                , SA.r "0.45"
-                                , SA.fill "transparent"
-                                , SE.onClick <| playMsg normCoords
-                                ]
-                                []
+                    Svg.svg [] []
 
-                        Nothing ->
-                            Svg.svg [] []
+        showPosition : G.Coords -> Svg msg
+        showPosition coords =
+            let
+                normCoords =
+                    normaliseCoords position coords
+            in
+            case getStone normCoords position of
+                Just player ->
+                    showStone coords normCoords player
+
+                Nothing ->
+                    showEmpty coords normCoords
     in
-    List.map maybeShowStone (GH.coordList min max)
+    List.map showPosition (GH.coordList min max)
 
 
 view : R.Replay -> (G.Coords -> msg) -> Svg msg
