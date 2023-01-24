@@ -111,15 +111,6 @@ hexCenter coords =
 viewBoardHex : G.Coords -> Svg msg
 viewBoardHex coords =
     let
-        h2 =
-            String.fromFloat <| hexHeight / 2
-
-        h4 =
-            String.fromFloat <| hexHeight / 4
-
-        w2 =
-            String.fromFloat <| hexWidth / 2
-
         ( centerX, centerY ) =
             hexCenter coords
 
@@ -129,13 +120,15 @@ viewBoardHex coords =
     Svg.path
         [ SA.d <|
             String.concat <|
-                [ center, " m 0,-", h2 ]
-                    ++ [ " l -", w2, ",", h4 ]
-                    ++ [ " l 0,", h2 ]
-                    ++ [ " l ", w2, ",", h4 ]
-                    ++ [ " l ", w2, ",-", h4 ]
-                    ++ [ " l 0,-", h2 ]
-                    ++ [ " l -", w2, ",-", h4 ]
+                [ center
+                , " m 0,-1"
+                , " l -0.866,0.5"
+                , " l 0,1"
+                , " l 0.866,0.5"
+                , " l 0.866,-0.5"
+                , " l 0,-1"
+                , " l -0.866,-0.5"
+                ]
         , SA.stroke "#333"
         , SA.strokeWidth "0.05"
         , SA.fill "transparent"
