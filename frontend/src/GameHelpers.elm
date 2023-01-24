@@ -10,6 +10,11 @@ intsToStr ints =
     List.map String.fromInt ints |> String.join " "
 
 
+floatsToStr : List Float -> String
+floatsToStr floats =
+    List.map String.fromFloat floats |> String.join " "
+
+
 coordList : Int -> Int -> List G.Coords
 coordList from to =
     let

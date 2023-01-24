@@ -3,6 +3,7 @@ module Page.Game exposing (..)
 import ApiClient as AC
 import Browser.Events
 import Game.Go
+import Game.Hex
 import Game.ToroidGo
 import Game.TwixT
 import GameRecord as G
@@ -150,8 +151,8 @@ boardView model =
                         G.Go ->
                             Game.Go.view
 
-                        _ ->
-                            \_ _ -> Svg.svg [] []
+                        G.Hex ->
+                            Game.Hex.view
             in
             specificView replay Play
 

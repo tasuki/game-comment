@@ -55,18 +55,9 @@ setStone stone coords position =
     }
 
 
-allCoords : Position -> List G.Coords
-allCoords position =
-    let
-        toSize =
-            List.range 1 position.size
-    in
-    List.concatMap (\x -> List.map (\y -> { x = x, y = y }) toSize) toSize
-
-
 positionToStones : Position -> List ( G.Coords, Stone )
 positionToStones position =
-    List.map (\c -> ( c, getStone c position )) (allCoords position)
+    List.map (\c -> ( c, getStone c position )) (GH.coordList 1 position.size)
 
 
 findGroupWithoutLiberties : Neighbors -> Position -> G.Player -> G.Coords -> List G.Coords
