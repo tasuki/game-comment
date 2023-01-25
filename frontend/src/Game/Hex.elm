@@ -119,7 +119,7 @@ viewBoardHex coords =
     in
     Svg.path
         [ SA.d <|
-            String.concat <|
+            String.concat
                 [ center
                 , " m 0,-1"
                 , " l -0.866,0.5"
@@ -129,11 +129,76 @@ viewBoardHex coords =
                 , " l 0,-1"
                 , " l -0.866,-0.5"
                 ]
-        , SA.stroke "#333"
+        , SA.stroke "#666"
         , SA.strokeWidth "0.05"
         , SA.fill "transparent"
         ]
         []
+
+
+type alias BoardSide =
+    { color : String
+    , start : G.Coords
+    , shift : String
+    , repeat : String
+    , end : String
+    }
+
+
+viewBoardSides : Int -> List (Svg msg)
+viewBoardSides size =
+    let
+        startCenter : G.Coords -> String
+        startCenter coords =
+            let
+                ( centerX, centerY ) =
+                    hexCenter coords
+            in
+            "M " ++ centerX ++ "," ++ centerY
+
+        viewBoardSide : BoardSide -> Svg msg
+        viewBoardSide bs =
+            Svg.path
+                [ SA.d <|
+                    String.concat <|
+                        [ startCenter bs.start
+                        , bs.shift
+                        ]
+                            ++ List.repeat (size - 1) bs.repeat
+                            ++ [ bs.end ]
+                , SA.stroke bs.color
+                , SA.strokeWidth "0.3"
+                , SA.strokeLinecap "round"
+                , SA.fill "transparent"
+                ]
+                []
+    in
+    List.map viewBoardSide
+        [ BoardSide
+            "black"
+            { x = 1, y = 1 }
+            " m -0.866,-0.5 m 0,-0.2"
+            " l 0.866,-0.5 l 0.866,0.5"
+            " l 0.866,-0.5 l 0.433,0.25"
+        , BoardSide
+            "black"
+            { x = size, y = size }
+            " m 0.866,0.5 m 0,0.2"
+            " l -0.866,0.5 l -0.866,-0.5"
+            " l -0.866,0.5 l -0.433,-0.25"
+        , BoardSide
+            "white"
+            { x = 1, y = 1 }
+            " m -0.866,-0.5 m -0.2,0.11"
+            " l 0,1 l 0.866,0.5"
+            " l 0,1 l 0.433,0.25"
+        , BoardSide
+            "white"
+            { x = size, y = size }
+            " m 0.866,0.5 m 0.2,-0.11"
+            " l 0,-1 l -0.866,-0.5"
+            " l 0,-1 l -0.433,-0.25"
+        ]
 
 
 viewHexes : Position -> Maybe G.Move -> (G.Coords -> msg) -> List G.Coords -> List (Svg msg)
@@ -202,6 +267,7 @@ view replay playMsg =
         ]
         (background boardWidth boardHeight
             ++ List.map viewBoardHex coordList
+            ++ viewBoardSides size
             ++ viewHexes
                 position
                 (R.lastMove replay)
