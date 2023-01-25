@@ -136,8 +136,8 @@ viewBoardHex coords =
         []
 
 
-viewHexes : Position -> Maybe G.Move -> G.Player -> (G.Coords -> msg) -> List G.Coords -> List (Svg msg)
-viewHexes position lastMove onMove playMsg =
+viewHexes : Position -> Maybe G.Move -> (G.Coords -> msg) -> List G.Coords -> List (Svg msg)
+viewHexes position lastMove playMsg =
     let
         viewHex : String -> String -> G.Player -> List (H.Attribute msg) -> Svg msg
         viewHex x y player attrs =
@@ -184,17 +184,17 @@ view : R.Replay -> (G.Coords -> msg) -> Svg msg
 view replay playMsg =
     let
         size =
-            toFloat replay.record.size
+            replay.record.size
 
         ( boardWidth, boardHeight ) =
-            ( hexWidth * 1.5 * size + 1, hexHeight * size * 3 / 4 + 1.5 )
+            ( hexWidth * 1.5 * toFloat size + 1, hexHeight * toFloat size * 3 / 4 + 1.5 )
 
         coordList : List G.Coords
         coordList =
-            GH.coordList 1 replay.record.size
+            GH.coordList 1 size
 
         position =
-            List.foldl add (emptyPosition replay.record.size) (R.currentMoves replay)
+            List.foldl add (emptyPosition size) (R.currentMoves replay)
     in
     Svg.svg
         [ SA.viewBox (GH.floatsToStr [ 0, 0, boardWidth, boardHeight ])
@@ -205,7 +205,6 @@ view replay playMsg =
             ++ viewHexes
                 position
                 (R.lastMove replay)
-                (G.onMove replay.lookingAt.move G.ToroidGo)
                 playMsg
                 coordList
         )
