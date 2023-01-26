@@ -32,11 +32,6 @@ neighbors position coords =
 -- VIEW
 
 
-drawLines : Int -> Int -> List (Svg msg)
-drawLines min max =
-    viewLines (toFloat min) (toFloat max) min max
-
-
 view : R.Replay -> (G.Coords -> msg) -> Svg msg
 view replay playMsg =
     let
@@ -54,7 +49,7 @@ view replay playMsg =
         , SA.class "go"
         ]
         (background size
-            ++ drawLines min max
+            ++ viewLines (toFloat min) (toFloat max) min max
             ++ viewStones
                 neighbors
                 normaliseCoords

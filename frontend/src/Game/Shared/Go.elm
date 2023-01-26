@@ -7,6 +7,8 @@ import List.Extra
 import Svg exposing (Svg)
 import Svg.Attributes as SA
 import Svg.Events as SE
+import Svg.Keyed
+import Svg.Lazy exposing (..)
 
 
 type alias Stone =
@@ -38,9 +40,19 @@ emptyPosition size =
     }
 
 
+coordsToArrayKey : Int -> G.Coords -> Int
+coordsToArrayKey size coords =
+    (coords.x - 1) + (coords.y - 1) * size
+
+
+arrayKeyToCoords : Int -> Int -> G.Coords
+arrayKeyToCoords size i =
+    { x = 1 + modBy size i, y = 1 + i // size }
+
+
 getStone : G.Coords -> Position -> Stone
 getStone coords position =
-    Array.get ((coords.x - 1) + (coords.y - 1) * position.size) position.stones
+    Array.get (coordsToArrayKey position.size coords) position.stones
         |> Maybe.withDefault Nothing
 
 
@@ -49,7 +61,7 @@ setStone stone coords position =
     { position
         | stones =
             Array.set
-                ((coords.x - 1) + (coords.y - 1) * position.size)
+                (coordsToArrayKey position.size coords)
                 stone
                 position.stones
     }
@@ -57,7 +69,11 @@ setStone stone coords position =
 
 positionToStones : Position -> List ( G.Coords, Stone )
 positionToStones position =
-    List.map (\c -> ( c, getStone c position )) (GH.coordList 1 position.size)
+    let
+        addCoordsToStone i stone =
+            ( arrayKeyToCoords position.size i, stone )
+    in
+    Array.indexedMap addCoordsToStone position.stones |> Array.toList
 
 
 findGroupWithoutLiberties : Neighbors -> Position -> G.Player -> G.Coords -> List G.Coords
@@ -172,15 +188,18 @@ add neighbors { player, play } position =
 
 background : Int -> List (Svg msg)
 background size =
-    [ Svg.rect
-        [ SA.x "0.5"
-        , SA.y "0.5"
-        , SA.width <| String.fromInt <| size
-        , SA.height <| String.fromInt <| size
-        , SA.fill "#EEE"
-        ]
-        []
-    ]
+    let
+        rect sz =
+            Svg.rect
+                [ SA.x "0.5"
+                , SA.y "0.5"
+                , SA.width <| String.fromInt <| sz
+                , SA.height <| String.fromInt <| sz
+                , SA.fill "#EEE"
+                ]
+                []
+    in
+    [ lazy rect size ]
 
 
 viewLines : Float -> Float -> Int -> Int -> List (Svg msg)
@@ -201,10 +220,10 @@ viewLines lineMin lineMax offsetMin offsetMax =
                 []
 
         horizontal =
-            List.map (\offset -> line lineMin offset lineMax offset) offsets
+            List.map (\offset -> lazy4 line lineMin offset lineMax offset) offsets
 
         vertical =
-            List.map (\offset -> line offset lineMin offset lineMax) offsets
+            List.map (\offset -> lazy4 line offset lineMin offset lineMax) offsets
     in
     horizontal ++ vertical
 
@@ -249,7 +268,12 @@ viewStones neighbors normaliseCoords min max position lastMove onMove playMsg =
                         []
 
                 Nothing ->
-                    Svg.svg [] []
+                    Svg.circle
+                        [ SA.cx <| String.fromInt coords.x
+                        , SA.cy <| String.fromInt coords.y
+                        , SA.fill "transparent"
+                        ]
+                        []
 
         showPosition : G.Coords -> Svg msg
         showPosition coords =
@@ -263,5 +287,11 @@ viewStones neighbors normaliseCoords min max position lastMove onMove playMsg =
 
                 Nothing ->
                     viewEmpty coords normCoords
+
+        showKeyedPosition : G.Coords -> ( String, Svg msg )
+        showKeyedPosition coords =
+            ( "coords-" ++ String.fromInt coords.x ++ "-" ++ String.fromInt coords.y
+            , lazy showPosition coords
+            )
     in
-    List.map showPosition (GH.coordList min max)
+    List.singleton <| Svg.Keyed.node "g" [] <| List.map showKeyedPosition (GH.coordList min max)

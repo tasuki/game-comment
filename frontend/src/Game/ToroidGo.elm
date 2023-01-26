@@ -56,11 +56,6 @@ contextBackground size =
     ]
 
 
-drawLines : Int -> Int -> List (Svg msg)
-drawLines min max =
-    viewLines (toFloat min - 0.5) (toFloat max + 0.5) min max
-
-
 view : R.Replay -> (G.Coords -> msg) -> Svg msg
 view replay playMsg =
     let
@@ -86,7 +81,7 @@ view replay playMsg =
         ]
         (contextBackground size
             ++ background size
-            ++ drawLines min max
+            ++ viewLines (toFloat min - 0.5) (toFloat max + 0.5) min max
             ++ viewStones
                 neighbors
                 normaliseCoords
