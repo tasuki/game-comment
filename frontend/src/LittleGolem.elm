@@ -116,6 +116,11 @@ parseMove player play =
 
 getMove : String -> String -> Node -> Result String Move
 getMove blackMove whiteMove node =
+    let
+        nodeToStr : Node -> String
+        nodeToStr nd =
+            String.concat <| List.map (\( prop, val ) -> prop ++ ": " ++ val) nd
+    in
     case ( find node blackMove, find node whiteMove ) of
         ( Just bp, Nothing ) ->
             parseMove Black bp
@@ -124,10 +129,10 @@ getMove blackMove whiteMove node =
             parseMove White wp
 
         ( Nothing, Nothing ) ->
-            Err <| "A node with no moves: " ++ Debug.toString node
+            Err <| "A node with no moves: " ++ nodeToStr node
 
         _ ->
-            Err <| "A node with too many moves: " ++ Debug.toString node
+            Err <| "A node with too many moves: " ++ nodeToStr node
 
 
 gameToRecord : Game -> Node -> List Node -> Result String Record
@@ -205,18 +210,9 @@ nodesToRecord nodes =
             Err "This game seems to have no moves"
 
 
-showDeadEnd : DeadEnd -> String
-showDeadEnd de =
-    "DeadEnd: " ++ Debug.toString de
-
-
 showDeadEnds : List DeadEnd -> String
 showDeadEnds deadEnds =
-    let
-        deadEndsString =
-            List.map showDeadEnd deadEnds |> String.join ", "
-    in
-    "Problem when parsing: [ " ++ deadEndsString ++ " ]"
+    "Problem when parsing: [ " ++ Parser.deadEndsToString deadEnds ++ " ]"
 
 
 parse : String -> Result String Record
