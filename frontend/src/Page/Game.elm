@@ -14,7 +14,6 @@ import Json.Decode as D
 import Replay as R
 import Session exposing (Session)
 import Svg exposing (Svg)
-import Svg.Attributes as SA
 
 
 

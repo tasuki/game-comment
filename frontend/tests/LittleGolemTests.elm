@@ -44,6 +44,16 @@ playParserTest =
                 Expect.equal
                     (Ok <| Place { x = 1, y = 100 })
                     (Parser.run playParser "a{{196}}|draw")
+        , test "Can parse move with { as first char" <|
+            \_ ->
+                Expect.equal
+                    (Ok <| Place { x = 27, y = 100 })
+                    (Parser.run playParser "{{{196}}")
+        , test "Can parse move with } as last char" <|
+            \_ ->
+                Expect.equal
+                    (Ok <| Place { x = 100, y = 29 })
+                    (Parser.run playParser "{{196}}}")
         , test "Can't parse move in unknown format" <|
             \_ ->
                 Expect.err

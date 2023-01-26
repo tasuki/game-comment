@@ -85,6 +85,7 @@ coordParser =
             |. symbol "{{"
             |= int
             |. symbol "}}"
+            |> backtrackable
         , succeed (charToCoord >> decrease)
             |= (getChompedString <| chompIf (\_ -> True))
         ]
