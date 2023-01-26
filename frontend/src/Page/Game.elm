@@ -186,7 +186,7 @@ sideView model =
 view : Model -> List (H.Html Msg)
 view model =
     [ H.div [ HA.class "pure-g" ]
-        [ H.div [ HA.class "pure-u-md-2-3", HA.class "grow" ] [ boardView model ]
-        , H.div [ HA.class "pure-u-md-1-3" ] (sideView model)
+        [ H.div [ HA.class "pure-u-1 pure-u-md-2-3" ] [ boardView model ]
+        , H.div [ HA.class "pure-u-1 pure-u-md-1-3" ] (sideView model)
         ]
     ]
