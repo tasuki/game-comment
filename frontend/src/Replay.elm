@@ -266,9 +266,11 @@ view jumpMsg replay =
             List.indexedMap (\i -> viewMove jumpMsg inVar replay (i + 1)) moves
                 |> List.concat
     in
-    [ H.div [ HA.class "player-black" ] [ H.text replay.record.black ]
-    , H.div [ HA.class "player-white" ] [ H.text replay.record.white ]
-    , H.div [ HA.class "clear" ] []
+    [ H.div [ HA.class "player-info" ]
+        [ H.div [ HA.class "player black" ] [ H.text replay.record.black ]
+        , H.div [ HA.class "player white" ] [ H.text replay.record.white ]
+        , H.div [ HA.class "clear" ] []
+        ]
     , H.div [ HA.class "replay" ]
         (viewMoves False replay.record.moves)
     , H.div [ HA.class "replay" ]
