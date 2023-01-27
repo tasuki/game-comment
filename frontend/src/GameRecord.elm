@@ -125,3 +125,13 @@ empty game size =
     , result = ""
     , moves = []
     }
+
+
+coordsToComparable : Coords -> ( Int, Int )
+coordsToComparable c =
+    ( c.x, c.y )
+
+
+coordsFromComparable : ( Int, Int ) -> Coords
+coordsFromComparable ( x, y ) =
+    { x = x, y = y }

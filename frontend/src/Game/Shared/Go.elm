@@ -4,6 +4,7 @@ import Array exposing (Array)
 import GameHelpers as GH
 import GameRecord as G
 import List.Extra
+import Set exposing (Set)
 import Svg exposing (Svg)
 import Svg.Attributes as SA
 import Svg.Events as SE
@@ -45,11 +46,6 @@ coordsToArrayKey size coords =
     (coords.x - 1) + (coords.y - 1) * size
 
 
-arrayKeyToCoords : Int -> Int -> G.Coords
-arrayKeyToCoords size i =
-    { x = 1 + modBy size i, y = 1 + i // size }
-
-
 getStone : G.Coords -> Position -> Stone
 getStone coords position =
     Array.get (coordsToArrayKey position.size coords) position.stones
@@ -67,28 +63,14 @@ setStone stone coords position =
     }
 
 
-positionToStones : Position -> List ( G.Coords, Stone )
-positionToStones position =
-    let
-        addCoordsToStone i stone =
-            ( arrayKeyToCoords position.size i, stone )
-    in
-    Array.indexedMap addCoordsToStone position.stones |> Array.toList
+type alias Closed =
+    Set ( Int, Int )
 
 
 findGroupWithoutLiberties : Neighbors -> Position -> G.Player -> G.Coords -> List G.Coords
 findGroupWithoutLiberties neighbors position player coords =
     -- returns list of coords of the libertyless group, empty list if has liberties
     let
-        empty =
-            emptyPosition position.size
-
-        coordsFromPosition : Position -> List G.Coords
-        coordsFromPosition explored =
-            positionToStones explored
-                |> List.filter (\( _, s ) -> s == Just player)
-                |> List.map (\( c, _ ) -> c)
-
         hasEmptyNeighbors : G.Coords -> Bool
         hasEmptyNeighbors toExplore =
             neighbors position toExplore
@@ -99,18 +81,14 @@ findGroupWithoutLiberties neighbors position player coords =
             neighbors position toExplore
                 |> List.filter (\c -> getStone c position == Just player)
 
-        isClosed : Position -> G.Coords -> Bool
+        isClosed : Closed -> G.Coords -> Bool
         isClosed closed toExplore =
-            case getStone toExplore closed of
-                Just _ ->
-                    True
+            Set.member (G.coordsToComparable toExplore) closed
 
-                Nothing ->
-                    False
-
-        newOpenClosed : G.Coords -> List G.Coords -> Position -> ( List G.Coords, Position )
+        newOpenClosed : G.Coords -> List G.Coords -> Closed -> ( List G.Coords, Closed )
         newOpenClosed toExplore open closed =
             let
+                toOpen : List G.Coords
                 toOpen =
                     ownNeighbors toExplore
                         |> List.Extra.filterNot (isClosed closed)
@@ -119,28 +97,27 @@ findGroupWithoutLiberties neighbors position player coords =
                     toOpen ++ open
 
                 newClosed =
-                    List.foldl (\c -> setStone (Just player) c) closed toOpen
+                    List.foldl (G.coordsToComparable >> Set.insert) closed toOpen
             in
             ( newOpen, newClosed )
 
-        findLibertyless : ( List G.Coords, Position ) -> Position
+        findLibertyless : ( List G.Coords, Closed ) -> List G.Coords
         findLibertyless ( open, closed ) =
             case open of
                 [] ->
                     -- libertyless
-                    closed
+                    Set.toList closed |> List.map G.coordsFromComparable
 
                 toExplore :: exploreLater ->
                     if hasEmptyNeighbors toExplore then
                         -- has at least one liberty
-                        empty
+                        []
 
                     else
                         -- explore further
                         findLibertyless <| newOpenClosed toExplore exploreLater closed
     in
-    findLibertyless ( [ coords ], setStone (Just player) coords empty )
-        |> coordsFromPosition
+    findLibertyless ( [ coords ], Set.singleton <| G.coordsToComparable coords )
 
 
 takeAll : Neighbors -> G.Player -> G.Coords -> Position -> Position
