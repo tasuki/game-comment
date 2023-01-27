@@ -2,9 +2,9 @@ module Page.Game exposing (..)
 
 import ApiClient as AC
 import Browser.Events
+import Browser.Navigation as Nav
 import Game.Go
 import Game.Hex
-import Game.Shared.Go
 import Game.ToroidGo
 import Game.TwixT
 import GameRecord as G
@@ -13,6 +13,7 @@ import Html.Attributes as HA
 import Html.Events as HE
 import Json.Decode as D
 import Replay as R
+import Route
 import Session exposing (Session)
 import Svg exposing (Svg)
 
@@ -61,6 +62,7 @@ type Msg
     | Start
     | End
     | Jump R.LookAt
+    | New
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -115,6 +117,9 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
+
+        New ->
+            ( model, Nav.pushUrl model.session.navKey (Route.toUrl <| Route.Home) )
 
 
 
@@ -184,6 +189,7 @@ sideView model =
             [ H.div []
                 [ H.button [ HE.onClick Backward ] [ H.text "prev" ]
                 , H.button [ HE.onClick Forward ] [ H.text "next" ]
+                , H.button [ HA.class "new", HE.onClick New ] [ H.text "new board" ]
                 ]
             ]
 
