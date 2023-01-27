@@ -39,6 +39,20 @@ neighbors position coords =
         ]
 
 
+isLegal : R.Replay -> G.Coords -> Bool
+isLegal replay move =
+    isMoveLegal
+        neighbors
+        (G.onMove replay.lookingAt.move G.ToroidGo)
+        move
+        (positionFromReplay replay)
+
+
+positionFromReplay : R.Replay -> Position
+positionFromReplay replay =
+    List.foldl (add neighbors) (emptyPosition replay.record.size) (R.currentMoves replay)
+
+
 
 -- VIEW
 
@@ -64,9 +78,6 @@ view replay playMsg =
 
         ( min, max ) =
             ( 1 - context, size + context )
-
-        position =
-            List.foldl (add neighbors) (emptyPosition size) (R.currentMoves replay)
     in
     Svg.svg
         [ SA.viewBox
@@ -83,11 +94,10 @@ view replay playMsg =
             ++ background size
             ++ viewLines (toFloat min - 0.5) (toFloat max + 0.5) min max
             ++ viewStones
-                neighbors
                 normaliseCoords
                 min
                 max
-                position
+                (positionFromReplay replay)
                 (R.lastMove replay)
                 (G.onMove replay.lookingAt.move G.ToroidGo)
                 playMsg

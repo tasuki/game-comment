@@ -4,6 +4,7 @@ import ApiClient as AC
 import Browser.Events
 import Game.Go
 import Game.Hex
+import Game.Shared.Go
 import Game.ToroidGo
 import Game.TwixT
 import GameRecord as G
@@ -96,7 +97,24 @@ update msg model =
             ( { model | replay = Maybe.map (R.jump lookAt) model.replay }, Cmd.none )
 
         Play coords ->
-            ( { model | replay = Maybe.map (R.playCoords coords) model.replay }, Cmd.none )
+            let
+                isMoveLegal replay =
+                    case replay.record.game of
+                        G.ToroidGo ->
+                            Game.ToroidGo.isLegal replay coords
+
+                        G.Go ->
+                            Game.Go.isLegal replay coords
+
+                        _ ->
+                            True
+            in
+            case Maybe.map isMoveLegal model.replay of
+                Just True ->
+                    ( { model | replay = Maybe.map (R.playCoords coords) model.replay }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
 
 
 

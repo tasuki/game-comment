@@ -153,6 +153,7 @@ takeAll neighbors player coords pos =
 
 maybePlay : Neighbors -> G.Player -> G.Coords -> Position -> Maybe Position
 maybePlay neighbors player coords position =
+    -- play the move if it's legal
     let
         positionAfterMove =
             setStone (Just player) coords position
@@ -180,6 +181,16 @@ add neighbors { player, play } position =
 
         _ ->
             position
+
+
+isMoveLegal : Neighbors -> G.Player -> G.Coords -> Position -> Bool
+isMoveLegal neighbors onMove move pos =
+    case maybePlay neighbors onMove move pos of
+        Just _ ->
+            True
+
+        Nothing ->
+            False
 
 
 
@@ -229,8 +240,7 @@ viewLines lineMin lineMax offsetMin offsetMax =
 
 
 viewStones :
-    Neighbors
-    -> Normalise
+    Normalise
     -> Int
     -> Int
     -> Position
@@ -238,7 +248,7 @@ viewStones :
     -> G.Player
     -> (G.Coords -> msg)
     -> List (Svg msg)
-viewStones neighbors normaliseCoords min max position lastMove onMove playMsg =
+viewStones normaliseCoords min max position lastMove onMove playMsg =
     let
         viewStone : G.Coords -> G.Coords -> G.Player -> Svg msg
         viewStone coords normCoords player =
@@ -256,24 +266,14 @@ viewStones neighbors normaliseCoords min max position lastMove onMove playMsg =
 
         viewEmpty : G.Coords -> G.Coords -> Svg msg
         viewEmpty coords normCoords =
-            case maybePlay neighbors onMove coords position of
-                Just _ ->
-                    Svg.circle
-                        [ SA.cx <| String.fromInt coords.x
-                        , SA.cy <| String.fromInt coords.y
-                        , SA.r "0.45"
-                        , SA.fill "transparent"
-                        , SE.onClick <| playMsg normCoords
-                        ]
-                        []
-
-                Nothing ->
-                    Svg.circle
-                        [ SA.cx <| String.fromInt coords.x
-                        , SA.cy <| String.fromInt coords.y
-                        , SA.fill "transparent"
-                        ]
-                        []
+            Svg.circle
+                [ SA.cx <| String.fromInt coords.x
+                , SA.cy <| String.fromInt coords.y
+                , SA.r "0.45"
+                , SA.fill "transparent"
+                , SE.onClick <| playMsg normCoords
+                ]
+                []
 
         showPosition : G.Coords -> Svg msg
         showPosition coords =
