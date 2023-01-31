@@ -222,10 +222,22 @@ view model =
 
                 Nothing ->
                     "Loading"
+
+        extraClass =
+            case model.replay of
+                Just { record } ->
+                    if record.game == G.Hex then
+                        ""
+
+                    else
+                        "limit-width"
+
+                Nothing ->
+                    "limit-width"
     in
     { title = gameName ++ " - Game Comment"
     , body =
-        [ H.div [ HA.class "pure-g" ]
+        [ H.div [ HA.class "pure-g", HA.class extraClass ]
             [ H.div [ HA.class "pure-u-1 pure-u-md-2-3" ] [ boardView model ]
             , H.div [ HA.class "pure-u-1 pure-u-md-1-3" ] (sideView model)
             ]

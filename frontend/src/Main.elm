@@ -3,6 +3,7 @@ module Main exposing (..)
 import Browser
 import Browser.Navigation as Nav
 import Html as H
+import Html.Attributes as HA
 import Page
 import Page.Game
 import Page.Home
@@ -170,5 +171,5 @@ view model =
 
         NotFound _ ->
             { title = "Game Comment"
-            , body = [ H.h2 [] [ H.text "We haven't found it!" ] ]
+            , body = [ H.div [ HA.class "limit-width" ] [ H.h2 [] [ H.text "We haven't found it!" ] ] ]
             }

@@ -167,5 +167,5 @@ viewPicker picker =
 view : Model -> Page Msg
 view model =
     { title = "Game Comment - Load Game"
-    , body = [ H.div [ HA.class "picker" ] (viewPicker model.picker) ]
+    , body = [ H.div [ HA.class "picker", HA.class "limit-width" ] (viewPicker model.picker) ]
     }
