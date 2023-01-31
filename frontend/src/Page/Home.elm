@@ -6,6 +6,7 @@ import Html as H
 import Html.Attributes as HA
 import Html.Events as HE
 import LittleGolem as LG
+import Page exposing (Page)
 import Route
 import Session exposing (Session)
 
@@ -163,6 +164,8 @@ viewPicker picker =
     ]
 
 
-view : Model -> List (H.Html Msg)
+view : Model -> Page Msg
 view model =
-    [ H.div [ HA.class "picker" ] (viewPicker model.picker) ]
+    { title = "Game Comment - Load Game"
+    , body = [ H.div [ HA.class "picker" ] (viewPicker model.picker) ]
+    }

@@ -3,6 +3,7 @@ module Main exposing (..)
 import Browser
 import Browser.Navigation as Nav
 import Html as H
+import Page
 import Page.Game
 import Page.Home
 import Route
@@ -160,21 +161,14 @@ subscriptions model =
 
 view : Model -> Browser.Document Msg
 view model =
-    let
-        viewPage toMsg pageView =
-            List.map (H.map toMsg) pageView
+    case model.page of
+        Home m ->
+            Page.viewPage HomeMsg (Page.Home.view m)
 
-        body =
-            case model.page of
-                Home m ->
-                    viewPage HomeMsg (Page.Home.view m)
+        Game m ->
+            Page.viewPage GameMsg (Page.Game.view m)
 
-                Game m ->
-                    viewPage GameMsg (Page.Game.view m)
-
-                NotFound _ ->
-                    [ H.h2 [] [ H.text "We haven't found it!" ] ]
-    in
-    { title = "Game Comment"
-    , body = body
-    }
+        NotFound _ ->
+            { title = "Game Comment"
+            , body = [ H.h2 [] [ H.text "We haven't found it!" ] ]
+            }

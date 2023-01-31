@@ -12,6 +12,7 @@ import Html as H
 import Html.Attributes as HA
 import Html.Events as HE
 import Json.Decode as D
+import Page exposing (Page)
 import Replay as R
 import Route
 import Session exposing (Session)
@@ -207,10 +208,26 @@ sideView model =
     ]
 
 
-view : Model -> List (H.Html Msg)
+view : Model -> Page Msg
 view model =
-    [ H.div [ HA.class "pure-g" ]
-        [ H.div [ HA.class "pure-u-1 pure-u-md-2-3" ] [ boardView model ]
-        , H.div [ HA.class "pure-u-1 pure-u-md-1-3" ] (sideView model)
+    let
+        gameName =
+            case model.replay of
+                Just { record } ->
+                    G.gameString record.game
+                        ++ ": "
+                        ++ record.black
+                        ++ " vs "
+                        ++ record.white
+
+                Nothing ->
+                    "Loading"
+    in
+    { title = gameName ++ " - Game Comment"
+    , body =
+        [ H.div [ HA.class "pure-g" ]
+            [ H.div [ HA.class "pure-u-1 pure-u-md-2-3" ] [ boardView model ]
+            , H.div [ HA.class "pure-u-1 pure-u-md-1-3" ] (sideView model)
+            ]
         ]
-    ]
+    }
