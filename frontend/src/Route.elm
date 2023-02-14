@@ -11,7 +11,7 @@ type Route
     | LittleGolemGame String
 
 
-parser : Parser (Route -> c) c
+parser : Parser (Route -> Route) Route
 parser =
     Parser.oneOf
         [ Parser.map Home Parser.top
