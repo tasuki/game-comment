@@ -1,6 +1,7 @@
 module Page.Home exposing (..)
 
 import Browser.Navigation as Nav
+import GameHelpers as GH
 import GameRecord as G
 import Html as H
 import Html.Attributes as HA
@@ -152,7 +153,9 @@ viewPicker picker =
             , HA.type_ "text"
             , HA.size 40
             , HA.value <| picker.identifier
+            , HA.autofocus True
             , HE.onInput EnterIdentifier
+            , GH.onEnter <| Fetch picker.identifier
             ]
             []
         ]

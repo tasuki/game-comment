@@ -2,6 +2,8 @@ module GameHelpers exposing (..)
 
 import GameRecord as G
 import Html as H
+import Html.Events as HE
+import Json.Decode as Json
 import Svg.Attributes as SA
 
 
@@ -35,3 +37,17 @@ classesProps lastMove player coords =
 
     else
         []
+
+
+onEnter : msg -> H.Attribute msg
+onEnter msg =
+    -- This better be in some utils thing...
+    let
+        isEnter code =
+            if code == 13 then
+                Json.succeed msg
+
+            else
+                Json.fail "not ENTER"
+    in
+    HE.on "keydown" (Json.andThen isEnter HE.keyCode)
