@@ -5,7 +5,9 @@ module Main (main) where
 import Config
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.ByteString.Lazy.Char8 as L8
-import Network.HTTP.Client
+import Data.Text.Lazy (Text)
+import Database
+import Network.HTTP.Client (httpLbs, newManager, parseRequest, Response(responseStatus, responseBody))
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Network.HTTP.Types.Status (Status)
 import Web.Scotty
@@ -16,10 +18,11 @@ fetchGameRecord gameId = do
     manager <- newManager tlsManagerSettings
     request <- parseRequest gameUrl
     response <- httpLbs request manager
-    return $ (responseStatus response, responseBody response)
+    return (responseStatus response, responseBody response)
 
 main :: IO ()
 main = do
+    conn <- initialize "game-comment.sqlite3"
     scotty 6483 $ do
         get "/game/lg/:gameId" $ do
             gameId <- param "gameId"
@@ -27,4 +30,9 @@ main = do
             status responseStatus -- we don't mind too bad if this is off
             setHeader "Content-Type" "application/sgf; charset=iso-8859-1"
             setHeader "Access-Control-Allow-Origin" allowOrigin
-            raw $ response
+            raw response
+
+        post "/users" $ do
+            user <- jsonData :: ActionM User
+            liftIO $ createUser conn user
+            json ("User created successfully" :: Text)

@@ -5,10 +5,14 @@ github: "tasuki/game-comment"
 dependencies:
     - base >= 4.7 && < 5
     - scotty
+    - aeson
     - bytestring
     - http-client
     - http-client-tls
     - http-types
+    - memory
+    - scrypt
+    - sqlite-simple
     - text
 
 executables:
