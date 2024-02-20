@@ -6,11 +6,13 @@ import Config
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.Text.Lazy (Text)
-import Database
 import Network.HTTP.Client (httpLbs, newManager, parseRequest, Response(responseStatus, responseBody))
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Network.HTTP.Types.Status (Status)
 import Web.Scotty
+
+import ApiResources
+import Database
 
 fetchGameRecord :: String -> IO (Status, L8.ByteString)
 fetchGameRecord gameId = do
