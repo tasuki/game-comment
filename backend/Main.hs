@@ -4,11 +4,12 @@ module Main (main) where
 
 import Config
 import Control.Monad.IO.Class (liftIO)
+import Data.Aeson (object, (.=))
 import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.Text.Lazy (Text)
 import Network.HTTP.Client (httpLbs, newManager, parseRequest, Response(responseStatus, responseBody))
 import Network.HTTP.Client.TLS (tlsManagerSettings)
-import Network.HTTP.Types.Status (Status)
+import Network.HTTP.Types.Status
 import Web.Scotty
 
 import ApiResources
@@ -36,5 +37,9 @@ main = do
 
         post "/users" $ do
             user <- jsonData :: ActionM User
-            liftIO $ createUser conn user
-            json ("User created successfully" :: Text)
+            creationResult <- liftIO $ createUser conn user
+            case creationResult of
+                Success -> json $ object [ "msg" .= ("User created successfully" :: Text) ]
+                ConstraintError ->
+                    status status409 >> json (object [ "msg" .= ("Username already exists" :: Text) ])
+                _ -> status status500 >> json (object [ "msg" .= ("Unknown error" :: Text) ])

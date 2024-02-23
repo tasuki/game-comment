@@ -6,7 +6,7 @@ prod:
 
 
 develop: dev
-	stack run
+	fd | entr -s "pkill game-comment-ba; stack run &"
 
 dev:
 	cp -f Config.dev.hs Config.hs
