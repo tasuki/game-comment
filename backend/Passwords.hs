@@ -26,7 +26,7 @@ hashPassword plainTextPass = byteStringToLazyText $ getEncryptedPass
     $ encryptPass defaultParams salt (toPass plainTextPass)
 
 verifyPassword :: TL.Text -> TL.Text -> Bool
-verifyPassword plainTextPass hashedPassword =
+verifyPassword hashedPassword plainTextPass =
     case verifyPass defaultParams (toPass plainTextPass) encryptedPass of
         (isValid, _) -> isValid
     where encryptedPass = EncryptedPass $ lazyTextToByteString hashedPassword

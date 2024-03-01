@@ -23,11 +23,14 @@ fetchGameRecord gameId = do
     response <- httpLbs request manager
     return (responseStatus response, responseBody response)
 
+jsonMsg :: Text -> ActionM ()
+jsonMsg msg = json $ object [ "msg" .= (msg :: Text) ]
+
 main :: IO ()
 main = do
     conn <- initialize "game-comment.sqlite3"
     scotty 6483 $ do
-        get "/game/lg/:gameId" $ do
+        get "/games/lg/:gameId" $ do
             gameId <- param "gameId"
             (responseStatus, response) <- liftIO $ fetchGameRecord gameId
             status responseStatus -- we don't mind too bad if this is off
@@ -36,10 +39,17 @@ main = do
             raw response
 
         post "/users" $ do
-            user <- jsonData :: ActionM User
+            user <- jsonData :: ActionM CreateUser
             creationResult <- liftIO $ createUser conn user
             case creationResult of
-                Success -> json $ object [ "msg" .= ("User created successfully" :: Text) ]
-                ConstraintError ->
-                    status status409 >> json (object [ "msg" .= ("Username already exists" :: Text) ])
-                _ -> status status500 >> json (object [ "msg" .= ("Unknown error" :: Text) ])
+                Success () -> jsonMsg "User created successfully"
+                ConstraintError -> status status409 >> jsonMsg "Username already exists"
+                _ -> status status500 >> jsonMsg "Unknown error"
+
+        post "/sessions" $ do
+            user <- jsonData :: ActionM CreateSession
+            creationResult <- liftIO $ authenticateUser conn user
+            case creationResult of
+                Success True -> jsonMsg "Authenticated"
+                Success False -> jsonMsg "Username and password don't match"
+                _ -> status status500 >> jsonMsg "Unknown error"

@@ -1,15 +1,26 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 
 module ApiResources where
 
-import Data.Aeson (FromJSON, ToJSON)
+import Data.Aeson
 import Data.Text.Lazy (Text)
 import GHC.Generics (Generic)
 
-data User = User
+
+data CreateUser = CreateUser
     { username :: Text
     , password :: Text
     } deriving (Show, Generic)
 
-instance FromJSON User
-instance ToJSON User
+instance FromJSON CreateUser
+instance ToJSON CreateUser
+
+
+data CreateSession = CreateSession
+    { username :: Text
+    , password :: Text
+    } deriving (Show, Generic)
+
+instance FromJSON CreateSession
+instance ToJSON CreateSession
