@@ -1,5 +1,7 @@
 release: prod
-	stack build
+	mkdir -p bin/
+	stack build --copy-bins --local-bin-path bin/
+	# TODO also restart the systemd service
 
 prod:
 	cp -f Config.prod.hs Config.hs
