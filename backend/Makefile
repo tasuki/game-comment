@@ -1,7 +1,7 @@
 release: prod
 	mkdir -p bin/
 	stack build --copy-bins --local-bin-path bin/
-	# TODO also restart the systemd service
+	sudo systemctl restart game-comment
 
 prod:
 	cp -f Config.prod.hs Config.hs
