@@ -1,8 +1,8 @@
 backend/.stack-work/
+backend/app/Config.hs
 backend/bin/
 backend/game-comment.sqlite3
 backend/game-comment-backend.cabal
-backend/Config.hs
 frontend/elm-stuff/
 frontend/gc.js
 frontend/src/Config.elm
