@@ -7,6 +7,8 @@ dependencies:
     - scotty
     - aeson
     - bytestring
+    - directory
+    - filepath
     - http-client
     - http-client-tls
     - http-types
@@ -14,13 +16,19 @@ dependencies:
     - scrypt
     - sqlite-simple
     - text
+    - time
 
 library:
     source-dirs: src
 
 executables:
-    game-comment-backend:
-        main: Main.hs
+    gc-server:
+        main: server.hs
+        source-dirs: app
+        ghc-options: -threaded -rtsopts -with-rtsopts=-N
+        dependencies: game-comment-backend
+    gc-migrate:
+        main: migrate.hs
         source-dirs: app
         ghc-options: -threaded -rtsopts -with-rtsopts=-N
         dependencies: game-comment-backend

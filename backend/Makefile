@@ -4,11 +4,11 @@ release: prod
 	sudo systemctl restart game-comment
 
 prod:
-	cp -f Config.prod.hs Config.hs
+	cp -f app/Config.prod.hs app/Config.hs
 
 
 develop: dev
-	fd | entr -s "pkill game-comment-ba; stack run &"
+	fd | entr -s "pkill gc-backend; stack run &"
 
 dev:
-	cp -f Config.dev.hs Config.hs
+	cp -f app/Config.dev.hs app/Config.hs

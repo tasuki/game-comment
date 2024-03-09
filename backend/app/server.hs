@@ -1,7 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Main (main) where
-
 import Config
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (object, (.=))
@@ -28,7 +26,7 @@ jsonMsg msg = json $ object [ "msg" .= (msg :: Text) ]
 
 main :: IO ()
 main = do
-    conn <- initialize "game-comment.sqlite3"
+    conn <- openDb "game-comment.sqlite3"
     scotty 6483 $ do
         get "/games/lg/:gameId" $ do
             gameId <- param "gameId"
