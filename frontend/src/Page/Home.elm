@@ -34,7 +34,7 @@ init : Session -> ( Model, Cmd Msg )
 init session =
     ( { session = session
       , picker = { game = Nothing, size = 0, identifier = "" }
-      , message = "You can use the left/right key to explore the game."
+      , message = "Hi."
       }
     , Cmd.none
     )

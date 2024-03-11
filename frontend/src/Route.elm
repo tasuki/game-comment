@@ -7,6 +7,7 @@ import Url.Parser as Parser exposing ((</>), (<?>), Parser, s)
 
 type Route
     = Home
+    | Help
     | EmptyGame G.Game Int
     | LittleGolemGame String
 
@@ -15,6 +16,7 @@ parser : Parser (Route -> Route) Route
 parser =
     Parser.oneOf
         [ Parser.map Home Parser.top
+        , Parser.map Help (s "help")
         , Parser.map EmptyGame (s "board" </> gameParser </> Parser.int)
         , Parser.map LittleGolemGame (s "game" </> s "lg" </> Parser.string)
         ]
@@ -25,6 +27,9 @@ toUrl r =
     case r of
         Home ->
             Url.absolute [] []
+
+        Help ->
+            Url.absolute [ "help" ] []
 
         EmptyGame game size ->
             Url.absolute [ "board", gameToUrl game, String.fromInt size ] []

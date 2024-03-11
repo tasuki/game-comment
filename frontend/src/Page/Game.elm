@@ -34,7 +34,7 @@ initEmpty : G.Game -> Int -> Session -> ( Model, Cmd Msg )
 initEmpty game size session =
     ( { session = session
       , replay = Just <| R.emptyReplay <| G.empty game size
-      , message = "You can use the left/right key to explore the game."
+      , message = "Use the left/right keys to explore the game."
       }
     , Cmd.none
     )
@@ -44,9 +44,19 @@ initLg : String -> Session -> ( Model, Cmd Msg )
 initLg lgId session =
     ( { session = session
       , replay = Nothing
-      , message = "You can use the left/right key to explore the game."
+      , message = "Use the left/right keys to explore the game."
       }
     , AC.getLittleGolemSgf Fetched lgId
+    )
+
+
+initPrevious : R.Replay -> Session -> ( Model, Cmd Msg )
+initPrevious replay session =
+    ( { session = session
+      , replay = Just replay
+      , message = ""
+      }
+    , Cmd.none
     )
 
 
@@ -64,6 +74,7 @@ type Msg
     | End
     | Jump R.LookAt
     | New
+    | Help
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -121,6 +132,9 @@ update msg model =
 
         New ->
             ( model, Nav.pushUrl model.session.navKey (Route.toUrl <| Route.Home) )
+
+        Help ->
+            ( model, Nav.pushUrl model.session.navKey (Route.toUrl <| Route.Help) )
 
 
 
@@ -190,7 +204,8 @@ sideView model =
             [ H.div []
                 [ H.button [ HE.onClick Backward ] [ H.text "prev" ]
                 , H.button [ HE.onClick Forward ] [ H.text "next" ]
-                , H.button [ HA.class "new", HE.onClick New ] [ H.text "new board" ]
+                , H.button [ HA.class "new", HE.onClick New ] [ H.text "new" ]
+                , H.button [ HA.class "new", HE.onClick Help ] [ H.text "help" ]
                 ]
             ]
 

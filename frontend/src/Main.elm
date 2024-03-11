@@ -2,14 +2,17 @@ module Main exposing (..)
 
 import Browser
 import Browser.Navigation as Nav
+import Dict exposing (Dict)
 import Html as H
 import Html.Attributes as HA
 import Page
 import Page.Game
+import Page.Help
 import Page.Home
+import Replay as R
 import Route
 import Session exposing (Session)
-import Url
+import Url exposing (Url)
 import Url.Parser
 
 
@@ -31,6 +34,7 @@ main =
 type Page
     = NotFound Session
     | Home Page.Home.Model
+    | Help Page.Help.Model
     | Game Page.Game.Model
 
 
@@ -38,10 +42,12 @@ type alias Model =
     { key : Nav.Key
     , page : Page
     , message : String
+    , currentUrl : Url
+    , replays : Dict String R.Replay
     }
 
 
-init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url key =
     let
         session =
@@ -51,6 +57,8 @@ init _ url key =
         { key = key
         , page = NotFound session
         , message = ""
+        , currentUrl = url
+        , replays = Dict.empty
         }
 
 
@@ -60,9 +68,10 @@ init _ url key =
 
 type Msg
     = Noop
-    | UrlChanged Url.Url
+    | UrlChanged Url
     | LinkClicked Browser.UrlRequest
     | HomeMsg Page.Home.Msg
+    | HelpMsg Page.Help.Msg
     | GameMsg Page.Game.Msg
 
 
@@ -73,32 +82,35 @@ update message model =
             ( model, Cmd.none )
 
         ( LinkClicked urlRequest, _ ) ->
-            case urlRequest of
-                Browser.Internal url ->
-                    ( model
-                    , Nav.pushUrl (getSession model.page).navKey (Url.toString url)
-                    )
-
-                Browser.External href ->
-                    ( model
-                    , Nav.load href
-                    )
+            handleLinkClick urlRequest model
 
         ( UrlChanged url, _ ) ->
             changeRouteTo url model
 
         ( HomeMsg msg, Home m ) ->
-            Page.Home.update msg m |> updateWith Home HomeMsg model
+            Page.Home.update msg m |> updateWith model Home HomeMsg
 
         ( GameMsg msg, Game m ) ->
-            Page.Game.update msg m |> updateWith Game GameMsg model
+            let
+                ( newModel, newCmd ) =
+                    Page.Game.update msg m
+
+                newReplays =
+                    case newModel.replay of
+                        Just replay ->
+                            Dict.insert (Url.toString model.currentUrl) replay model.replays
+
+                        _ ->
+                            model.replays
+            in
+            updateWith { model | replays = newReplays } Game GameMsg ( newModel, newCmd )
 
         ( _, _ ) ->
             ( model, Cmd.none )
 
 
-updateWith : (subModel -> Page) -> (subMsg -> Msg) -> Model -> ( subModel, Cmd subMsg ) -> ( Model, Cmd Msg )
-updateWith toPage toMsg model ( subModel, subCmd ) =
+updateWith : Model -> (subModel -> Page) -> (subMsg -> Msg) -> ( subModel, Cmd subMsg ) -> ( Model, Cmd Msg )
+updateWith model toPage toMsg ( subModel, subCmd ) =
     ( { model | page = toPage subModel }
     , Cmd.map toMsg subCmd
     )
@@ -113,28 +125,53 @@ getSession page =
         Home m ->
             m.session
 
+        Help m ->
+            m.session
+
         Game m ->
             m.session
 
 
-changeRouteTo : Url.Url -> Model -> ( Model, Cmd Msg )
+handleLinkClick : Browser.UrlRequest -> Model -> ( Model, Cmd msg )
+handleLinkClick urlRequest model =
+    case urlRequest of
+        Browser.Internal url ->
+            ( model, Nav.pushUrl (getSession model.page).navKey (Url.toString url) )
+
+        Browser.External href ->
+            ( model, Nav.load href )
+
+
+changeRouteTo : Url -> Model -> ( Model, Cmd Msg )
 changeRouteTo url model =
     let
         session =
             getSession model.page
+
+        maybeLoadReplay defaultModel =
+            case Dict.get (Url.toString url) model.replays of
+                Just replay ->
+                    Page.Game.initPrevious replay (getSession model.page)
+
+                Nothing ->
+                    defaultModel
     in
     case Url.Parser.parse Route.parser url of
         Just Route.Home ->
             Page.Home.init session
-                |> updateWith Home HomeMsg model
+                |> updateWith model Home HomeMsg
+
+        Just Route.Help ->
+            Page.Help.init session
+                |> updateWith model Help HelpMsg
 
         Just (Route.EmptyGame game size) ->
-            Page.Game.initEmpty game size session
-                |> updateWith Game GameMsg model
+            maybeLoadReplay (Page.Game.initEmpty game size session)
+                |> updateWith model Game GameMsg
 
         Just (Route.LittleGolemGame lgId) ->
-            Page.Game.initLg lgId session
-                |> updateWith Game GameMsg model
+            maybeLoadReplay (Page.Game.initLg lgId session)
+                |> updateWith model Game GameMsg
 
         Nothing ->
             ( { model | page = NotFound session }
@@ -165,6 +202,9 @@ view model =
     case model.page of
         Home m ->
             Page.viewPage HomeMsg (Page.Home.view m)
+
+        Help _ ->
+            Page.viewPage HelpMsg Page.Help.view
 
         Game m ->
             Page.viewPage GameMsg (Page.Game.view m)
