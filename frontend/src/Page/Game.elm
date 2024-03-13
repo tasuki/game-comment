@@ -2,7 +2,6 @@ module Page.Game exposing (..)
 
 import ApiClient as AC
 import Browser.Events
-import Browser.Navigation as Nav
 import Game.Go
 import Game.Hex
 import Game.ToroidGo
@@ -17,6 +16,8 @@ import Replay as R
 import Route
 import Session exposing (Session)
 import Svg exposing (Svg)
+import Url exposing (Url)
+import Url.Parser
 
 
 
@@ -66,6 +67,7 @@ initPrevious replay session =
 
 type Msg
     = Noop
+    | Reload
     | Fetched AC.SgfResult
     | Play G.Coords
     | Forward
@@ -73,15 +75,21 @@ type Msg
     | Start
     | End
     | Jump R.LookAt
-    | New
-    | Help
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update : Msg -> Model -> Url -> ( Model, Cmd Msg )
+update msg model currentUrl =
     case msg of
         Noop ->
             ( model, Cmd.none )
+
+        Reload ->
+            case Url.Parser.parse Route.parser currentUrl of
+                Just (Route.LittleGolemGame lgId) ->
+                    ( model, AC.getLittleGolemSgf Fetched lgId )
+
+                _ ->
+                    ( model, Cmd.none )
 
         Fetched result ->
             case result of
@@ -129,12 +137,6 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
-
-        New ->
-            ( model, Nav.pushUrl model.session.navKey (Route.toUrl <| Route.Home) )
-
-        Help ->
-            ( model, Nav.pushUrl model.session.navKey (Route.toUrl <| Route.Help) )
 
 
 
@@ -204,8 +206,7 @@ sideView model =
             [ H.div []
                 [ H.button [ HE.onClick Backward ] [ H.text "prev" ]
                 , H.button [ HE.onClick Forward ] [ H.text "next" ]
-                , H.button [ HA.class "new", HE.onClick New ] [ H.text "new" ]
-                , H.button [ HA.class "new", HE.onClick Help ] [ H.text "help" ]
+                , H.button [ HE.onClick Reload, HA.class "right" ] [ H.text "reload" ]
                 ]
             ]
 

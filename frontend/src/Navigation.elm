@@ -33,7 +33,7 @@ getNavigationTiles currentUrl replays =
 
         tiles : List ( String, String, String )
         tiles =
-            ([ ( Route.toUrl Route.Home, "new" ) ] ++ replayUrls ++ [ ( Route.toUrl Route.Help, "help" ) ])
+            ([ ( Route.toUrl Route.Home, "new" ), ( Route.toUrl Route.Help, "help" ) ] ++ replayUrls)
                 |> List.map (addClass currentUrl.path)
     in
     List.map (\( url, recordName, isActive ) -> H.a [ HA.href url, HA.class "nav-item", HA.class isActive ] [ H.text recordName ]) tiles

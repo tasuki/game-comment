@@ -92,22 +92,27 @@ update message model =
             Page.Home.update msg m |> updateWith model Home HomeMsg
 
         ( GameMsg msg, Game m ) ->
-            let
-                ( newModel, newCmd ) =
-                    Page.Game.update msg m
-
-                newReplays =
-                    case newModel.replay of
-                        Just replay ->
-                            Dict.insert model.currentUrl.path replay model.replays
-
-                        _ ->
-                            model.replays
-            in
-            updateWith { model | replays = newReplays } Game GameMsg ( newModel, newCmd )
+            updateGamePage model msg m
 
         ( _, _ ) ->
             ( model, Cmd.none )
+
+
+updateGamePage : Model -> Page.Game.Msg -> Page.Game.Model -> ( Model, Cmd Msg )
+updateGamePage model msg m =
+    let
+        ( newModel, newCmd ) =
+            Page.Game.update msg m model.currentUrl
+
+        newReplays =
+            case newModel.replay of
+                Just replay ->
+                    Dict.insert model.currentUrl.path replay model.replays
+
+                _ ->
+                    model.replays
+    in
+    updateWith { model | replays = newReplays } Game GameMsg ( newModel, newCmd )
 
 
 updateWith : Model -> (subModel -> Page) -> (subMsg -> Msg) -> ( subModel, Cmd subMsg ) -> ( Model, Cmd Msg )
