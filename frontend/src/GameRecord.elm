@@ -90,6 +90,15 @@ gameString g =
             "Hex"
 
 
+recordName : Record -> String
+recordName record =
+    gameString record.game
+        ++ ": "
+        ++ record.black
+        ++ " vs "
+        ++ record.white
+
+
 defaultSize : Game -> Int
 defaultSize g =
     case g of

@@ -223,17 +223,13 @@ sideView model =
     ]
 
 
-view : Model -> Page Msg
-view model =
+view : Model -> List (H.Html Msg) -> Page Msg
+view model nav =
     let
         gameName =
             case model.replay of
                 Just { record } ->
-                    G.gameString record.game
-                        ++ ": "
-                        ++ record.black
-                        ++ " vs "
-                        ++ record.white
+                    G.recordName record
 
                 Nothing ->
                     "Loading"
@@ -254,7 +250,7 @@ view model =
     , body =
         [ H.div [ HA.class "pure-g", HA.class extraClass ]
             [ H.div [ HA.class "pure-u-1 pure-u-md-2-3" ] [ boardView model ]
-            , H.div [ HA.class "pure-u-1 pure-u-md-1-3" ] (sideView model)
+            , H.div [ HA.class "pure-u-1 pure-u-md-1-3" ] (nav ++ sideView model)
             ]
         ]
     }

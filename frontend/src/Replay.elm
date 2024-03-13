@@ -9,7 +9,8 @@ import List.Extra
 
 
 type alias Replay =
-    { record : G.Record
+    { name : String
+    , record : G.Record
     , lookingAt : LookAt
     , variation : Variation
     }
@@ -29,7 +30,8 @@ type alias Variation =
 
 emptyReplay : G.Record -> Replay
 emptyReplay record =
-    { record = record
+    { name = G.recordName record
+    , record = record
     , lookingAt = { variation = False, move = 0 }
     , variation = emptyVariation
     }

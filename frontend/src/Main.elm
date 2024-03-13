@@ -5,6 +5,7 @@ import Browser.Navigation as Nav
 import Dict exposing (Dict)
 import Html as H
 import Html.Attributes as HA
+import Navigation
 import Page
 import Page.Game
 import Page.Help
@@ -98,7 +99,7 @@ update message model =
                 newReplays =
                     case newModel.replay of
                         Just replay ->
-                            Dict.insert (Url.toString model.currentUrl) replay model.replays
+                            Dict.insert model.currentUrl.path replay model.replays
 
                         _ ->
                             model.replays
@@ -148,8 +149,11 @@ changeRouteTo url model =
         session =
             getSession model.page
 
+        newModel =
+            { model | currentUrl = url }
+
         maybeLoadReplay defaultModel =
-            case Dict.get (Url.toString url) model.replays of
+            case Dict.get url.path model.replays of
                 Just replay ->
                     Page.Game.initPrevious replay (getSession model.page)
 
@@ -159,22 +163,22 @@ changeRouteTo url model =
     case Url.Parser.parse Route.parser url of
         Just Route.Home ->
             Page.Home.init session
-                |> updateWith model Home HomeMsg
+                |> updateWith newModel Home HomeMsg
 
         Just Route.Help ->
             Page.Help.init session
-                |> updateWith model Help HelpMsg
+                |> updateWith newModel Help HelpMsg
 
         Just (Route.EmptyGame game size) ->
             maybeLoadReplay (Page.Game.initEmpty game size session)
-                |> updateWith model Game GameMsg
+                |> updateWith newModel Game GameMsg
 
         Just (Route.LittleGolemGame lgId) ->
             maybeLoadReplay (Page.Game.initLg lgId session)
-                |> updateWith model Game GameMsg
+                |> updateWith newModel Game GameMsg
 
         Nothing ->
-            ( { model | page = NotFound session }
+            ( { newModel | page = NotFound session }
             , Cmd.none
             )
 
@@ -199,15 +203,20 @@ subscriptions model =
 
 view : Model -> Browser.Document Msg
 view model =
+    let
+        nav : List (H.Html msg)
+        nav =
+            Navigation.getNavigationTiles model.currentUrl model.replays
+    in
     case model.page of
         Home m ->
-            Page.viewPage HomeMsg (Page.Home.view m)
+            Page.viewPage HomeMsg (Page.Home.view m nav)
 
-        Help _ ->
-            Page.viewPage HelpMsg Page.Help.view
+        Help m ->
+            Page.viewPage HelpMsg (Page.Help.view m nav)
 
         Game m ->
-            Page.viewPage GameMsg (Page.Game.view m)
+            Page.viewPage GameMsg (Page.Game.view m nav)
 
         NotFound _ ->
             { title = "Game Comment"

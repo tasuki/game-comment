@@ -167,8 +167,13 @@ viewPicker picker =
     ]
 
 
-view : Model -> Page Msg
-view model =
+view : Model -> List (H.Html Msg) -> Page Msg
+view model nav =
     { title = "Game Comment - Load Game"
-    , body = [ H.div [ HA.class "picker", HA.class "limit-width" ] (viewPicker model.picker) ]
+    , body =
+        [ H.div [ HA.class "pure-g limit-width" ]
+            [ H.div [ HA.class "pure-u-1 pure-u-md-2-3 picker" ] (viewPicker model.picker)
+            , H.div [ HA.class "pure-u-1 pure-u-md-1-3" ] nav
+            ]
+        ]
     }
