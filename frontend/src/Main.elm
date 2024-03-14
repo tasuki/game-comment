@@ -215,13 +215,13 @@ view model =
     in
     case model.page of
         Home m ->
-            Page.viewPage HomeMsg (Page.Home.view m nav)
+            Page.viewPage HomeMsg (Page.Home.view m) nav
 
         Help m ->
-            Page.viewPage HelpMsg (Page.Help.view m nav)
+            Page.viewPage HelpMsg (Page.Help.view m) nav
 
         Game m ->
-            Page.viewPage GameMsg (Page.Game.view m nav)
+            Page.viewPage GameMsg (Page.Game.view m) nav
 
         NotFound _ ->
             { title = "Game Comment"

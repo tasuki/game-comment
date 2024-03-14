@@ -224,8 +224,8 @@ sideView model =
     ]
 
 
-view : Model -> List (H.Html Msg) -> Page Msg
-view model nav =
+view : Model -> Page Msg
+view model =
     let
         gameName =
             case model.replay of
@@ -248,10 +248,7 @@ view model nav =
                     "limit-width"
     in
     { title = gameName ++ " - Game Comment"
-    , body =
-        [ H.div [ HA.class "pure-g", HA.class extraClass ]
-            [ H.div [ HA.class "pure-u-1 pure-u-md-2-3" ] [ boardView model ]
-            , H.div [ HA.class "pure-u-1 pure-u-md-1-3" ] (nav ++ sideView model)
-            ]
-        ]
+    , extraClass = extraClass
+    , content = [ boardView model ]
+    , sidebar = sideView model
     }
