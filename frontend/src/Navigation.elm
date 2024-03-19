@@ -71,9 +71,16 @@ getNavigationTiles currentUrl showFullMenu toggleMenuMsg closeMsg replays =
             else
                 String.fromChar <| firstLetter <| G.recordName record
 
+        replayCloseMsg url =
+            if showFullMenu then
+                Just <| closeMsg url
+
+            else
+                Nothing
+
         toNavTile : ( String, R.Replay ) -> NavTile msg
         toNavTile ( url, replay ) =
-            NavTile url (H.text <| replayTileText replay.record) (Just <| closeMsg url)
+            NavTile url (H.text <| replayTileText replay.record) (replayCloseMsg url)
 
         replayUrls : List (NavTile msg)
         replayUrls =
