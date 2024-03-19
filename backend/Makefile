@@ -1,3 +1,5 @@
+.PHONY: release bin prod-config develop dev-config
+
 release: prod-config bin
 	sudo systemctl stop game-comment
 	./bin/gc-migrate
