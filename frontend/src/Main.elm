@@ -41,6 +41,7 @@ type Page
 
 type alias Model =
     { key : Nav.Key
+    , showFullMenu : Bool
     , page : Page
     , message : String
     , currentUrl : Url
@@ -56,6 +57,7 @@ init _ url key =
     in
     changeRouteTo url
         { key = key
+        , showFullMenu = True
         , page = NotFound session
         , message = ""
         , currentUrl = url
@@ -74,6 +76,8 @@ type Msg
     | HomeMsg Page.Home.Msg
     | HelpMsg Page.Help.Msg
     | GameMsg Page.Game.Msg
+    | ToggleMenu
+    | CloseGame String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -94,6 +98,12 @@ update message model =
         ( GameMsg msg, Game m ) ->
             updateGamePage model msg m
 
+        ( ToggleMenu, _ ) ->
+            ( { model | showFullMenu = not model.showFullMenu }, Cmd.none )
+
+        ( CloseGame url, _ ) ->
+            closeGame url model
+
         ( _, _ ) ->
             ( model, Cmd.none )
 
@@ -113,6 +123,23 @@ updateGamePage model msg m =
                     model.replays
     in
     updateWith { model | replays = newReplays } Game GameMsg ( newModel, newCmd )
+
+
+closeGame : String -> Model -> ( Model, Cmd Msg )
+closeGame url model =
+    let
+        newReplays : Dict String R.Replay
+        newReplays =
+            Dict.remove url model.replays
+
+        cmd =
+            if url == model.currentUrl.path then
+                Nav.pushUrl model.key (Route.toUrl <| Route.Home)
+
+            else
+                Cmd.none
+    in
+    ( { model | replays = newReplays }, cmd )
 
 
 updateWith : Model -> (subModel -> Page) -> (subMsg -> Msg) -> ( subModel, Cmd subMsg ) -> ( Model, Cmd Msg )
@@ -209,9 +236,15 @@ subscriptions model =
 view : Model -> Browser.Document Msg
 view model =
     let
-        nav : List (H.Html msg)
+        nav : List (H.Html Msg)
         nav =
-            Navigation.getNavigationTiles model.currentUrl model.replays
+            [ Navigation.getNavigationTiles
+                model.currentUrl
+                model.showFullMenu
+                ToggleMenu
+                CloseGame
+                model.replays
+            ]
     in
     case model.page of
         Home m ->

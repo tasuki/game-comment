@@ -13,23 +13,28 @@
           src: url('/public/jetbrains-mono-regular.woff2') format('woff2');
         }
 
+        /* global */
         html, button, input, select, textarea, .pure-g [class *= "pure-u"]
             { font-family: "JetBrains Mono", sans-serif; letter-spacing: 0; }
         .limit-width { max-width: 1100px; margin: auto; }
         button { background-color: transparent; border: none; margin: 0; padding: 2px 6px; }
         button:hover { background-color: #F66; cursor: pointer; }
-        .nav-item { background-color: #EEE; color: #000; display: inline-block; margin: 2px; padding: 2px 6px; text-decoration: none; }
-        .nav-item svg { vertical-align: middle; }
-        .nav-item.current { background-color: #F66; }
-        label { padding: 10px 20px; line-height: 3; }
         .clear { clear: both; }
         .white { color: #FFF; }
         .black { color: #000; }
 
+        /* menu */
+        .menu-item { background-color: #EEE; display: inline-block; margin: 2px; padding: 4px 6px; }
+        .menu-item button { padding: 0; }
+        .menu-item .close { margin-left: 3px; }
+        .menu-item a { color: #000; text-decoration: none; }
+        .menu-item svg { vertical-align: middle; }
+        .menu-item:hover, .menu-item.current { background-color: #F66; }
+
         /* home */
-        .picker button, .picker input { background-color: #EEE; border: 1px solid #333; margin: 10px; padding: 5px 10px; }
-        .picker input { background-color: #FFF; }
-        .picker .active { color: #FFF; background-color: #666; }
+        .picker .content button, .picker .content input { background-color: #EEE; border: 1px solid #333; margin: 10px; padding: 5px 10px; }
+        .picker .content input { background-color: #FFF; }
+        .picker .content .active { color: #FFF; background-color: #666; }
 
         /* game */
         .player { padding: 2px 5px; }

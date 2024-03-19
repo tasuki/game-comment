@@ -26,8 +26,8 @@ viewPage toMsg pageView navigation =
     { title = title
     , body =
         [ H.div [ HA.class "pure-g", HA.class extraClass ]
-            [ H.div [ HA.class "pure-u-1 pure-u-md-2-3" ] (listToMsg content)
-            , H.div [ HA.class "pure-u-1 pure-u-md-1-3" ] (navigation ++ listToMsg sidebar)
+            [ H.div [ HA.class "content pure-u-1 pure-u-md-2-3" ] (listToMsg content)
+            , H.div [ HA.class "sidebar pure-u-1 pure-u-md-1-3" ] (navigation ++ listToMsg sidebar)
             ]
         ]
     }
