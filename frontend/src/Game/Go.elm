@@ -6,6 +6,7 @@ import GameRecord as G
 import Replay as R
 import Svg exposing (Svg)
 import Svg.Attributes as SA
+import Svg.Lazy exposing (..)
 
 
 normaliseCoords : Normalise
@@ -46,17 +47,39 @@ positionFromReplay replay =
 -- VIEW
 
 
+background : Int -> List (Svg msg)
+background size =
+    let
+        rect sz =
+            Svg.rect
+                [ SA.x "0"
+                , SA.y "0"
+                , SA.width <| String.fromInt <| sz + 1
+                , SA.height <| String.fromInt <| sz + 1
+                , SA.fill "#EEE"
+                ]
+                []
+    in
+    [ lazy rect size ]
+
+
 view : R.Replay -> (G.Coords -> msg) -> Svg msg
 view replay playMsg =
     let
         size =
             replay.record.size
 
+        borderAdjust =
+            0.2
+
+        ( from, to ) =
+            ( 0.5 - borderAdjust, toFloat size + 2 * borderAdjust )
+
         ( min, max ) =
             ( 1, size )
     in
     Svg.svg
-        [ SA.viewBox (GH.intsToStr [ 0, 0, size + 1, size + 1 ])
+        [ SA.viewBox (GH.floatsToStr [ from, from, to, to ])
         , SA.class "go"
         ]
         (background size

@@ -174,22 +174,6 @@ isMoveLegal neighbors onMove move pos =
 -- VIEW
 
 
-background : Int -> List (Svg msg)
-background size =
-    let
-        rect sz =
-            Svg.rect
-                [ SA.x "0.5"
-                , SA.y "0.5"
-                , SA.width <| String.fromInt <| sz
-                , SA.height <| String.fromInt <| sz
-                , SA.fill "#EEE"
-                ]
-                []
-    in
-    [ lazy rect size ]
-
-
 viewLines : Float -> Float -> Int -> Int -> List (Svg msg)
 viewLines lineMin lineMax offsetMin offsetMax =
     let

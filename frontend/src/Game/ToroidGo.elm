@@ -6,6 +6,7 @@ import GameRecord as G
 import Replay as R
 import Svg exposing (Svg)
 import Svg.Attributes as SA
+import Svg.Lazy exposing (..)
 
 
 context =
@@ -57,15 +58,26 @@ positionFromReplay replay =
 -- VIEW
 
 
-contextBackground : Int -> List (Svg msg)
-contextBackground size =
+background : Int -> List (Svg msg)
+background size =
+    let
+        rect sz =
+            Svg.rect
+                [ SA.x "0.5"
+                , SA.y "0.5"
+                , SA.width <| String.fromInt <| sz
+                , SA.height <| String.fromInt <| sz
+                , SA.fill "#EEE"
+                ]
+                []
+    in
+    [ lazy rect size ]
+
+
+contextBackground : String -> String -> List (Svg msg)
+contextBackground from to =
     [ Svg.rect
-        [ SA.x <| String.fromFloat (0.5 - context)
-        , SA.y <| String.fromFloat (0.5 - context)
-        , SA.width <| String.fromInt <| size + (context * 2)
-        , SA.height <| String.fromInt <| size + (context * 2)
-        , SA.fill "#BBB"
-        ]
+        [ SA.x from, SA.y from, SA.width to, SA.height to, SA.fill "#BBB" ]
         []
     ]
 
@@ -76,21 +88,22 @@ view replay playMsg =
         size =
             replay.record.size
 
+        borderAdjust =
+            0.05
+
+        ( from, to ) =
+            ( String.fromFloat <| 0.5 - context - borderAdjust
+            , String.fromFloat <| toFloat size + (context * 2) + (borderAdjust * 2)
+            )
+
         ( min, max ) =
             ( 1 - context, size + context )
     in
     Svg.svg
-        [ SA.viewBox
-            (GH.intsToStr
-                [ -context
-                , -context
-                , size + 1 + (2 * context)
-                , size + 1 + (2 * context)
-                ]
-            )
+        [ SA.viewBox <| String.join " " [ from, from, to, to ]
         , SA.class "go"
         ]
-        (contextBackground size
+        (contextBackground from to
             ++ background size
             ++ viewLines (toFloat min - 0.5) (toFloat max + 0.5) min max
             ++ viewStones
