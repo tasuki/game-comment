@@ -12,7 +12,7 @@ prod-config:
 
 
 develop: dev-config
-	fd | entr -s "pkill gc-backend; stack run &"
+	fd | entr -s "pkill gc-server; stack run gc-migrate && stack run gc-server &"
 
 dev-config:
 	cp -f app/Config.dev.hs app/Config.hs
