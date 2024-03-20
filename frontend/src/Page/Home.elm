@@ -144,15 +144,17 @@ viewPicker picker =
                 Nothing ->
                     []
     in
-    [ H.div [] (List.map gamePicker G.games)
+    [ H.p [] [ H.text "Create an empty board for:" ]
+    , H.div [] (List.map gamePicker G.games)
     , H.div [] sizePickerAndCreateButton
-    , H.hr [] []
+    , H.h3 [] [ H.text "~~ OR ~~" ]
+    , H.p [] [ H.text "Load a game from LittleGolem:" ]
     , H.div []
         [ H.input
             [ HA.placeholder "LittleGolem game number or url"
             , HA.type_ "text"
-            , HA.size 40
             , HA.value <| picker.identifier
+            , HA.class "lg-picker"
             , HA.autofocus True
             , HE.onInput EnterIdentifier
             , GH.onEnter <| Fetch picker.identifier
@@ -172,5 +174,5 @@ view model =
     { title = "Game Comment - Load Game"
     , extraClass = "picker limit-width"
     , content = viewPicker model.picker
-    , sidebar = []
+    , sidebar = Page.sideHelp
     }

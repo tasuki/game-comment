@@ -34,5 +34,18 @@ viewPage toMsg pageView navigation =
     }
 
 
-
--- , body = List.map (H.map toMsg) body
+sideHelp : List (H.Html msg)
+sideHelp =
+    [ H.p []
+        [ H.text "Hi there, this is a toy project of "
+        , H.br [] []
+        , H.a [ HA.href "https://tasuki.org/" ] [ H.text "Vít tasuki Brunner" ]
+        , H.text "."
+        ]
+    , H.p [] [ H.text "It is very much a work in progress." ]
+    , H.p []
+        [ H.text "You can "
+        , H.a [ HA.href "https://github.com/tasuki/game-comment" ] [ H.text "see the source code" ]
+        , H.text "."
+        ]
+    ]
