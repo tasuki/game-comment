@@ -16,6 +16,7 @@ import Replay as R
 import Route
 import Session exposing (Session)
 import Svg exposing (Svg)
+import Svg.Attributes as SA
 import Url exposing (Url)
 import Url.Parser
 
@@ -33,7 +34,7 @@ type alias Model =
 
 sidebarMsg : String
 sidebarMsg =
-    "Press j for previous move, k for next move."
+    "Press k for previous move, j for next move."
 
 
 initEmpty : G.Game -> Int -> Session -> ( Model, Cmd Msg )
@@ -158,16 +159,16 @@ subscriptions m =
 keydown : String -> Msg
 keydown keycode =
     case keycode of
-        "j" ->
+        "k" ->
             Backward
 
-        "k" ->
+        "j" ->
             Forward
 
-        "h" ->
+        "g" ->
             Start
 
-        "l" ->
+        "G" ->
             End
 
         _ ->
@@ -176,6 +177,39 @@ keydown keycode =
 
 
 -- VIEW
+
+
+squareIcon : List (Svg msg) -> H.Html msg
+squareIcon svgElems =
+    Svg.svg [ SA.width "40", SA.height "40" ] svgElems
+
+
+start : H.Html msg
+start =
+    squareIcon
+        [ Svg.polygon [ SA.points "14,13 14,27 12,27 12,13" ] []
+        , Svg.polygon [ SA.points "28,12 28,28 15,20" ] []
+        ]
+
+
+end : H.Html msg
+end =
+    squareIcon
+        [ Svg.polygon [ SA.points "26,13 26,27 28,27 28,13" ] []
+        , Svg.polygon [ SA.points "12,12 12,28 25,20" ] []
+        ]
+
+
+backward : H.Html msg
+backward =
+    squareIcon
+        [ Svg.polygon [ SA.points "25,12 25,28 12,20" ] [] ]
+
+
+forward : H.Html msg
+forward =
+    squareIcon
+        [ Svg.polygon [ SA.points "15,12 15,28 28,20" ] [] ]
 
 
 boardView : Model -> H.Html Msg
@@ -207,24 +241,35 @@ boardView model =
 sideView : Model -> List (H.Html Msg)
 sideView model =
     let
-        prevNext =
-            [ H.div []
-                [ H.button [ HE.onClick Backward ] [ H.text "prev" ]
-                , H.button [ HE.onClick Forward ] [ H.text "next" ]
-                , H.button [ HE.onClick Reload, HA.class "right" ] [ H.text "reload" ]
-                ]
-            ]
-
-        replayView : Maybe R.Replay -> List (H.Html Msg)
-        replayView maybeReplay =
-            case maybeReplay of
+        moveNum : Int
+        moveNum =
+            case model.replay of
                 Just replay ->
-                    R.view Jump replay
+                    replay.lookingAt.move
+
+                Nothing ->
+                    0
+
+        gameNav : H.Html Msg
+        gameNav =
+            H.div [ HA.class "pure-g game-nav" ]
+                [ H.div [ HA.class "pure-u-1-5" ] [ H.button [ HE.onClick Start ] [ start ] ]
+                , H.div [ HA.class "pure-u-1-5" ] [ H.button [ HE.onClick Backward ] [ backward ] ]
+                , H.div [ HA.class "pure-u-1-5" ] [ H.text <| String.fromInt moveNum ]
+                , H.div [ HA.class "pure-u-1-5" ] [ H.button [ HE.onClick Forward ] [ forward ] ]
+                , H.div [ HA.class "pure-u-1-5" ] [ H.button [ HE.onClick End ] [ end ] ]
+                ]
+
+        gameInfo : List (H.Html Msg)
+        gameInfo =
+            case model.replay of
+                Just replay ->
+                    R.view Jump gameNav replay
 
                 Nothing ->
                     []
     in
-    [ H.div [ HA.class "game-info" ] (prevNext ++ replayView model.replay)
+    [ H.div [ HA.class "game-info" ] gameInfo
     , H.div [ HA.class "message" ] [ H.text model.message ]
     ]
 

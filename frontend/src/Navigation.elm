@@ -126,16 +126,16 @@ line x1 y1 x2 y2 =
 bars : H.Html msg
 bars =
     Svg.svg
-        [ SA.width "20", SA.height "14" ]
-        [ line 2 2 18 2
-        , line 2 7 18 7
-        , line 2 12 18 12
+        [ SA.width "20", SA.height "18" ]
+        [ line 2 4 18 4
+        , line 2 9 18 9
+        , line 2 14 18 14
         ]
 
 
 close : H.Html msg
 close =
-    Svg.svg [ SA.width "14", SA.height "14" ]
-        [ line 3 3 11 11
-        , line 3 11 11 3
+    Svg.svg [ SA.width "18", SA.height "18" ]
+        [ line 5 5 13 13
+        , line 5 13 13 5
         ]

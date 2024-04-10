@@ -16,9 +16,9 @@
 
         /* global */
         html, button, input, select, textarea, .pure-g [class *= "pure-u"]
-            { font-family: "Recursive Mono", monospace; letter-spacing: 0; }
+            { font-family: "Recursive Mono", monospace; letter-spacing: 0; line-height: 18px; }
         .limit-width { max-width: 1100px; margin: auto; }
-        button { background-color: transparent; border: none; margin: 0; padding: 2px 6px; }
+        button { background-color: transparent; border: none; margin: 0; padding: 0; }
         button:hover { background-color: #F66; cursor: pointer; }
         .clear { clear: both; }
         .white { color: #FFF; }
@@ -28,7 +28,6 @@
 
         /* menu */
         .menu-item { background-color: #EEE; display: inline-block; margin: 0 4px 4px 0; padding: 4px 6px; }
-        .menu-item button { padding: 0; }
         .menu-item .close { margin-left: 3px; }
         .menu-item a { color: #000; text-decoration: none; }
         .menu-item svg { vertical-align: middle; }
@@ -42,16 +41,19 @@
         .picker .content .lg-picker { width: 80%; }
 
         /* game */
-        .player { padding: 2px 5px; }
+        .player { padding: 7px 5px; }
         .game-info { background-color: #999; margin: 10px; padding: 5px; }
         @media screen and (min-width: 48em) { .game-info { margin-top: 0; } }
         .game-info .right { float: right; }
+        .game-info .game-nav { max-width: 350px; margin: auto; }
+        .game-info .game-nav div { display: flex; justify-content: center; align-items: center; }
         .highlight { background-color: #F66; }
         .replay { padding-top: 10px; }
         .replay button { margin: 0; }
         .message { margin: 10px; padding: 5px; }
         .player-info .black { font-size: 24px; float: left; }
         .player-info .white { font-size: 24px; float: right; }
+        .sidebar svg { vertical-align: middle; }
 
         /* specific games */
         .twixt .last-move.white { stroke: #C00; }

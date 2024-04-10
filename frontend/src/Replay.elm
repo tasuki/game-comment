@@ -260,8 +260,8 @@ viewMove jumpMsg inVar replay i =
         moveNum
 
 
-view : (LookAt -> msg) -> Replay -> List (H.Html msg)
-view jumpMsg replay =
+view : (LookAt -> msg) -> H.Html msg -> Replay -> List (H.Html msg)
+view jumpMsg gameNav replay =
     let
         viewMoves : Bool -> List G.Move -> List (H.Html msg)
         viewMoves inVar moves =
@@ -273,8 +273,7 @@ view jumpMsg replay =
         , H.div [ HA.class "player white" ] [ H.text replay.record.white ]
         , H.div [ HA.class "clear" ] []
         ]
-    , H.div [ HA.class "replay" ]
-        (viewMoves False replay.record.moves)
+    , gameNav
     , H.div [ HA.class "replay" ]
         (viewMoves True (A.toList replay.variation.moves))
     ]
