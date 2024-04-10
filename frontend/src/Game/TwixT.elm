@@ -319,7 +319,7 @@ view replay playMsg =
             positionFromMoves (R.currentMoves replay)
     in
     Svg.svg
-        [ SA.viewBox (GH.intsToStr [ 0, 0, size + 1, size + 1 ]), SA.class "twixt" ]
+        [ SA.viewBox (GH.floatsToStr [ 0.5, 0.5, toFloat size, toFloat size ]), SA.class "twixt" ]
         (background size
             ++ drawBorders size
             ++ drawGuidelines size
