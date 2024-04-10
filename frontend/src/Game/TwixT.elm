@@ -158,7 +158,7 @@ background size =
         , SA.y "0.5"
         , SA.width <| String.fromInt <| size
         , SA.height <| String.fromInt <| size
-        , SA.fill "#CCC"
+        , SA.fill "#CA5"
         ]
         []
     ]
@@ -211,7 +211,7 @@ drawGuidelines size =
                 , SA.y1 <| coord y1
                 , SA.x2 <| coord x2
                 , SA.y2 <| coord y2
-                , SA.stroke "#AAA"
+                , SA.stroke "#986"
                 , SA.strokeWidth ".1"
                 , SA.strokeLinecap <| "round"
                 ]

@@ -67,7 +67,7 @@ background size =
                 , SA.y "0.5"
                 , SA.width <| String.fromInt <| sz
                 , SA.height <| String.fromInt <| sz
-                , SA.fill "#EEE"
+                , SA.fill "#CA5"
                 ]
                 []
     in
@@ -77,7 +77,7 @@ background size =
 contextBackground : String -> String -> List (Svg msg)
 contextBackground from to =
     [ Svg.rect
-        [ SA.x from, SA.y from, SA.width to, SA.height to, SA.fill "#BBB" ]
+        [ SA.x from, SA.y from, SA.width to, SA.height to, SA.fill "#875" ]
         []
     ]
 

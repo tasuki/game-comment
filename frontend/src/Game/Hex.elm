@@ -129,9 +129,9 @@ viewBoardHex coords =
                 , " l 0,-1"
                 , " l -0.866,-0.5"
                 ]
-        , SA.stroke "#666"
+        , SA.stroke "#444"
         , SA.strokeWidth "0.05"
-        , SA.fill "transparent"
+        , SA.fill "#CA5"
         ]
         []
 

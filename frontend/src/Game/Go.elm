@@ -56,7 +56,7 @@ background size =
                 , SA.y "0"
                 , SA.width <| String.fromInt <| sz + 1
                 , SA.height <| String.fromInt <| sz + 1
-                , SA.fill "#EEE"
+                , SA.fill "#CA5"
                 ]
                 []
     in

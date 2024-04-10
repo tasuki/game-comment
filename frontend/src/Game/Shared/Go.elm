@@ -186,7 +186,7 @@ viewLines lineMin lineMax offsetMin offsetMax =
                 , SA.y1 <| String.fromFloat y1
                 , SA.x2 <| String.fromFloat x2
                 , SA.y2 <| String.fromFloat y2
-                , SA.stroke "#666"
+                , SA.stroke "#333"
                 , SA.strokeWidth ".05"
                 ]
                 []
@@ -219,7 +219,7 @@ viewStones normaliseCoords min max position lastMove onMove playMsg =
                        , SA.cy <| String.fromInt coords.y
                        , SA.r "0.48"
                        , SA.stroke "black"
-                       , SA.strokeWidth "0.07"
+                       , SA.strokeWidth "0.06"
                        , SA.fill <| G.color player
                        ]
                 )
