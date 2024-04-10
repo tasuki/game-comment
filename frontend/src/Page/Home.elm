@@ -172,7 +172,7 @@ viewPicker picker =
 view : Model -> Page Msg
 view model =
     { title = "Game Comment - Load Game"
-    , extraClass = "picker limit-width"
+    , extraClass = "picker narrower"
     , content = viewPicker model.picker
     , sidebar = Page.sideHelp
     }

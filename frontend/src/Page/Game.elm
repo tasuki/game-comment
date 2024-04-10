@@ -289,13 +289,13 @@ view model =
             case model.replay of
                 Just { record } ->
                     if record.game == G.Hex then
-                        ""
+                        "wider"
 
                     else
-                        "limit-width"
+                        "narrower"
 
                 Nothing ->
-                    "limit-width"
+                    "narrower"
     in
     { title = gameName ++ " - Game Comment"
     , extraClass = extraClass

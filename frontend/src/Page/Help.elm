@@ -31,7 +31,7 @@ type Msg
 view : Model -> Page Msg
 view _ =
     { title = "Help - Game Comment"
-    , extraClass = "limit-width"
+    , extraClass = "narrower"
     , content =
         [ H.p [] [ H.text "Press k for previous move, j for next move." ]
         , H.p [] [ H.text "And g/G to go to the start/end of the game." ]

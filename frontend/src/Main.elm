@@ -258,5 +258,5 @@ view model =
 
         NotFound _ ->
             { title = "Game Comment"
-            , body = [ H.div [ HA.class "limit-width" ] [ H.h2 [] [ H.text "We haven't found it!" ] ] ]
+            , body = [ H.div [ HA.class "narrower" ] [ H.h2 [] [ H.text "We haven't found it!" ] ] ]
             }
