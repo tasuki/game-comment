@@ -31,11 +31,16 @@ type alias Model =
     }
 
 
+sidebarMsg : String
+sidebarMsg =
+    "Press j for previous move, k for next move."
+
+
 initEmpty : G.Game -> Int -> Session -> ( Model, Cmd Msg )
 initEmpty game size session =
     ( { session = session
       , replay = Just <| R.emptyReplay <| G.empty game size
-      , message = "Use the left/right keys to explore the game."
+      , message = sidebarMsg
       }
     , Cmd.none
     )
@@ -45,7 +50,7 @@ initLg : String -> Session -> ( Model, Cmd Msg )
 initLg lgId session =
     ( { session = session
       , replay = Nothing
-      , message = "Use the left/right keys to explore the game."
+      , message = sidebarMsg
       }
     , AC.getLittleGolemSgf Fetched lgId
     )
@@ -153,16 +158,16 @@ subscriptions m =
 keydown : String -> Msg
 keydown keycode =
     case keycode of
-        "ArrowLeft" ->
+        "j" ->
             Backward
 
-        "ArrowRight" ->
+        "k" ->
             Forward
 
-        "ArrowUp" ->
+        "h" ->
             Start
 
-        "ArrowDown" ->
+        "l" ->
             End
 
         _ ->
