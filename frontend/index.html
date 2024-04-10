@@ -19,7 +19,7 @@
             { font-family: "Recursive Mono", monospace; letter-spacing: 0; line-height: 18px; }
         .limit-width { max-width: 1100px; margin: auto; }
         button { background-color: transparent; border: none; margin: 0; padding: 0; }
-        button:hover { background-color: #F66; cursor: pointer; }
+        button:hover { background-color: #CA5; cursor: pointer; }
         .clear { clear: both; }
         .white { color: #FFF; }
         .black { color: #000; }
@@ -31,7 +31,7 @@
         .menu-item .close { margin-left: 3px; }
         .menu-item a { color: #000; text-decoration: none; }
         .menu-item svg { vertical-align: middle; }
-        .menu-item:hover, .menu-item.current { background-color: #F66; }
+        .menu-item:hover, .menu-item.current { background-color: #FC6; }
 
         /* home */
         .picker .content hr { margin-left: 10px; max-width: 80%; }
@@ -41,19 +41,19 @@
         .picker .content .lg-picker { width: 80%; }
 
         /* game */
-        .player { padding: 7px 5px; }
         .game-info { background-color: #999; margin: 10px; padding: 5px; }
         @media screen and (min-width: 48em) { .game-info { margin-top: 0; } }
-        .game-info .right { float: right; }
         .game-info .game-nav { max-width: 350px; margin: auto; }
         .game-info .game-nav div { display: flex; justify-content: center; align-items: center; }
-        .highlight { background-color: #F66; }
+        .game-info .game-nav svg { vertical-align: middle; }
+        .highlight { background-color: #CA5; }
+        .player-info .player { font-size: 24px; padding: 7px 5px; }
+        .player-info .black { float: left; }
+        .player-info .white { float: right; }
         .replay { padding-top: 10px; }
         .replay button { margin: 0; }
+        .replay .player { padding: 2px 5px; }
         .message { margin: 10px; padding: 5px; }
-        .player-info .black { font-size: 24px; float: left; }
-        .player-info .white { font-size: 24px; float: right; }
-        .sidebar svg { vertical-align: middle; }
 
         /* specific games */
         .twixt .last-move.white { stroke: #C00; }
