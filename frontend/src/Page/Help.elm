@@ -33,8 +33,7 @@ view _ =
     { title = "Help - Game Comment"
     , extraClass = "narrower"
     , content =
-        [ H.p [] [ H.text "Press k for previous move, j for next move." ]
-        , H.p [] [ H.text "And g/G to go to the start/end of the game." ]
+        [ H.p [] [ H.text "Use the left/right keys to explore the game." ]
         ]
     , sidebar = Page.sideHelp
     }

@@ -35,7 +35,7 @@ type alias Model =
 
 sidebarMsg : String
 sidebarMsg =
-    "Press k for previous move, j for next move."
+    "Use the left/right keys to explore the game."
 
 
 initEmpty : G.Game -> Int -> Session -> ( Model, Cmd Msg )
@@ -158,6 +158,12 @@ subscriptions m =
 keydown : String -> Msg
 keydown keycode =
     case keycode of
+        "ArrowLeft" ->
+            Backward
+
+        "ArrowRight" ->
+            Forward
+
         "k" ->
             Backward
 
