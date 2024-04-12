@@ -106,7 +106,9 @@ update msg model currentUrl =
                     )
 
                 Err error ->
-                    ( { model | message = "Could not load game: [ " ++ error ++ " ]" }, Cmd.none )
+                    ( { model | message = "Could not load game: [ " ++ error ++ " ]" }
+                    , Cmd.none
+                    )
 
         Start ->
             ( { model | replay = Maybe.map R.start model.replay }, Cmd.none )
@@ -138,7 +140,9 @@ update msg model currentUrl =
             in
             case Maybe.map isMoveLegal model.replay of
                 Just True ->
-                    ( { model | replay = Maybe.map (R.playCoords coords) model.replay }, Cmd.none )
+                    ( { model | replay = Maybe.map (R.playCoords coords) model.replay }
+                    , Cmd.none
+                    )
 
                 _ ->
                     ( model, Cmd.none )

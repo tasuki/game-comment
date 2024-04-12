@@ -1,7 +1,6 @@
 module Game.ToroidGo exposing (..)
 
 import Game.Shared.Go exposing (..)
-import GameHelpers as GH
 import GameRecord as G
 import Replay as R
 import Svg exposing (Svg)
