@@ -17,6 +17,7 @@ import Route
 import Session exposing (Session)
 import Svg exposing (Svg)
 import Svg.Attributes as SA
+import Task
 import Url exposing (Url)
 import Url.Parser
 
@@ -63,7 +64,7 @@ initPrevious replay session =
       , replay = Just replay
       , message = ""
       }
-    , Cmd.none
+    , Task.succeed Reload |> Task.perform identity
     )
 
 
@@ -100,9 +101,7 @@ update msg model currentUrl =
         Fetched result ->
             case result of
                 Ok record ->
-                    ( { model
-                        | replay = Just <| R.emptyReplay record
-                      }
+                    ( { model | replay = Just <| R.withRecord record model.replay }
                     , Cmd.none
                     )
 

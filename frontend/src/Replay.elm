@@ -37,6 +37,16 @@ emptyReplay record =
     }
 
 
+withRecord : G.Record -> Maybe Replay -> Replay
+withRecord record maybeReplay =
+    case maybeReplay of
+        Just replay ->
+            { replay | record = record }
+
+        Nothing ->
+            emptyReplay record
+
+
 emptyVariation : Variation
 emptyVariation =
     { fromMove = 0, moves = A.empty }
