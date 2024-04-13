@@ -14,4 +14,4 @@ dev:
 	cp -f Config.dev.elm src/Config.elm
 
 serve:
-	php -S localhost:8000 &
+	http-server . -p 8000 &

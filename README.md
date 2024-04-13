@@ -8,13 +8,13 @@ On Debian 12 Bookworm, frontend toolchain:
 
 ```
 sudo apt install npm uglifyjs
-sudo npm install -g elm@latest-0.19.1 elm-test elm-format
+sudo npm install -g elm@latest-0.19.1 elm-test elm-format http-server
 ```
 
 Backend toolchain:
 
 ```
-sudo apt install haskell-stack
+sudo apt install haskell-stack libtinfo-dev zlib1g-dev
 ```
 
 ## Develop
