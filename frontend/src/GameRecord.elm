@@ -144,3 +144,8 @@ coordsToComparable c =
 coordsFromComparable : ( Int, Int ) -> Coords
 coordsFromComparable ( x, y ) =
     { x = x, y = y }
+
+
+addMove : Move -> Record -> Record
+addMove move record =
+    { record | moves = record.moves ++ [ move ] }

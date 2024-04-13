@@ -1,6 +1,7 @@
 module Replay exposing (..)
 
 import Array as A exposing (Array)
+import Dict exposing (Dict)
 import GameRecord as G
 import Html as H
 import Html.Attributes as HA
@@ -11,20 +12,25 @@ import List.Extra
 type alias Replay =
     { name : String
     , record : G.Record
+    , alterable : Bool
     , lookingAt : LookAt
-    , variation : Variation
+    , variations : Dict String Variation
     }
 
 
+type alias Moves =
+    Array G.Move
+
+
 type alias LookAt =
-    { variation : Bool
+    { variation : Maybe String
     , move : Int
     }
 
 
 type alias Variation =
     { fromMove : Int
-    , moves : Array G.Move
+    , moves : Moves
     }
 
 
@@ -32,24 +38,24 @@ emptyReplay : G.Record -> Replay
 emptyReplay record =
     { name = G.recordName record
     , record = record
-    , lookingAt = { variation = False, move = 0 }
-    , variation = emptyVariation
+    , alterable = True
+    , lookingAt = { variation = Nothing, move = 0 }
+    , variations = Dict.empty
     }
 
 
 withRecord : G.Record -> Maybe Replay -> Replay
 withRecord record maybeReplay =
-    case maybeReplay of
-        Just replay ->
-            { replay | record = record }
+    let
+        replay =
+            case maybeReplay of
+                Just r ->
+                    { r | record = record }
 
-        Nothing ->
-            emptyReplay record
-
-
-emptyVariation : Variation
-emptyVariation =
-    { fromMove = 0, moves = A.empty }
+                Nothing ->
+                    emptyReplay record
+    in
+    { replay | alterable = False }
 
 
 lookNext : LookAt -> LookAt
@@ -63,23 +69,40 @@ lookPrev lookingAt =
 
 
 
+-- Variations
+
+
+emptyVariation : Variation
+emptyVariation =
+    { fromMove = 0, moves = A.empty }
+
+
+currentVariation : Replay -> Maybe ( String, Variation )
+currentVariation replay =
+    let
+        getVarWithName : String -> Maybe ( String, Variation )
+        getVarWithName varName =
+            Dict.get varName replay.variations
+                |> Maybe.map (\var -> ( varName, var ))
+    in
+    replay.lookingAt.variation
+        |> Maybe.andThen getVarWithName
+
+
+
 -- Moves from replay
 
 
 allMoves : Replay -> List G.Move
 allMoves replay =
-    let
-        fromMain =
-            List.take replay.variation.fromMove replay.record.moves
+    case currentVariation replay of
+        Nothing ->
+            replay.record.moves
 
-        fromVar =
-            A.toList replay.variation.moves
-    in
-    if replay.lookingAt.variation then
-        List.append fromMain fromVar
-
-    else
-        replay.record.moves
+        Just ( _, var ) ->
+            List.append
+                (List.take var.fromMove replay.record.moves)
+                (A.toList var.moves)
 
 
 currentMoves : Replay -> List G.Move
@@ -104,28 +127,40 @@ nextMove replay =
 addMoveToVar : G.Move -> Replay -> Replay
 addMoveToVar move replay =
     let
-        var =
-            if replay.lookingAt.variation then
-                let
-                    variation =
-                        replay.variation
+        maybeVar =
+            currentVariation replay
 
-                    till =
-                        replay.lookingAt.move - variation.fromMove
-                in
-                { variation | moves = A.slice 0 till variation.moves }
+        chopMoves : Variation -> Array G.Move
+        chopMoves var =
+            A.slice 0 (replay.lookingAt.move - var.fromMove) var.moves
 
-            else
-                { emptyVariation | fromMove = replay.lookingAt.move }
+        addVariation : String -> Variation -> Replay
+        addVariation varName newVar =
+            { replay
+                | lookingAt = { variation = Just varName, move = replay.lookingAt.move + 1 }
+                , variations = Dict.insert varName (addMove move newVar) replay.variations
+            }
 
         addMove : G.Move -> Variation -> Variation
         addMove m variation =
             { variation | moves = A.push m variation.moves }
     in
-    { replay
-        | lookingAt = { variation = True, move = replay.lookingAt.move + 1 }
-        , variation = addMove move var
-    }
+    case maybeVar of
+        Nothing ->
+            if replay.alterable && (List.length replay.record.moves == replay.lookingAt.move) then
+                -- append move to alterable game record
+                { replay
+                    | record = G.addMove move replay.record
+                    , lookingAt = { variation = Nothing, move = replay.lookingAt.move + 1 }
+                }
+
+            else
+                -- create new variation
+                addVariation "todo name this thing" { emptyVariation | fromMove = replay.lookingAt.move }
+
+        Just ( varName, var ) ->
+            -- expand preexisting variation, potentially chopping
+            addVariation varName { var | moves = chopMoves var }
 
 
 playCoords : G.Coords -> Replay -> Replay
@@ -158,16 +193,22 @@ prev replay =
         lookAtPrev =
             lookPrev replay.lookingAt
 
+        varFromMove : Int
+        varFromMove =
+            currentVariation replay
+                |> Maybe.map (\( _, var ) -> var.fromMove)
+                |> Maybe.withDefault 0
+
         lookingEarlierThanVariation =
-            (replay.lookingAt.move - 1) <= replay.variation.fromMove
+            (replay.lookingAt.move - 1) <= varFromMove
     in
     case lastMove replay of
         Nothing ->
             replay
 
         Just _ ->
-            if replay.lookingAt.variation && lookingEarlierThanVariation then
-                { replay | lookingAt = { lookAtPrev | variation = False } }
+            if lookingEarlierThanVariation then
+                { replay | lookingAt = { lookAtPrev | variation = Nothing } }
 
             else
                 { replay | lookingAt = lookAtPrev }
@@ -245,27 +286,18 @@ viewMoveHtml jumpMsg highlight moveNum { player, play } =
     ]
 
 
-viewMove : (LookAt -> msg) -> Bool -> Replay -> Int -> G.Move -> List (H.Html msg)
-viewMove jumpMsg inVar replay i =
+viewMove : (LookAt -> msg) -> ( String, Variation ) -> Replay -> Int -> G.Move -> List (H.Html msg)
+viewMove jumpMsg ( varName, var ) replay i =
     let
         moveNum =
-            if inVar then
-                replay.variation.fromMove + i
-
-            else
-                i
+            var.fromMove + i
 
         highlight =
-            if inVar then
-                replay.lookingAt.variation
-                    && (replay.lookingAt.move == replay.variation.fromMove + i)
-
-            else
-                not replay.lookingAt.variation
-                    && (replay.lookingAt.move == i)
+            (replay.lookingAt.variation == Just varName)
+                && (replay.lookingAt.move == var.fromMove + i)
     in
     viewMoveHtml
-        (jumpMsg { variation = inVar, move = moveNum })
+        (jumpMsg { variation = Just varName, move = moveNum })
         highlight
         moveNum
 
@@ -273,9 +305,9 @@ viewMove jumpMsg inVar replay i =
 view : (LookAt -> msg) -> H.Html msg -> Replay -> List (H.Html msg)
 view jumpMsg gameNav replay =
     let
-        viewMoves : Bool -> List G.Move -> List (H.Html msg)
-        viewMoves inVar moves =
-            List.indexedMap (\i -> viewMove jumpMsg inVar replay (i + 1)) moves
+        viewVar : ( String, Variation ) -> List (H.Html msg)
+        viewVar ( varName, var ) =
+            List.indexedMap (\i -> viewMove jumpMsg ( varName, var ) replay (i + 1)) (A.toList var.moves)
                 |> List.concat
     in
     [ H.div [ HA.class "player-info" ]
@@ -285,5 +317,5 @@ view jumpMsg gameNav replay =
         ]
     , gameNav
     , H.div [ HA.class "replay" ]
-        (viewMoves True (A.toList replay.variation.moves))
+        (Dict.toList replay.variations |> List.concatMap viewVar)
     ]
