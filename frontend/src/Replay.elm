@@ -144,6 +144,10 @@ addMove move replay =
         chopMoves var =
             List.take (replay.lookingAt.move - var.fromMove) var.moves
 
+        addMoveToVar : Variation Moves -> Variation Moves
+        addMoveToVar var =
+            { var | moves = var.moves ++ [ move ] }
+
         addVariation : Variation Moves -> Replay
         addVariation var =
             { replay
@@ -152,14 +156,14 @@ addMove move replay =
                     , move = replay.lookingAt.move + 1
                     }
                 , variations =
-                    replay.variations ++ [ { var | moves = var.moves ++ [ move ] } ]
+                    replay.variations ++ [ addMoveToVar var ]
             }
 
         expandVariation : Int -> Variation Moves -> Replay
         expandVariation varNum var =
             { replay
                 | lookingAt = lookNext replay.lookingAt
-                , variations = replaceAtIndex varNum var replay.variations
+                , variations = replaceAtIndex varNum (addMoveToVar var) replay.variations
             }
     in
     case currentVariation replay of
