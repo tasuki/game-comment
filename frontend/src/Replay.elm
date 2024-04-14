@@ -200,11 +200,35 @@ playCoords coords replay =
         addMove move replay
 
 
+goToFirstVarIfNoMain : Replay -> Replay
+goToFirstVarIfNoMain replay =
+    let
+        eligibleVar : Maybe Int
+        eligibleVar =
+            List.indexedMap Tuple.pair replay.variations
+                |> List.filter (\( _, var ) -> var.fromMove == replay.lookingAt.move)
+                |> List.head
+                |> Maybe.map (\( varNum, _ ) -> varNum)
+    in
+    case ( replay.lookingAt.variation, eligibleVar ) of
+        ( Nothing, Just eligible ) ->
+            -- we're at the end of main line and there's a continuing variation
+            { replay
+                | lookingAt =
+                    { variation = Just <| eligible
+                    , move = replay.lookingAt.move + 1
+                    }
+            }
+
+        _ ->
+            replay
+
+
 next : Replay -> Replay
 next replay =
     case nextMove replay of
         Nothing ->
-            replay
+            goToFirstVarIfNoMain replay
 
         Just _ ->
             { replay | lookingAt = lookNext replay.lookingAt }
