@@ -137,12 +137,9 @@ replaceAtIndex index newElement list =
     List.indexedMap maybeReplace list
 
 
-addMoveToVar : G.Move -> Replay -> Replay
-addMoveToVar move replay =
+addMove : G.Move -> Replay -> Replay
+addMove move replay =
     let
-        maybeVar =
-            currentVariation replay
-
         chopMoves : Variation Moves -> Moves
         chopMoves var =
             List.take (replay.lookingAt.move - var.fromMove) var.moves
@@ -154,7 +151,8 @@ addMoveToVar move replay =
                     { variation = Just <| List.length replay.variations
                     , move = replay.lookingAt.move + 1
                     }
-                , variations = replay.variations ++ [ addMove move var ]
+                , variations =
+                    replay.variations ++ [ { var | moves = var.moves ++ [ move ] } ]
             }
 
         expandVariation : Int -> Variation Moves -> Replay
@@ -163,12 +161,8 @@ addMoveToVar move replay =
                 | lookingAt = lookNext replay.lookingAt
                 , variations = replaceAtIndex varNum var replay.variations
             }
-
-        addMove : G.Move -> Variation Moves -> Variation Moves
-        addMove m variation =
-            { variation | moves = variation.moves ++ [ m ] }
     in
-    case maybeVar of
+    case currentVariation replay of
         Nothing ->
             if replay.alterable && (List.length replay.record.moves == replay.lookingAt.move) then
                 -- append move to alterable game record
@@ -191,13 +185,15 @@ playCoords coords replay =
     let
         move : G.Move
         move =
-            { player = G.onMove replay.lookingAt.move replay.record.game, play = G.Place coords }
+            { player = G.onMove replay.lookingAt.move replay.record.game
+            , play = G.Place coords
+            }
     in
     if Just move == nextMove replay then
         next replay
 
     else
-        addMoveToVar move replay
+        addMove move replay
 
 
 next : Replay -> Replay
