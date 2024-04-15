@@ -82,6 +82,8 @@ type Msg
     | Start
     | End
     | Jump R.LookAt
+    | PrevVariation
+    | NextVariation
 
 
 update : Msg -> Model -> Url -> ( Model, Cmd Msg )
@@ -121,6 +123,12 @@ update msg model currentUrl =
 
         End ->
             ( { model | replay = Maybe.map R.end model.replay }, Cmd.none )
+
+        PrevVariation ->
+            ( { model | replay = Maybe.map R.prevVariation model.replay }, Cmd.none )
+
+        NextVariation ->
+            ( { model | replay = Maybe.map R.nextVariation model.replay }, Cmd.none )
 
         Jump lookAt ->
             ( { model | replay = Maybe.map (R.jump lookAt) model.replay }, Cmd.none )
@@ -168,11 +176,23 @@ keydown keycode =
         "ArrowRight" ->
             Forward
 
+        "ArrowUp" ->
+            PrevVariation
+
+        "ArrowDown" ->
+            NextVariation
+
         "k" ->
             Backward
 
         "j" ->
             Forward
+
+        "h" ->
+            PrevVariation
+
+        "l" ->
+            NextVariation
 
         "g" ->
             Start

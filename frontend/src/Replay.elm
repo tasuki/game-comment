@@ -20,6 +20,14 @@ type alias Moves =
     List G.Move
 
 
+type alias IndexedMove =
+    ( Int, G.Move )
+
+
+type alias IndexedMoves =
+    List IndexedMove
+
+
 type alias LookAt =
     { variation : Maybe Int
     , move : Int
@@ -87,6 +95,40 @@ currentVariation replay =
     in
     replay.lookingAt.variation
         |> Maybe.andThen getVarWithNum
+
+
+allVariations : Replay -> List (Variation IndexedMoves)
+allVariations replay =
+    let
+        getIndexedMoves : Variation Moves -> IndexedMoves
+        getIndexedMoves var =
+            List.indexedMap (\i move -> ( var.fromMove + i + 1, move )) var.moves
+    in
+    { colour = ""
+    , fromMove = 0
+    , moves = List.indexedMap (\i m -> ( i + 1, m )) replay.record.moves
+    }
+        :: List.map
+            (\var ->
+                { colour = var.colour
+                , fromMove = var.fromMove
+                , moves = getIndexedMoves var
+                }
+            )
+            replay.variations
+
+
+variationsWithCurrentMove : Replay -> List Int
+variationsWithCurrentMove replay =
+    let
+        hasMove : ( Int, Variation IndexedMoves ) -> Bool
+        hasMove ( _, var ) =
+            List.any (\( moveNum, _ ) -> moveNum == replay.lookingAt.move) var.moves
+    in
+    allVariations replay
+        |> List.indexedMap Tuple.pair
+        |> List.filter hasMove
+        |> List.map (\( i, _ ) -> i)
 
 
 
@@ -278,6 +320,55 @@ end replay =
 
         Just _ ->
             end { replay | lookingAt = lookNext replay.lookingAt }
+
+
+varToNum : Maybe ( Int, Variation a ) -> Int
+varToNum var =
+    case var of
+        Nothing ->
+            0
+
+        Just ( i, _ ) ->
+            i + 1
+
+
+numToVar : Int -> Maybe Int
+numToVar num =
+    case num of
+        0 ->
+            Nothing
+
+        i ->
+            Just <| i - 1
+
+
+switchVariation : (List Int -> List Int) -> (Int -> Int -> Bool) -> Replay -> Replay
+switchVariation listOp dropIf replay =
+    let
+        nextVarWithMove : Maybe Int
+        nextVarWithMove =
+            variationsWithCurrentMove replay
+                |> List.sort
+                |> listOp
+                |> List.Extra.dropWhile (\vwcm -> dropIf vwcm (varToNum <| currentVariation replay))
+                |> List.head
+    in
+    case nextVarWithMove of
+        Just nvwm ->
+            { replay | lookingAt = { variation = numToVar nvwm, move = replay.lookingAt.move } }
+
+        Nothing ->
+            replay
+
+
+nextVariation : Replay -> Replay
+nextVariation =
+    switchVariation identity (<=)
+
+
+prevVariation : Replay -> Replay
+prevVariation =
+    switchVariation List.reverse (>=)
 
 
 jump : LookAt -> Replay -> Replay
