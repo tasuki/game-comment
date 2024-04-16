@@ -385,7 +385,7 @@ chars =
     String.toList "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
-viewMoveHtml : msg -> Bool -> Int -> G.Move -> List (H.Html msg)
+viewMoveHtml : msg -> Bool -> Int -> G.Move -> H.Html msg
 viewMoveHtml jumpMsg highlight moveNum { player, play } =
     let
         char : Int -> Char
@@ -418,13 +418,12 @@ viewMoveHtml jumpMsg highlight moveNum { player, play } =
             else
                 ""
     in
-    [ H.button
+    H.button
         [ HE.onClick jumpMsg, HA.class (class ++ highlightClass) ]
         [ H.text <| String.fromInt moveNum ++ "." ++ moveStr ]
-    ]
 
 
-viewMove : (LookAt -> msg) -> Int -> Variation Moves -> Replay -> Int -> G.Move -> List (H.Html msg)
+viewMove : (LookAt -> msg) -> Int -> Variation Moves -> Replay -> Int -> G.Move -> H.Html msg
 viewMove jumpMsg varNum var replay i =
     let
         moveNum =
@@ -443,10 +442,10 @@ viewMove jumpMsg varNum var replay i =
 view : (LookAt -> msg) -> H.Html msg -> Replay -> List (H.Html msg)
 view jumpMsg gameNav replay =
     let
-        viewVar : Int -> Variation Moves -> List (H.Html msg)
+        viewVar : Int -> Variation Moves -> H.Html msg
         viewVar varNum var =
-            List.indexedMap (\i -> viewMove jumpMsg varNum var replay (i + 1)) var.moves
-                |> List.concat
+            H.div []
+                (List.indexedMap (\i -> viewMove jumpMsg varNum var replay (i + 1)) var.moves)
     in
     [ H.div [ HA.class "player-info" ]
         [ H.div [ HA.class "player black" ] [ H.text replay.record.black ]
@@ -454,5 +453,5 @@ view jumpMsg gameNav replay =
         , H.div [ HA.class "clear" ] []
         ]
     , gameNav
-    , H.div [ HA.class "replay" ] (List.indexedMap viewVar replay.variations |> List.concat)
+    , H.div [ HA.class "variations" ] (List.indexedMap viewVar replay.variations)
     ]
