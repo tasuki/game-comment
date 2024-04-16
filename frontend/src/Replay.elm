@@ -371,6 +371,27 @@ prevVariation =
     switchVariation List.reverse (>=)
 
 
+deleteVariation : Replay -> Replay
+deleteVariation replay =
+    let
+        removeVar varNum =
+            List.take varNum replay.variations
+                ++ List.drop (varNum + 1) replay.variations
+    in
+    case currentVariation replay of
+        Just ( varNum, var ) ->
+            { replay
+                | variations = removeVar varNum
+                , lookingAt =
+                    { variation = Nothing
+                    , move = var.fromMove
+                    }
+            }
+
+        _ ->
+            replay
+
+
 jump : LookAt -> Replay -> Replay
 jump lookAt replay =
     { replay | lookingAt = lookAt }
