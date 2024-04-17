@@ -421,8 +421,8 @@ chars =
     String.toList "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
-viewMoveHtml : msg -> Bool -> Int -> G.Move -> H.Html msg
-viewMoveHtml jumpMsg highlight moveNum { player, play } =
+viewMoveHtml : msg -> String -> Int -> G.Move -> H.Html msg
+viewMoveHtml jumpMsg backgroundColour moveNum { player, play } =
     let
         char : Int -> Char
         char coord =
@@ -446,42 +446,41 @@ viewMoveHtml jumpMsg highlight moveNum { player, play } =
 
                 G.White ->
                     "player white "
-
-        highlightClass =
-            if highlight then
-                "highlight "
-
-            else
-                ""
     in
     H.button
-        [ HE.onClick jumpMsg, HA.class (class ++ highlightClass) ]
+        [ HE.onClick jumpMsg
+        , HA.class class
+        , HA.style "background-color" backgroundColour
+        ]
         [ H.text <| String.fromInt moveNum ++ "." ++ moveStr ]
-
-
-viewMove : (LookAt -> msg) -> Int -> Variation Moves -> Replay -> Int -> G.Move -> H.Html msg
-viewMove jumpMsg varNum var replay i =
-    let
-        moveNum =
-            var.fromMove + i
-
-        highlight =
-            (replay.lookingAt.variation == Just varNum)
-                && (replay.lookingAt.move == var.fromMove + i)
-    in
-    viewMoveHtml
-        (jumpMsg { variation = Just varNum, move = moveNum })
-        highlight
-        moveNum
 
 
 view : (LookAt -> msg) -> H.Html msg -> Replay -> List (H.Html msg)
 view jumpMsg gameNav replay =
     let
+        lookAt : LookAt
+        lookAt =
+            replay.lookingAt
+
+        backgroundColour : String -> Int -> Int -> String
+        backgroundColour varColour varNum moveNum =
+            if (lookAt.variation == Just varNum) && (lookAt.move == moveNum) then
+                varColour
+
+            else
+                "transparent"
+
+        viewMove : String -> Int -> Int -> G.Move -> H.Html msg
+        viewMove varColour varNum moveNum =
+            viewMoveHtml
+                (jumpMsg { variation = Just varNum, move = moveNum })
+                (backgroundColour varColour varNum moveNum)
+                moveNum
+
         viewVar : Int -> Variation Moves -> H.Html msg
         viewVar varNum var =
             H.div [ HA.class "variation", HA.style "border-color" var.colour ]
-                (List.indexedMap (\i -> viewMove jumpMsg varNum var replay (i + 1)) var.moves)
+                (List.indexedMap (\i -> viewMove var.colour varNum (var.fromMove + i + 1)) var.moves)
     in
     [ H.div [ HA.class "player-info" ]
         [ H.div [ HA.class "player black" ] [ H.text replay.record.black ]
