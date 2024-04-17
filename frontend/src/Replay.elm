@@ -406,6 +406,16 @@ jump lookAt replay =
 -- VIEW
 
 
+currentColour : Replay -> String
+currentColour replay =
+    case currentVariation replay of
+        Just ( _, var ) ->
+            var.colour
+
+        Nothing ->
+            C.colourMain
+
+
 chars : List Char
 chars =
     String.toList "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"

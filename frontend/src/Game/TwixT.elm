@@ -151,14 +151,14 @@ positionFromMoves moves =
 -- View
 
 
-background : Int -> List (Svg msg)
-background size =
+background : String -> Int -> List (Svg msg)
+background colour size =
     [ Svg.rect
         [ SA.x "0.5"
         , SA.y "0.5"
         , SA.width <| String.fromInt <| size
         , SA.height <| String.fromInt <| size
-        , SA.fill "#CA5"
+        , SA.fill colour
         ]
         []
     ]
@@ -320,7 +320,7 @@ view replay playMsg =
     in
     Svg.svg
         [ SA.viewBox (GH.floatsToStr [ 0.5, 0.5, toFloat size, toFloat size ]), SA.class "twixt" ]
-        (background size
+        (background (R.currentColour replay) size
             ++ drawBorders size
             ++ drawGuidelines size
             ++ drawPoints size

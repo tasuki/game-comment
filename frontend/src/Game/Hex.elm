@@ -108,8 +108,8 @@ hexCenter coords =
     )
 
 
-viewBoardHex : G.Coords -> Svg msg
-viewBoardHex coords =
+viewBoardHex : String -> G.Coords -> Svg msg
+viewBoardHex colour coords =
     let
         ( centerX, centerY ) =
             hexCenter coords
@@ -131,7 +131,7 @@ viewBoardHex coords =
                 ]
         , SA.stroke "#444"
         , SA.strokeWidth "0.05"
-        , SA.fill "#CA5"
+        , SA.fill colour
         ]
         []
 
@@ -266,7 +266,7 @@ view replay playMsg =
         , SA.class "hex"
         ]
         (background boardWidth boardHeight
-            ++ List.map viewBoardHex coordList
+            ++ List.map (viewBoardHex <| R.currentColour replay) coordList
             ++ viewBoardSides size
             ++ viewHexes
                 position

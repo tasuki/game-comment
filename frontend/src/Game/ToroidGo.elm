@@ -57,8 +57,8 @@ positionFromReplay replay =
 -- VIEW
 
 
-background : Int -> List (Svg msg)
-background size =
+background : String -> Int -> List (Svg msg)
+background colour size =
     let
         rect sz =
             Svg.rect
@@ -66,17 +66,17 @@ background size =
                 , SA.y "0.5"
                 , SA.width <| String.fromInt <| sz
                 , SA.height <| String.fromInt <| sz
-                , SA.fill "#CA5"
+                , SA.fill colour
                 ]
                 []
     in
     [ lazy rect size ]
 
 
-contextBackground : String -> String -> List (Svg msg)
-contextBackground from to =
+contextBackground : String -> String -> String -> List (Svg msg)
+contextBackground fill from to =
     [ Svg.rect
-        [ SA.x from, SA.y from, SA.width to, SA.height to, SA.fill "#875" ]
+        [ SA.x from, SA.y from, SA.width to, SA.height to, SA.fill fill ]
         []
     ]
 
@@ -97,13 +97,17 @@ view replay playMsg =
 
         ( min, max ) =
             ( 1 - context, size + context )
+
+        colour =
+            R.currentColour replay
     in
     Svg.svg
         [ SA.viewBox <| String.join " " [ from, from, to, to ]
         , SA.class "go"
         ]
-        (contextBackground from to
-            ++ background size
+        (contextBackground colour from to
+            ++ contextBackground "#3336" from to
+            ++ background colour size
             ++ viewLines (toFloat min - 0.5) (toFloat max + 0.5) min max
             ++ viewStones
                 normaliseCoords
