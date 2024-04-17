@@ -14,4 +14,4 @@ dev:
 	cp -f Config.dev.elm src/Config.elm
 
 serve:
-	http-server . -p 8000 &
+	serve -p 8000 --single &

@@ -8,7 +8,7 @@ On Debian 12 Bookworm, frontend toolchain:
 
 ```
 sudo apt install npm uglifyjs
-sudo npm install -g elm@latest-0.19.1 elm-test elm-format http-server
+sudo npm install -g elm@latest-0.19.1 elm-test elm-format serve
 ```
 
 Backend toolchain:
