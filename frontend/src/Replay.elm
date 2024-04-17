@@ -1,5 +1,6 @@
 module Replay exposing (..)
 
+import Colours as C
 import GameRecord as G
 import Html as H
 import Html.Attributes as HA
@@ -219,7 +220,11 @@ addMove move replay =
 
             else
                 -- create new variation
-                addVariation { emptyVariation | fromMove = replay.lookingAt.move }
+                addVariation
+                    { emptyVariation
+                        | fromMove = replay.lookingAt.move
+                        , colour = C.pickNext <| List.map (\v -> v.colour) replay.variations
+                    }
 
         Just ( varNum, var ) ->
             -- expand preexisting variation, potentially chopping
@@ -465,7 +470,7 @@ view jumpMsg gameNav replay =
     let
         viewVar : Int -> Variation Moves -> H.Html msg
         viewVar varNum var =
-            H.div []
+            H.div [ HA.class "variation", HA.style "border-color" var.colour ]
                 (List.indexedMap (\i -> viewMove jumpMsg varNum var replay (i + 1)) var.moves)
     in
     [ H.div [ HA.class "player-info" ]
