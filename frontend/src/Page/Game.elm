@@ -186,16 +186,16 @@ keydown keycode =
         "ArrowDown" ->
             NextVariation
 
-        "k" ->
+        "h" ->
             Backward
 
-        "j" ->
+        "l" ->
             Forward
 
-        "h" ->
+        "k" ->
             PrevVariation
 
-        "l" ->
+        "j" ->
             NextVariation
 
         "x" ->
