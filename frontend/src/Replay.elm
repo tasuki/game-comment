@@ -14,7 +14,7 @@ type alias Replay =
     , record : G.Record
     , alterable : Bool
     , lookingAt : LookAt
-    , variations : List (Variation Moves)
+    , variations : List Variation
     }
 
 
@@ -22,12 +22,8 @@ type alias Moves =
     List G.Move
 
 
-type alias IndexedMove =
-    ( Int, G.Move )
-
-
 type alias IndexedMoves =
-    List IndexedMove
+    List ( Int, G.Move )
 
 
 type alias LookAt =
@@ -36,10 +32,10 @@ type alias LookAt =
     }
 
 
-type alias Variation m =
+type alias Variation =
     { colour : String
     , fromMove : Int
-    , moves : m
+    , moves : Moves
     }
 
 
@@ -81,15 +77,15 @@ lookPrev lookingAt =
 -- Variations
 
 
-emptyVariation : Variation Moves
+emptyVariation : Variation
 emptyVariation =
     { colour = "", fromMove = 0, moves = [] }
 
 
-currentVariation : Replay -> Maybe ( Int, Variation Moves )
+currentVariation : Replay -> Maybe ( Int, Variation )
 currentVariation replay =
     let
-        getVarWithNum : Int -> Maybe ( Int, Variation Moves )
+        getVarWithNum : Int -> Maybe ( Int, Variation )
         getVarWithNum varNum =
             List.drop varNum replay.variations
                 |> List.head
@@ -99,33 +95,23 @@ currentVariation replay =
         |> Maybe.andThen getVarWithNum
 
 
-allVariations : Replay -> List (Variation IndexedMoves)
+getIndexedMoves : Variation -> IndexedMoves
+getIndexedMoves var =
+    List.indexedMap (\i move -> ( var.fromMove + i + 1, move )) var.moves
+
+
+allVariations : Replay -> List IndexedMoves
 allVariations replay =
-    let
-        getIndexedMoves : Variation Moves -> IndexedMoves
-        getIndexedMoves var =
-            List.indexedMap (\i move -> ( var.fromMove + i + 1, move )) var.moves
-    in
-    { colour = ""
-    , fromMove = 0
-    , moves = List.indexedMap (\i m -> ( i + 1, m )) replay.record.moves
-    }
-        :: List.map
-            (\var ->
-                { colour = var.colour
-                , fromMove = var.fromMove
-                , moves = getIndexedMoves var
-                }
-            )
-            replay.variations
+    List.indexedMap (\i m -> ( i + 1, m )) replay.record.moves
+        :: List.map getIndexedMoves replay.variations
 
 
 variationsWithCurrentMove : Replay -> List Int
 variationsWithCurrentMove replay =
     let
-        hasMove : ( Int, Variation IndexedMoves ) -> Bool
-        hasMove ( _, var ) =
-            List.any (\( moveNum, _ ) -> moveNum == replay.lookingAt.move) var.moves
+        hasMove : ( Int, IndexedMoves ) -> Bool
+        hasMove ( _, moves ) =
+            List.any (\( moveNum, _ ) -> moveNum == replay.lookingAt.move) moves
     in
     allVariations replay
         |> List.indexedMap Tuple.pair
@@ -184,15 +170,15 @@ replaceAtIndex index newElement list =
 addMove : G.Move -> Replay -> Replay
 addMove move replay =
     let
-        chopMoves : Variation Moves -> Moves
+        chopMoves : Variation -> Moves
         chopMoves var =
             List.take (replay.lookingAt.move - var.fromMove) var.moves
 
-        addMoveToVar : Variation Moves -> Variation Moves
+        addMoveToVar : Variation -> Variation
         addMoveToVar var =
             { var | moves = var.moves ++ [ move ] }
 
-        addVariation : Variation Moves -> Replay
+        addVariation : Variation -> Replay
         addVariation var =
             { replay
                 | lookingAt =
@@ -203,7 +189,7 @@ addMove move replay =
                     replay.variations ++ [ addMoveToVar var ]
             }
 
-        expandVariation : Int -> Variation Moves -> Replay
+        expandVariation : Int -> Variation -> Replay
         expandVariation varNum var =
             { replay
                 | lookingAt = lookNext replay.lookingAt
@@ -328,7 +314,7 @@ end replay =
             end { replay | lookingAt = lookNext replay.lookingAt }
 
 
-varToNum : Maybe ( Int, Variation a ) -> Int
+varToNum : Maybe ( Int, Variation ) -> Int
 varToNum var =
     case var of
         Nothing ->
@@ -377,7 +363,7 @@ prevVariation =
     switchVariation List.reverse (>=)
 
 
-removeVar : Int -> Replay -> List (Variation Moves)
+removeVar : Int -> Replay -> List Variation
 removeVar varNum replay =
     List.take varNum replay.variations
         ++ List.drop (varNum + 1) replay.variations
@@ -500,7 +486,7 @@ view jumpMsg deleteVarMsg gameNav replay =
                 (backgroundColour varColour varNum moveNum)
                 moveNum
 
-        viewVar : Int -> Variation Moves -> H.Html msg
+        viewVar : Int -> Variation -> H.Html msg
         viewVar varNum var =
             H.div [ HA.class "variation", HA.style "border-color" var.colour ]
                 (List.indexedMap (\i -> viewMove var.colour varNum (var.fromMove + i + 1)) var.moves
