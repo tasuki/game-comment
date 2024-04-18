@@ -19,35 +19,35 @@
             { font-family: "Recursive Mono", monospace; letter-spacing: 0; line-height: 18px; }
         .narrower { max-width: 1100px; margin: auto; }
         .wider { max-width: 1500px; margin: auto; }
+
         button { background-color: transparent; border: none; margin: 0; padding: 0; }
         button:hover { cursor: pointer; }
         .clear { clear: both; }
         .white { color: #FFF; }
         .black { color: #000; }
+        .close { margin-left: 3px; }
+
         .content p, .sidebar p, h3 { margin: 20px 0 0 0; padding: 0 10px; }
         h3 { font-size: 20px; font-weight: normal; }
 
         /* menu */
-        .menu-item { background-color: #EEE; display: inline-block; margin: 0 4px 4px 0; padding: 4px 6px; }
-        .menu-item .close { margin-left: 3px; }
+        .menu-item { background-color: #EEE; border: 1px solid #CCC; border-top: none; display: inline-block; margin: 0 4px 4px 0; padding: 3px 6px; }
         .menu-item a { color: #000; text-decoration: none; }
+        .menu-item button { height: 18px; }
         .menu-item svg { vertical-align: middle; }
-        .menu-item:hover, .menu-item.current { background-color: #FC6; }
+        .menu-item:hover, .menu-item.current, .picker .content .active { background-color: #D5B565; border-color: #998146; }
 
         /* home */
-        .picker .content button, .picker .content input { background-color: #EEE; border: 1px solid #666; margin: 10px; padding: 5px 10px; }
+        .picker .content button, .picker .content input { background-color: #EEE; border: 1px solid #CCC; margin: 10px; padding: 5px 10px; }
         .picker .content input { background-color: #FFF; }
-        .picker .content .active { background-color: #FC6; }
         .picker .content .lg-picker { width: 80%; }
 
         /* game */
         .game-info { background-color: #999; margin: 10px; padding: 5px; }
         @media screen and (min-width: 48em) { .game-info { margin-top: 0; } }
-        .game-info button:hover { background-color: #CA5; }
         .game-info .game-nav { max-width: 350px; margin: auto; }
         .game-info .game-nav div { display: flex; justify-content: center; align-items: center; }
         .game-info .game-nav svg { vertical-align: middle; }
-        .highlight { background-color: #CA5; }
         .player-info .player { font-size: 24px; padding: 7px 5px; }
         .player-info .black { float: left; }
         .player-info .white { float: right; }
