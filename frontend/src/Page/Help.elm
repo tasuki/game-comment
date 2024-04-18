@@ -52,10 +52,6 @@ view _ =
             [ H.text "Use the left/right keys to explore the game."
             , H.text "Up/down to switch between variations at the current move."
             ]
-        , list
-            [ H.text "Use the left/right keys to explore the game."
-            , H.text "Up/down to switch between variations at the current move."
-            ]
         , H.br [] []
         , H.p [] [ H.text "You can also use the more complicated vim bindings:" ]
         , list
