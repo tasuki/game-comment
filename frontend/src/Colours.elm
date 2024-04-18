@@ -7,23 +7,22 @@ import List.Extra
 
 -- variations
 -- based on https://www.hsluv.org/
--- H ?, S 75.7, L 71.0
-
-
-colourMain : String
-colourMain =
-    -- H  63.4
-    "#CCAA55"
 
 
 coloursVars : List String
 coloursVars =
-    [ "#81BE54" -- H 116
-    , "#5BBDBB" -- H 190
-    , "#9EABEC" -- H 260
-    , "#E58FEC" -- H 304
-    , "#F09780" -- H  24
+    [ "#9AC664" -- [110.0, 70.0, 75.0]
+    , "#7AC6BD" -- [180.0, 60.0, 75.0]
+    , "#ACB6EB" -- [260.0, 70.0, 75.0]
+    , "#D9A8E4" -- [300.0, 60.0, 75.0]
+    , "#EDA79D" -- [20.0, 70.0, 75.0]
+    , "#E5BB69" -- [60.0, 70.0, 78.0]
     ]
+
+
+colourMain : String
+colourMain =
+    List.Extra.last coloursVars |> Maybe.withDefault "#CA5"
 
 
 varsDict : Dict String Int
@@ -64,15 +63,9 @@ pickNext existing =
         counts =
             countStrings existing
 
-        _ =
-            Debug.log "counts" counts
-
         minOcc : Int
         minOcc =
             minOccurences counts
-
-        _ =
-            Debug.log "minOcc" minOcc
 
         isMin : String -> Bool
         isMin colour =
