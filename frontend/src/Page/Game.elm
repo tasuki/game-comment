@@ -2,6 +2,7 @@ module Page.Game exposing (..)
 
 import ApiClient as AC
 import Browser.Events
+import Colours as C
 import Game.Go
 import Game.Hex
 import Game.ToroidGo
@@ -84,7 +85,8 @@ type Msg
     | Jump R.LookAt
     | PrevVariation
     | NextVariation
-    | DeleteVariation
+    | DeleteCurrentVariation
+    | DeleteVariation Int
 
 
 update : Msg -> Model -> Url -> ( Model, Cmd Msg )
@@ -131,8 +133,11 @@ update msg model currentUrl =
         NextVariation ->
             ( { model | replay = Maybe.map R.nextVariation model.replay }, Cmd.none )
 
-        DeleteVariation ->
-            ( { model | replay = Maybe.map R.deleteVariation model.replay }, Cmd.none )
+        DeleteCurrentVariation ->
+            ( { model | replay = Maybe.map R.deleteCurrentVariation model.replay }, Cmd.none )
+
+        DeleteVariation varNum ->
+            ( { model | replay = Maybe.map (R.deleteVariation varNum) model.replay }, Cmd.none )
 
         Jump lookAt ->
             ( { model | replay = Maybe.map (R.jump lookAt) model.replay }, Cmd.none )
@@ -199,7 +204,7 @@ keydown keycode =
             NextVariation
 
         "x" ->
-            DeleteVariation
+            DeleteCurrentVariation
 
         "g" ->
             Start
@@ -286,12 +291,29 @@ sideView model =
                 Nothing ->
                     0
 
+        navColor : String
+        navColor =
+            case model.replay of
+                Just replay ->
+                    if replay.lookingAt.variation == Nothing then
+                        C.colourMain
+
+                    else
+                        "inherit"
+
+                Nothing ->
+                    "inherit"
+
         gameNav : H.Html Msg
         gameNav =
             H.div [ HA.class "pure-g game-nav" ]
                 [ H.div [ HA.class "pure-u-1-5" ] [ H.button [ HE.onClick Start ] [ start ] ]
                 , H.div [ HA.class "pure-u-1-5" ] [ H.button [ HE.onClick Backward ] [ backward ] ]
-                , H.div [ HA.class "pure-u-1-5" ] [ H.text <| String.fromInt moveNum ]
+                , H.div [ HA.class "pure-u-1-5" ]
+                    [ H.div
+                        [ HA.style "padding" "7px 10px", HA.style "background-color" navColor ]
+                        [ H.text <| String.fromInt moveNum ]
+                    ]
                 , H.div [ HA.class "pure-u-1-5" ] [ H.button [ HE.onClick Forward ] [ forward ] ]
                 , H.div [ HA.class "pure-u-1-5" ] [ H.button [ HE.onClick End ] [ end ] ]
                 ]
@@ -300,7 +322,7 @@ sideView model =
         gameInfo =
             case model.replay of
                 Just replay ->
-                    R.view Jump gameNav replay
+                    R.view Jump DeleteVariation gameNav replay
 
                 Nothing ->
                     []

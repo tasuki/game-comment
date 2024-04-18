@@ -7,8 +7,7 @@ import Html.Attributes as HA
 import Html.Events as HE
 import Replay as R
 import Route
-import Svg exposing (Svg)
-import Svg.Attributes as SA
+import SvgImages as SI
 import Url exposing (Url)
 
 
@@ -44,7 +43,7 @@ showTile currentUrl navTile =
         showCloseLink =
             case navTile.msg of
                 Just msg ->
-                    [ H.button [ HA.class "close", HE.onClick msg ] [ close ] ]
+                    [ H.button [ HA.class "close", HE.onClick msg ] [ SI.close Nothing Nothing ] ]
 
                 Nothing ->
                     []
@@ -96,46 +95,10 @@ getNavigationTiles currentUrl showFullMenu toggleMenuMsg closeMsg replays =
         toggleButton =
             H.div
                 [ HA.class "menu-item" ]
-                [ H.button [ HE.onClick toggleMenuMsg ] [ bars ] ]
+                [ H.button [ HE.onClick toggleMenuMsg ] [ SI.bars ] ]
 
         tiles : List (H.Html msg)
         tiles =
             List.concatMap (showTile currentUrl) (firstTiles ++ replayUrls)
     in
     H.div [] <| toggleButton :: tiles
-
-
-
--- SVG helpers
-
-
-line : Int -> Int -> Int -> Int -> Svg msg
-line x1 y1 x2 y2 =
-    Svg.line
-        [ SA.x1 <| String.fromInt x1
-        , SA.y1 <| String.fromInt y1
-        , SA.x2 <| String.fromInt x2
-        , SA.y2 <| String.fromInt y2
-        , SA.strokeLinecap "round"
-        , SA.strokeWidth "2"
-        , SA.stroke "black"
-        ]
-        []
-
-
-bars : H.Html msg
-bars =
-    Svg.svg
-        [ SA.width "20", SA.height "18" ]
-        [ line 2 4 18 4
-        , line 2 9 18 9
-        , line 2 14 18 14
-        ]
-
-
-close : H.Html msg
-close =
-    Svg.svg [ SA.width "18", SA.height "18" ]
-        [ line 5 5 13 13
-        , line 5 13 13 5
-        ]

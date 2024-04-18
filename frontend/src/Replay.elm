@@ -6,6 +6,7 @@ import Html as H
 import Html.Attributes as HA
 import Html.Events as HE
 import List.Extra
+import SvgImages as SI
 
 
 type alias Replay =
@@ -376,17 +377,18 @@ prevVariation =
     switchVariation List.reverse (>=)
 
 
-deleteVariation : Replay -> Replay
-deleteVariation replay =
-    let
-        removeVar varNum =
-            List.take varNum replay.variations
-                ++ List.drop (varNum + 1) replay.variations
-    in
+removeVar : Int -> Replay -> List (Variation Moves)
+removeVar varNum replay =
+    List.take varNum replay.variations
+        ++ List.drop (varNum + 1) replay.variations
+
+
+deleteCurrentVariation : Replay -> Replay
+deleteCurrentVariation replay =
     case currentVariation replay of
         Just ( varNum, var ) ->
             { replay
-                | variations = removeVar varNum
+                | variations = removeVar varNum replay
                 , lookingAt =
                     { variation = Nothing
                     , move = var.fromMove
@@ -395,6 +397,27 @@ deleteVariation replay =
 
         _ ->
             replay
+
+
+deleteVariation : Int -> Replay -> Replay
+deleteVariation varNum replay =
+    let
+        lookAt =
+            case currentVariation replay of
+                Just ( vn, var ) ->
+                    if vn == varNum then
+                        { variation = Nothing, move = var.fromMove }
+
+                    else
+                        replay.lookingAt
+
+                _ ->
+                    replay.lookingAt
+    in
+    { replay
+        | variations = removeVar varNum replay
+        , lookingAt = lookAt
+    }
 
 
 jump : LookAt -> Replay -> Replay
@@ -455,8 +478,8 @@ viewMoveHtml jumpMsg backgroundColour moveNum { player, play } =
         [ H.text <| String.fromInt moveNum ++ "." ++ moveStr ]
 
 
-view : (LookAt -> msg) -> H.Html msg -> Replay -> List (H.Html msg)
-view jumpMsg gameNav replay =
+view : (LookAt -> msg) -> (Int -> msg) -> H.Html msg -> Replay -> List (H.Html msg)
+view jumpMsg deleteVarMsg gameNav replay =
     let
         lookAt : LookAt
         lookAt =
@@ -480,7 +503,12 @@ view jumpMsg gameNav replay =
         viewVar : Int -> Variation Moves -> H.Html msg
         viewVar varNum var =
             H.div [ HA.class "variation", HA.style "border-color" var.colour ]
-                (List.indexedMap (\i -> viewMove var.colour varNum (var.fromMove + i + 1)) var.moves)
+                (List.indexedMap (\i -> viewMove var.colour varNum (var.fromMove + i + 1)) var.moves
+                    ++ [ H.button
+                            [ HA.class "close", HE.onClick <| deleteVarMsg varNum ]
+                            [ SI.close (Just 4) (Just var.colour) ]
+                       ]
+                )
     in
     [ H.div [ HA.class "player-info" ]
         [ H.div [ HA.class "player black" ] [ H.text replay.record.black ]
