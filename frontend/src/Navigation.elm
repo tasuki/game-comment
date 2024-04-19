@@ -1,4 +1,4 @@
-module Navigation exposing (getNavigationTiles)
+module Navigation exposing (getGamesTiles, getNavigationTiles)
 
 import Dict exposing (Dict)
 import GameRecord as G
@@ -60,37 +60,43 @@ showTile currentUrl navTile =
     ]
 
 
-getNavigationTiles : Url -> Bool -> msg -> (String -> msg) -> Dict String R.Replay -> H.Html msg
-getNavigationTiles currentUrl showFullMenu toggleMenuMsg closeMsg replays =
+gameNavTile : Bool -> (String -> msg) -> ( String, R.Replay ) -> NavTile msg
+gameNavTile showFullMenu closeMsg ( url, replay ) =
     let
-        replayTileText record =
+        gameTileText =
             if showFullMenu then
-                G.recordName record
+                G.recordName replay.record
 
             else
-                String.fromChar <| firstLetter <| G.recordName record
+                String.fromChar <| firstLetter <| G.recordName replay.record
 
-        replayCloseMsg url =
+        gameCloseMsg =
             if showFullMenu then
                 Just <| closeMsg url
 
             else
                 Nothing
+    in
+    NavTile url (H.text <| gameTileText) gameCloseMsg
 
-        toNavTile : ( String, R.Replay ) -> NavTile msg
-        toNavTile ( url, replay ) =
-            NavTile url (H.text <| replayTileText replay.record) (replayCloseMsg url)
 
-        replayUrls : List (NavTile msg)
-        replayUrls =
-            Dict.toList replays |> List.sortBy (\( url, _ ) -> url) |> List.map toNavTile
+getGamesTiles : (String -> msg) -> Bool -> Dict String R.Replay -> List (NavTile msg)
+getGamesTiles closeMsg showFullMenu replays =
+    Dict.toList replays
+        |> List.sortBy Tuple.first
+        |> List.map (gameNavTile showFullMenu closeMsg)
 
-        firstTiles : List (NavTile msg)
-        firstTiles =
-            [ NavTile (Route.toUrl Route.Home) (H.text "new") Nothing
-            , NavTile (Route.toUrl Route.Help) (H.text "help") Nothing
-            ]
 
+firstTiles : List (NavTile msg)
+firstTiles =
+    [ NavTile (Route.toUrl Route.Home) (H.text "new") Nothing
+    , NavTile (Route.toUrl Route.Help) (H.text "help") Nothing
+    ]
+
+
+getNavigationTiles : msg -> Url -> List (NavTile msg) -> H.Html msg
+getNavigationTiles toggleMenuMsg currentUrl gamesTiles =
+    let
         toggleButton : H.Html msg
         toggleButton =
             H.div
@@ -99,6 +105,6 @@ getNavigationTiles currentUrl showFullMenu toggleMenuMsg closeMsg replays =
 
         tiles : List (H.Html msg)
         tiles =
-            List.concatMap (showTile currentUrl) (firstTiles ++ replayUrls)
+            List.concatMap (showTile currentUrl) (firstTiles ++ gamesTiles)
     in
     H.div [] <| toggleButton :: tiles

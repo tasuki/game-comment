@@ -116,7 +116,7 @@ variationsWithCurrentMove replay =
     allVariations replay
         |> List.indexedMap Tuple.pair
         |> List.filter hasMove
-        |> List.map (\( i, _ ) -> i)
+        |> List.map Tuple.first
 
 
 
@@ -210,7 +210,7 @@ addMove move replay =
                 addVariation
                     { emptyVariation
                         | fromMove = replay.lookingAt.move
-                        , colour = C.pickNext <| List.map (\v -> v.colour) replay.variations
+                        , colour = C.pickNext <| List.map .colour replay.variations
                     }
 
         Just ( varNum, var ) ->
@@ -242,7 +242,7 @@ goToFirstVarIfNoMain replay =
             List.indexedMap Tuple.pair replay.variations
                 |> List.filter (\( _, var ) -> var.fromMove == replay.lookingAt.move)
                 |> List.head
-                |> Maybe.map (\( varNum, _ ) -> varNum)
+                |> Maybe.map Tuple.first
     in
     case ( replay.lookingAt.variation, eligibleVar ) of
         ( Nothing, Just eligible ) ->
@@ -277,7 +277,7 @@ prev replay =
         varFromMove : Int
         varFromMove =
             currentVariation replay
-                |> Maybe.map (\( _, var ) -> var.fromMove)
+                |> Maybe.map (Tuple.second >> .fromMove)
                 |> Maybe.withDefault 0
 
         lookingEarlierThanVariation =
@@ -335,14 +335,14 @@ numToVar num =
 
 
 switchVariation : (List Int -> List Int) -> (Int -> Int -> Bool) -> Replay -> Replay
-switchVariation listOp dropIf replay =
+switchVariation listOp dropCondition replay =
     let
         nextVarWithMove : Maybe Int
         nextVarWithMove =
             variationsWithCurrentMove replay
                 |> List.sort
                 |> listOp
-                |> List.Extra.dropWhile (\vwcm -> dropIf vwcm (varToNum <| currentVariation replay))
+                |> List.Extra.dropWhile (dropCondition <| varToNum <| currentVariation replay)
                 |> List.head
     in
     case nextVarWithMove of
@@ -355,12 +355,12 @@ switchVariation listOp dropIf replay =
 
 nextVariation : Replay -> Replay
 nextVariation =
-    switchVariation identity (<=)
+    switchVariation identity (>=)
 
 
 prevVariation : Replay -> Replay
 prevVariation =
-    switchVariation List.reverse (>=)
+    switchVariation List.reverse (<=)
 
 
 removeVar : Int -> Replay -> List Variation

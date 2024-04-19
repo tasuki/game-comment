@@ -236,15 +236,12 @@ subscriptions model =
 view : Model -> Browser.Document Msg
 view model =
     let
+        gamesTiles =
+            Navigation.getGamesTiles CloseGame model.showFullMenu model.replays
+
         nav : List (H.Html Msg)
         nav =
-            [ Navigation.getNavigationTiles
-                model.currentUrl
-                model.showFullMenu
-                ToggleMenu
-                CloseGame
-                model.replays
-            ]
+            [ Navigation.getNavigationTiles ToggleMenu model.currentUrl gamesTiles ]
     in
     case model.page of
         Home m ->
