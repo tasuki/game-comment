@@ -12,6 +12,7 @@ import Html as H
 import Html.Attributes as HA
 import Html.Events as HE
 import Json.Decode as D
+import Maybe.Extra
 import Page exposing (Page)
 import Replay as R
 import Route
@@ -147,10 +148,10 @@ update msg model currentUrl =
                 isMoveLegal replay =
                     case replay.record.game of
                         G.ToroidGo ->
-                            Game.ToroidGo.isLegal replay coords
+                            Game.ToroidGo.isLegal coords replay
 
                         G.Go ->
-                            Game.Go.isLegal replay coords
+                            Game.Go.isLegal coords replay
 
                         _ ->
                             True
@@ -170,10 +171,9 @@ update msg model currentUrl =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions m =
+subscriptions _ =
     Sub.batch
-        [ Browser.Events.onKeyDown (D.map keydown <| D.field "key" D.string)
-        ]
+        [ Browser.Events.onKeyDown (D.map keydown <| D.field "key" D.string) ]
 
 
 keydown : String -> Msg
@@ -293,16 +293,10 @@ sideView model =
 
         navColor : String
         navColor =
-            case model.replay of
-                Just replay ->
-                    if replay.lookingAt.variation == Nothing then
-                        C.colourMain
-
-                    else
-                        "inherit"
-
-                Nothing ->
-                    "inherit"
+            model.replay
+                |> Maybe.Extra.filter (\r -> r.lookingAt.variation == Nothing)
+                |> Maybe.map (always C.colourMain)
+                |> Maybe.withDefault "inherit"
 
         gameNav : H.Html Msg
         gameNav =
@@ -344,16 +338,10 @@ view model =
                     "Loading"
 
         extraClass =
-            case model.replay of
-                Just { record } ->
-                    if record.game == G.Hex then
-                        "wider"
-
-                    else
-                        "narrower"
-
-                Nothing ->
-                    "narrower"
+            model.replay
+                |> Maybe.Extra.filter (\r -> r.record.game == G.Hex)
+                |> Maybe.map (always "wider")
+                |> Maybe.withDefault "narrower"
     in
     { title = gameName ++ " - Game Comment"
     , extraClass = extraClass

@@ -29,18 +29,9 @@ neighbors position coords =
         ]
 
 
-isLegal : R.Replay -> G.Coords -> Bool
-isLegal replay move =
-    isMoveLegal
-        neighbors
-        (G.onMove replay.lookingAt.move G.Go)
-        move
-        (positionFromReplay replay)
-
-
-positionFromReplay : R.Replay -> Position
-positionFromReplay replay =
-    List.foldl (add neighbors) (emptyPosition replay.record.size) (R.currentMoves replay)
+isLegal : G.Coords -> R.Replay -> Bool
+isLegal =
+    isMoveLegal neighbors
 
 
 
@@ -88,8 +79,7 @@ view replay playMsg =
                 normaliseCoords
                 min
                 max
-                (positionFromReplay replay)
+                (positionFromReplay neighbors replay)
                 (R.lastMove replay)
-                (G.onMove replay.lookingAt.move G.Go)
                 playMsg
         )

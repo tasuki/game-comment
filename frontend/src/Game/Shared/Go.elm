@@ -4,6 +4,8 @@ import Array exposing (Array)
 import GameHelpers as GH
 import GameRecord as G
 import List.Extra
+import Maybe.Extra
+import Replay as R
 import Set exposing (Set)
 import Svg exposing (Svg)
 import Svg.Attributes as SA
@@ -149,25 +151,26 @@ add : Neighbors -> G.Move -> Position -> Position
 add neighbors { player, play } position =
     case play of
         G.Place coords ->
-            case maybePlay neighbors player coords position of
-                Just newPos ->
-                    newPos
-
-                Nothing ->
-                    position
+            maybePlay neighbors player coords position
+                |> Maybe.withDefault position
 
         _ ->
             position
 
 
-isMoveLegal : Neighbors -> G.Player -> G.Coords -> Position -> Bool
-isMoveLegal neighbors onMove move pos =
-    case maybePlay neighbors onMove move pos of
-        Just _ ->
-            True
+positionFromReplay : Neighbors -> R.Replay -> Position
+positionFromReplay neighbors replay =
+    List.foldl (add neighbors) (emptyPosition replay.record.size) (R.currentMoves replay)
 
-        Nothing ->
-            False
+
+isMoveLegal : Neighbors -> G.Coords -> R.Replay -> Bool
+isMoveLegal neighbors move replay =
+    Maybe.Extra.isJust <|
+        maybePlay
+            neighbors
+            (G.onMove replay.lookingAt.move G.Go)
+            move
+            (positionFromReplay neighbors replay)
 
 
 
@@ -206,10 +209,9 @@ viewStones :
     -> Int
     -> Position
     -> Maybe G.Move
-    -> G.Player
     -> (G.Coords -> msg)
     -> List (Svg msg)
-viewStones normaliseCoords min max position lastMove onMove playMsg =
+viewStones normaliseCoords min max position lastMove playMsg =
     let
         viewStone : G.Coords -> G.Coords -> G.Player -> Svg msg
         viewStone coords normCoords player =

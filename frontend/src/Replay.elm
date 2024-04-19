@@ -6,6 +6,7 @@ import Html as H
 import Html.Attributes as HA
 import Html.Events as HE
 import List.Extra
+import Maybe.Extra
 import SvgImages as SI
 
 
@@ -388,17 +389,12 @@ deleteCurrentVariation replay =
 deleteVariation : Int -> Replay -> Replay
 deleteVariation varNum replay =
     let
+        lookAt : LookAt
         lookAt =
-            case currentVariation replay of
-                Just ( vn, var ) ->
-                    if vn == varNum then
-                        { variation = Nothing, move = var.fromMove }
-
-                    else
-                        replay.lookingAt
-
-                _ ->
-                    replay.lookingAt
+            currentVariation replay
+                |> Maybe.Extra.filter (\( vn, _ ) -> vn == varNum)
+                |> Maybe.map (\( _, var ) -> { variation = Nothing, move = var.fromMove })
+                |> Maybe.withDefault replay.lookingAt
     in
     { replay
         | variations = removeVar varNum replay
