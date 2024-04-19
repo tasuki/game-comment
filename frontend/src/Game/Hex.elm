@@ -92,11 +92,12 @@ background width height =
     ]
 
 
+hexWidth : Float
 hexWidth =
-    -- 2 * sqrt 3
-    1.732
+    sqrt 3
 
 
+hexHeight : Float
 hexHeight =
     2
 
@@ -129,7 +130,7 @@ viewBoardHex colour coords =
                 , " l 0,-1"
                 , " l -0.866,-0.5"
                 ]
-        , SA.stroke "#444"
+        , SA.stroke "#0005"
         , SA.strokeWidth "0.05"
         , SA.fill colour
         ]

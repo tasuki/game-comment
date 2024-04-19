@@ -23,6 +23,7 @@ type alias Position =
     }
 
 
+emptyPosition : Position
 emptyPosition =
     { pegs = []
     , links = []
@@ -177,9 +178,9 @@ drawBorders size =
         border from path color =
             Svg.path
                 [ SA.d <| "M" ++ from ++ " " ++ path
-                , SA.stroke <| color
+                , SA.stroke color
                 , SA.strokeWidth ".25"
-                , SA.strokeLinecap <| "square"
+                , SA.strokeLinecap "square"
                 ]
                 []
     in
@@ -211,9 +212,9 @@ drawGuidelines size =
                 , SA.y1 <| coord y1
                 , SA.x2 <| coord x2
                 , SA.y2 <| coord y2
-                , SA.stroke "#986"
+                , SA.stroke "#0003"
                 , SA.strokeWidth ".1"
-                , SA.strokeLinecap <| "round"
+                , SA.strokeLinecap "round"
                 ]
                 []
     in

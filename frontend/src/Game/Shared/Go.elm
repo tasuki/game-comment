@@ -189,7 +189,7 @@ viewLines lineMin lineMax offsetMin offsetMax =
                 , SA.y1 <| String.fromFloat y1
                 , SA.x2 <| String.fromFloat x2
                 , SA.y2 <| String.fromFloat y2
-                , SA.stroke "#333"
+                , SA.stroke "#0008"
                 , SA.strokeWidth ".05"
                 ]
                 []
