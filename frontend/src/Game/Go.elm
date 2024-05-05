@@ -75,6 +75,7 @@ view replay playMsg =
         ]
         (background (R.currentColour replay) size
             ++ viewLines (toFloat min) (toFloat max) min max
+            ++ viewStars size
             ++ viewStones
                 normaliseCoords
                 min

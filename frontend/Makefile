@@ -14,4 +14,4 @@ dev:
 	cp -f Config.dev.elm src/Config.elm
 
 serve:
-	serve -p 8000 --single &
+	serve -p 6484 --single &

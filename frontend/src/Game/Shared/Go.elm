@@ -5,6 +5,7 @@ import GameHelpers as GH
 import GameRecord as G
 import List.Extra
 import Maybe.Extra
+import Page.Home exposing (Msg(..))
 import Replay as R
 import Set exposing (Set)
 import Svg exposing (Svg)
@@ -201,6 +202,82 @@ viewLines lineMin lineMax offsetMin offsetMax =
             List.map (\offset -> lazy4 line offset lineMin offset lineMax) offsets
     in
     horizontal ++ vertical
+
+
+starPoints : Int -> List ( Int, Int )
+starPoints boardSize =
+    let
+        half =
+            (boardSize + 1) // 2
+    in
+    if modBy 2 boardSize == 0 then
+        -- Fuck you, you deserve no star points.
+        -- Be happy such transgressions
+        -- against all that is right and just
+        -- are even allowed around here.
+        []
+
+    else if boardSize >= 15 then
+        [ ( 4, 4 ), ( half, half ), ( 4, half ) ]
+
+    else if boardSize >= 13 then
+        [ ( 4, 4 ), ( half, half ) ]
+
+    else if boardSize >= 11 then
+        [ ( 3, 3 ), ( half, half ) ]
+
+    else if boardSize >= 5 then
+        [ ( 3, 3 ) ]
+
+    else
+        []
+
+
+orderedRemoveDupes : comparable -> List comparable -> List comparable
+orderedRemoveDupes previous lst =
+    case lst of
+        x :: xs ->
+            if x == previous then
+                orderedRemoveDupes previous xs
+
+            else
+                x :: orderedRemoveDupes x xs
+
+        [] ->
+            []
+
+
+allStarPoints : Int -> List ( Int, Int )
+allStarPoints boardSize =
+    starPoints boardSize
+        |> List.map (\( x, y ) -> ( x - 1, y - 1 ))
+        |> List.concatMap (\( x, y ) -> [ ( x, y ), ( y, x ) ])
+        |> List.concatMap
+            (\( x, y ) ->
+                [ ( x, y )
+                , ( boardSize - 1 - x, y )
+                , ( x, boardSize - 1 - y )
+                , ( boardSize - 1 - x, boardSize - 1 - y )
+                ]
+            )
+        |> List.sort
+        |> orderedRemoveDupes ( -42, -42 )
+
+
+viewStarPoint : ( Int, Int ) -> Svg msg
+viewStarPoint ( x, y ) =
+    Svg.circle
+        [ SA.cx <| String.fromInt (x + 1)
+        , SA.cy <| String.fromInt (y + 1)
+        , SA.r "0.1"
+        , SA.fill "#0008"
+        ]
+        []
+
+
+viewStars : Int -> List (Svg msg)
+viewStars =
+    allStarPoints >> List.map viewStarPoint
 
 
 viewStones :
