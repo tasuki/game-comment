@@ -1,4 +1,4 @@
-module Utils (lazyTextToByteString, byteStringToLazyText, lbsToLazyText) where
+module Utils where
 
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy.Char8 as LBS
@@ -14,3 +14,11 @@ byteStringToLazyText = TL.fromStrict . TE.decodeUtf8
 
 lbsToLazyText :: LBS.ByteString -> TL.Text
 lbsToLazyText = TLE.decodeUtf8
+
+lazyTextToLbs :: TL.Text -> LBS.ByteString
+lazyTextToLbs = TLE.encodeUtf8
+
+stringToInt :: String -> Maybe Int
+stringToInt str = case reads str of
+    [(x, "")] -> Just x
+    _         -> Nothing

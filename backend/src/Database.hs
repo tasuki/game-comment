@@ -36,15 +36,22 @@ createUser conn createUser = do
 
 authenticateUser :: S.Connection -> CS.CreateSession -> IO (SqlResult Bool)
 authenticateUser conn createSession = do
-    rows <- S.query conn sql [CS.username createSession] :: IO [S.Only Text]
+    rows <- S.query conn query [CS.username createSession] :: IO [S.Only Text]
     case rows of
         [S.Only pass] -> return $ Success $ verifyPassword pass $ CS.password createSession
         _ -> return OtherError
-    where
-        sql = "SELECT password FROM users WHERE username = ?"
+    where query = "SELECT password FROM users WHERE username = ?"
 
 saveRecord :: S.Connection -> Text -> Int -> Text -> IO (SqlResult ())
 saveRecord conn source id sgf = do
     result <- try $ S.execute conn query (source, id, sgf)
     writeResult result
     where query = "REPLACE INTO games (source, id, sgf) VALUES (?, ?, ?)"
+
+fetchRecord :: S.Connection -> Text -> Int -> IO (SqlResult Text)
+fetchRecord conn source id = do
+    rows <- S.query conn query (source, id) :: IO [S.Only Text]
+    case rows of
+        [S.Only sgf] -> return $ Success $ sgf
+        _ -> return OtherError
+    where query = "SELECT sgf FROM games WHERE source = ? AND id = ?"
