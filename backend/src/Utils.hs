@@ -2,6 +2,7 @@ module Utils where
 
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy.Char8 as LBS
+import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Encoding as TLE
@@ -22,3 +23,6 @@ stringToInt :: String -> Maybe Int
 stringToInt str = case reads str of
     [(x, "")] -> Just x
     _         -> Nothing
+
+stringToText :: String -> TL.Text
+stringToText = TL.fromStrict . T.pack

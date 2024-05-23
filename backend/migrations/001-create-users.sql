@@ -1,5 +1,7 @@
 CREATE TABLE users
-    ( id INTEGER PRIMARY KEY
-    , username TEXT UNIQUE
-    , password TEXT
+    ( id INTEGER PRIMARY KEY NOT NULL
+    , username TEXT UNIQUE NOT NULL
+    , password TEXT NOT NULL
+    , email TEXT
+    , updated DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
     );
