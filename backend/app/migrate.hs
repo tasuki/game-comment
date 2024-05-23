@@ -3,30 +3,29 @@
 
 import Control.Monad (forM_, unless)
 import qualified Data.Text as T
-import Database.SQLite.Simple
+import qualified Database.SQLite.Simple as S
 import System.Directory (listDirectory)
 import System.FilePath ((</>), takeFileName)
 import Data.List (sort)
 import Data.Maybe (listToMaybe)
-import Data.Time.Clock (UTCTime)
 
-import Database (openDb)
+import qualified Database as DB
 
-applyMigration :: Connection -> FilePath -> IO ()
+applyMigration :: S.Connection -> FilePath -> IO ()
 applyMigration conn file = do
     migration <- readFile ("migrations" </> file)
-    execute_ conn (Query $ T.pack migration)
-    execute conn "INSERT INTO migrations (name) VALUES (?)" (Only $ takeFileName file)
+    S.execute_ conn (S.Query $ T.pack migration)
+    S.execute conn "INSERT INTO migrations (name) VALUES (?)" (S.Only $ takeFileName file)
 
-wasMigrationAppliedAt :: Connection -> FilePath -> IO (Maybe String)
+wasMigrationAppliedAt :: S.Connection -> FilePath -> IO (Maybe String)
 wasMigrationAppliedAt conn file = do
-    result <- query conn "SELECT applied_at FROM migrations WHERE name = ?" (Only $ takeFileName file) :: IO [Only String]
-    return $ listToMaybe [ts | Only ts <- result]
+    result <- S.query conn "SELECT applied_at FROM migrations WHERE name = ?" (S.Only $ takeFileName file) :: IO [S.Only String]
+    return $ listToMaybe [ts | S.Only ts <- result]
 
 main :: IO ()
 main = do
-    conn <- openDb "game-comment.sqlite3"
-    execute_ conn "CREATE TABLE IF NOT EXISTS migrations \
+    conn <- DB.open "game-comment.sqlite3"
+    S.execute_ conn "CREATE TABLE IF NOT EXISTS migrations \
         \(name TEXT PRIMARY KEY, applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP)"
     files <- listDirectory "migrations"
     forM_ (sort files) $ \file -> do

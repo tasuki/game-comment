@@ -1,62 +1,62 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Config
+import Config (allowOrigin)
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (object, (.=))
 import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.Text.Lazy (Text)
-import Database.SQLite.Simple
-import Network.HTTP.Client (httpLbs, newManager, parseRequest, Response(responseStatus, responseBody))
-import Network.HTTP.Client.TLS (tlsManagerSettings)
-import Network.HTTP.Types.Status
-import Web.Scotty
+import qualified Database.SQLite.Simple as SQL
+import qualified Network.HTTP.Client as HTTP
+import qualified Network.HTTP.Client.TLS as TLS
+import qualified Network.HTTP.Types.Status as Status
+import qualified Web.Scotty as S
 
-import ApiResources
-import Database
-import Utils
+import qualified ApiResources as API
+import qualified Database as DB
+import qualified Utils as U
 
-fetchGameRecord :: String -> IO (Status, L8.ByteString)
+fetchGameRecord :: String -> IO (Status.Status, L8.ByteString)
 fetchGameRecord gameId = do
     let gameUrl = "https://www.littlegolem.net/servlet/sgf/" <> gameId <> "/game.sgf"
-    manager <- newManager tlsManagerSettings
-    request <- parseRequest gameUrl
-    response <- httpLbs request manager
-    return (responseStatus response, responseBody response)
+    manager <- HTTP.newManager TLS.tlsManagerSettings
+    request <- HTTP.parseRequest gameUrl
+    response <- HTTP.httpLbs request manager
+    return (HTTP.responseStatus response, HTTP.responseBody response)
 
-jsonMsg :: Text -> ActionM ()
-jsonMsg msg = json $ object [ "msg" .= (msg :: Text) ]
+jsonMsg :: Text -> S.ActionM ()
+jsonMsg msg = S.json $ object [ "msg" .= (msg :: Text) ]
 
-maybeSaveRecord :: Connection -> Status -> Text -> Int -> Text -> IO (SqlResult ())
+maybeSaveRecord :: SQL.Connection -> Status.Status -> Text -> Int -> Text -> IO (DB.SqlResult ())
 maybeSaveRecord conn responseStatus source gameId sgf =
-    if responseStatus == status200
-        then saveRecord conn source gameId sgf
-        else return OtherError
+    if responseStatus == Status.status200
+        then DB.saveRecord conn source gameId sgf
+        else return DB.OtherError
 
 main :: IO ()
 main = do
-    conn <- openDb "game-comment.sqlite3"
-    scotty 6483 $ do
-        get "/games/lg/:gameId" $ do
-            gameId <- param "gameId"
+    conn <- DB.open "game-comment.sqlite3"
+    S.scotty 6483 $ do
+        S.get "/games/lg/:gameId" $ do
+            gameId <- S.param "gameId"
             (responseStatus, record) <- liftIO $ fetchGameRecord gameId
-            _ <- liftIO $ maybeSaveRecord conn responseStatus "lg" 123 (lbsToLazyText record) -- TODO 123 !!!!!!!
-            status responseStatus -- we don't mind too bad if this is off
-            setHeader "Content-Type" "application/sgf; charset=iso-8859-1"
-            setHeader "Access-Control-Allow-Origin" allowOrigin
-            raw record
+            _ <- liftIO $ maybeSaveRecord conn responseStatus "lg" 123 (U.lbsToLazyText record) -- TODO 123 !!!!!!!
+            S.status responseStatus -- we don't mind too bad if this is off
+            S.setHeader "Content-Type" "application/sgf; charset=iso-8859-1"
+            S.setHeader "Access-Control-Allow-Origin" allowOrigin
+            S.raw record
 
-        post "/users" $ do
-            user <- jsonData :: ActionM CreateUser
-            creationResult <- liftIO $ createUser conn user
+        S.post "/users" $ do
+            user <- S.jsonData :: S.ActionM API.CreateUser
+            creationResult <- liftIO $ DB.createUser conn user
             case creationResult of
-                Success () -> jsonMsg "User created successfully"
-                ConstraintError -> status status409 >> jsonMsg "Username already exists"
-                _ -> status status500 >> jsonMsg "Unknown error"
+                DB.Success () -> jsonMsg "User created successfully"
+                DB.ConstraintError -> S.status Status.status409 >> jsonMsg "Username already exists"
+                _ -> S.status Status.status500 >> jsonMsg "Unknown error"
 
-        post "/sessions" $ do
-            user <- jsonData :: ActionM CreateSession
-            creationResult <- liftIO $ authenticateUser conn user
+        S.post "/sessions" $ do
+            user <- S.jsonData :: S.ActionM API.CreateSession
+            creationResult <- liftIO $ DB.authenticateUser conn user
             case creationResult of
-                Success True -> jsonMsg "Authenticated"
-                Success False -> jsonMsg "Username and password don't match"
-                _ -> status status500 >> jsonMsg "Unknown error"
+                DB.Success True -> jsonMsg "Authenticated"
+                DB.Success False -> jsonMsg "Username and password don't match"
+                _ -> S.status Status.status500 >> jsonMsg "Unknown error"

@@ -3,7 +3,7 @@
 
 module ApiResources where
 
-import Data.Aeson
+import qualified Data.Aeson as A
 import Data.Text.Lazy (Text)
 import GHC.Generics (Generic)
 
@@ -13,8 +13,8 @@ data CreateUser = CreateUser
     , password :: Text
     } deriving (Show, Generic)
 
-instance FromJSON CreateUser
-instance ToJSON CreateUser
+instance A.FromJSON CreateUser
+instance A.ToJSON CreateUser
 
 
 data CreateSession = CreateSession
@@ -22,5 +22,5 @@ data CreateSession = CreateSession
     , password :: Text
     } deriving (Show, Generic)
 
-instance FromJSON CreateSession
-instance ToJSON CreateSession
+instance A.FromJSON CreateSession
+instance A.ToJSON CreateSession
