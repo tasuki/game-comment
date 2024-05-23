@@ -3,20 +3,12 @@
 module Passwords (hashPassword, verifyPassword) where
 
 import Crypto.Scrypt
-import qualified Data.ByteString as BS
-import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Encoding as TE
-import qualified Data.Text.Lazy.Encoding as TLE
+
+import Utils
 
 salt :: Salt
 salt = Salt "SaltyPeanutIsSalty"
-
-lazyTextToByteString :: TL.Text -> BS.ByteString
-lazyTextToByteString = LBS.toStrict . TLE.encodeUtf8
-
-byteStringToLazyText :: BS.ByteString -> TL.Text
-byteStringToLazyText = TL.fromStrict . TE.decodeUtf8
 
 toPass :: TL.Text -> Pass
 toPass = Pass . lazyTextToByteString
