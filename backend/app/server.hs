@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Config (allowOrigin)
 import Control.Exception (try)
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (object, (.=))
@@ -17,6 +16,7 @@ import qualified Web.Scotty as S
 
 import qualified ApiResources as API
 import qualified Database as DB
+import qualified Env as E
 import qualified Utils as U
 
 
@@ -54,8 +54,8 @@ maybeSaveRecord conn source gameId eitherResult =
             _ <- logMsg $ printf "NOT saving game, exception: %s" (show e)
             return $ DB.Success ()
 
-getGame :: (Text -> IO GameFetched) -> SQL.Connection -> Text -> Text -> S.ActionM ()
-getGame fetcher conn source gameId = do
+getGame :: E.Config -> (Text -> IO GameFetched) -> SQL.Connection -> Text -> Text -> S.ActionM ()
+getGame config fetcher conn source gameId = do
     result <- liftIO $ fetcher gameId
     _ <- liftIO $ maybeSaveRecord conn source gameId result
     record <- liftIO $ DB.fetchRecord conn source gameId
@@ -65,11 +65,12 @@ getGame fetcher conn source gameId = do
         DB.Success record -> do
             S.status Status.status200
             S.setHeader "Content-Type" "application/sgf" -- charset is illegal anyway
-            S.setHeader "Access-Control-Allow-Origin" allowOrigin
+            S.setHeader "Access-Control-Allow-Origin" $ U.stringToText $ E.allowOrigin config
             S.raw record
 
 main :: IO ()
 main = do
+    config <- E.readEnvVars
     conn <- DB.open "game-comment.sqlite3"
     S.scotty 6483 $ do
         S.get "/games/lg/:gameId" $ do
@@ -77,11 +78,11 @@ main = do
             case U.stringToInt gameId of
                 Nothing -> S.status Status.status400 >> jsonMsg "LG game id must be a number"
                 Just _ ->
-                    getGame fetchLittleGolemGameRecord conn "lg" $ U.stringToText gameId
+                    getGame config fetchLittleGolemGameRecord conn "lg" $ U.stringToText gameId
 
         S.post "/users" $ do
             user <- S.jsonData :: S.ActionM API.CreateUser
-            creationResult <- liftIO $ DB.createUser conn user
+            creationResult <- liftIO $ DB.createUser conn (E.passSalt config) user
             case creationResult of
                 DB.Success () -> jsonMsg "User created successfully"
                 DB.ConstraintError -> S.status Status.status409 >> jsonMsg "Username already exists"

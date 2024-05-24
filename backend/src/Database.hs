@@ -29,11 +29,11 @@ writeResult result =
         Left (S.SQLError S.ErrorConstraint _ _) -> return ConstraintError
         Left _ -> return OtherError
 
-createUser :: S.Connection -> CU.CreateUser -> IO (SqlResult ())
-createUser conn createUser = do
+createUser :: S.Connection -> String -> CU.CreateUser -> IO (SqlResult ())
+createUser conn salt createUser = do
     result <- try $ S.execute conn query
         ( CU.username createUser
-        , hashPassword $ CU.password createUser
+        , hashPassword salt $ CU.password createUser
         , CU.email createUser
         )
     writeResult result

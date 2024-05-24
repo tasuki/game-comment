@@ -8,6 +8,7 @@ dependencies:
     - aeson
     - bytestring
     - directory
+    - dotenv
     - filepath
     - http-client
     - http-client-tls

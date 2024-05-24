@@ -7,15 +7,12 @@ import qualified Data.Text.Lazy as TL
 
 import qualified Utils as U
 
-salt :: S.Salt
-salt = S.Salt "SaltyPeanutIsSalty"
-
 toPass :: TL.Text -> S.Pass
 toPass = S.Pass . U.lazyTextToByteString
 
-hashPassword :: TL.Text -> TL.Text
-hashPassword plainTextPass = U.byteStringToLazyText $ S.getEncryptedPass
-    $ S.encryptPass S.defaultParams salt $ toPass plainTextPass
+hashPassword :: String -> TL.Text -> TL.Text
+hashPassword salt plainTextPass = U.byteStringToLazyText $ S.getEncryptedPass
+    $ S.encryptPass S.defaultParams (S.Salt (U.stringToByteString salt)) $ toPass plainTextPass
 
 verifyPassword :: TL.Text -> TL.Text -> Bool
 verifyPassword hashedPassword plainTextPass =

@@ -1,5 +1,5 @@
+backend/.env
 backend/.stack-work/
-backend/app/Config.hs
 backend/bin/
 backend/game-comment.sqlite3
 backend/game-comment-backend.cabal
