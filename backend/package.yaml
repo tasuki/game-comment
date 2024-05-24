@@ -7,12 +7,14 @@ dependencies:
     - scotty
     - aeson
     - bytestring
+    - containers
     - directory
     - dotenv
     - filepath
     - http-client
     - http-client-tls
     - http-types
+    - jwt
     - memory
     - scrypt
     - sqlite-simple

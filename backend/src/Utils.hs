@@ -19,13 +19,19 @@ lbsToLazyText = TLE.decodeUtf8
 lazyTextToLbs :: TL.Text -> LBS.ByteString
 lazyTextToLbs = TLE.encodeUtf8
 
+lazyTextToText :: TL.Text -> T.Text
+lazyTextToText = TL.toStrict
+
 stringToInt :: String -> Maybe Int
 stringToInt str = case reads str of
     [(x, "")] -> Just x
     _         -> Nothing
 
-stringToText :: String -> TL.Text
-stringToText = TL.fromStrict . T.pack
+stringToLazyText :: String -> TL.Text
+stringToLazyText = TL.fromStrict . T.pack
+
+stringToText :: String -> T.Text
+stringToText = T.pack
 
 stringToByteString :: String -> BS.ByteString
 stringToByteString = BS.pack

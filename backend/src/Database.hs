@@ -7,8 +7,10 @@ import qualified Database.SQLite.Simple as S
 import Data.Text.Lazy (Text)
 import qualified Data.ByteString.Lazy.Char8 as LBS
 
+import qualified ApiResources as AR
 import qualified ApiResources as CU (CreateUser(username, password, email))
 import qualified ApiResources as CS (CreateSession(username, password))
+
 import Passwords (hashPassword, verifyPassword)
 
 open :: String -> IO S.Connection
@@ -24,10 +26,10 @@ data SqlResult a
 
 writeResult :: Either S.SQLError () -> IO (SqlResult ())
 writeResult result =
-    case result of
-        Right _ -> return $ Success ()
-        Left (S.SQLError S.ErrorConstraint _ _) -> return ConstraintError
-        Left _ -> return OtherError
+    return $ case result of
+        Right _ -> Success ()
+        Left (S.SQLError S.ErrorConstraint _ _) -> ConstraintError
+        Left _ -> OtherError
 
 createUser :: S.Connection -> String -> CU.CreateUser -> IO (SqlResult ())
 createUser conn salt createUser = do
@@ -39,13 +41,18 @@ createUser conn salt createUser = do
     writeResult result
     where query = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)"
 
-authenticateUser :: S.Connection -> CS.CreateSession -> IO (SqlResult Bool)
+authenticateUser :: S.Connection -> CS.CreateSession -> IO (SqlResult (Either String AR.UserData))
 authenticateUser conn createSession = do
-    rows <- S.query conn query [CS.username createSession] :: IO [S.Only Text]
-    case rows of
-        [S.Only pass] -> return $ Success $ verifyPassword pass $ CS.password createSession
-        _ -> return OtherError
-    where query = "SELECT password FROM users WHERE username = ?"
+    rows <- S.query conn query [CS.username createSession] :: IO [(Int, Text, Text)]
+    return $ case rows of
+        [(id, username, pass)] -> Success $
+            if verifyPassword pass $ CS.password createSession then
+                Right $ AR.UserData id username
+            else
+                Left "Username and password don't match"
+        [] -> Success $ Left "No such user exists"
+        _ -> OtherError
+    where query = "SELECT id, username, password FROM users WHERE username = ?"
 
 saveRecord :: S.Connection -> Text -> Text -> LBS.ByteString -> IO (SqlResult ())
 saveRecord conn source id sgf = do
@@ -56,7 +63,7 @@ saveRecord conn source id sgf = do
 fetchRecord :: S.Connection -> Text -> Text -> IO (SqlResult LBS.ByteString)
 fetchRecord conn source id = do
     rows <- S.query conn query (source, id) :: IO [S.Only LBS.ByteString]
-    case rows of
-        [S.Only sgf] -> return $ Success $ sgf
-        _ -> return OtherError
+    return $ case rows of
+        [S.Only sgf] -> Success $ sgf
+        _ -> OtherError
     where query = "SELECT sgf FROM games WHERE source = ? AND id = ?"

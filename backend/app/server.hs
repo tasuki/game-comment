@@ -6,6 +6,7 @@ import Data.Aeson (object, (.=))
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import Data.Text.Lazy (Text, unpack)
 import qualified Data.Time.Clock as TC
+import qualified Data.Time.Clock.System as TCS
 import qualified Data.Time.Format as TF
 import qualified Database.SQLite.Simple as SQL
 import qualified Network.HTTP.Client as HTTP
@@ -15,6 +16,7 @@ import Text.Printf (printf)
 import qualified Web.Scotty as S
 
 import qualified ApiResources as API
+import qualified Auth as A
 import qualified Database as DB
 import qualified Env as E
 import qualified Utils as U
@@ -28,6 +30,9 @@ logMsg str = do
 
 jsonMsg :: Text -> S.ActionM ()
 jsonMsg msg = S.json $ object [ "msg" .= (msg :: Text) ]
+
+jsonMsgStr :: String -> S.ActionM ()
+jsonMsgStr = stringToLazyText >> jsonMsg
 
 type GameFetched = Either HTTP.HttpException (Status.Status, LBS.ByteString)
 
@@ -65,8 +70,14 @@ getGame config fetcher conn source gameId = do
         DB.Success record -> do
             S.status Status.status200
             S.setHeader "Content-Type" "application/sgf" -- charset is illegal anyway
-            S.setHeader "Access-Control-Allow-Origin" $ U.stringToText $ E.allowOrigin config
+            S.setHeader "Access-Control-Allow-Origin" $ U.stringToLazyText $ E.allowOrigin config
             S.raw record
+
+getCurrentUnixTime :: IO Integer
+getCurrentUnixTime = do
+    currentTime <- TCS.getSystemTime
+    let (TCS.MkSystemTime seconds _) = currentTime
+    return $ fromIntegral seconds
 
 main :: IO ()
 main = do
@@ -76,9 +87,10 @@ main = do
         S.get "/games/lg/:gameId" $ do
             gameId <- S.param "gameId"
             case U.stringToInt gameId of
-                Nothing -> S.status Status.status400 >> jsonMsg "LG game id must be a number"
+                Nothing ->
+                    S.status Status.status400 >> jsonMsg "LG game id must be a number"
                 Just _ ->
-                    getGame config fetchLittleGolemGameRecord conn "lg" $ U.stringToText gameId
+                    getGame config fetchLittleGolemGameRecord conn "lg" $ U.stringToLazyText gameId
 
         S.post "/users" $ do
             user <- S.jsonData :: S.ActionM API.CreateUser
@@ -89,9 +101,13 @@ main = do
                 _ -> S.status Status.status500 >> jsonMsg "Unknown error"
 
         S.post "/sessions" $ do
+            nowTime <- liftIO getCurrentUnixTime
             user <- S.jsonData :: S.ActionM API.CreateSession
             creationResult <- liftIO $ DB.authenticateUser conn user
             case creationResult of
-                DB.Success True -> jsonMsg "Authenticated"
-                DB.Success False -> jsonMsg "Username and password don't match"
-                _ -> S.status Status.status500 >> jsonMsg "Unknown error"
+                DB.Success (Right userData) ->
+                    S.json $ object [ "authToken" .= (A.createJwt (E.jwtSecret config) nowTime userData) ]
+                DB.Success (Left msg) ->
+                    S.status Status.status401 >> jsonMsgStr msg
+                _ ->
+                    S.status Status.status500 >> jsonMsg "Unknown error"
