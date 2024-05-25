@@ -12,6 +12,8 @@ import qualified Database.SQLite.Simple as SQL
 import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Client.TLS as TLS
 import qualified Network.HTTP.Types.Status as Status
+import Network.Wai (Middleware)
+import Network.Wai.Middleware.AddHeaders (addHeaders)
 import Text.Printf (printf)
 import qualified Web.Scotty as S
 
@@ -33,6 +35,10 @@ jsonMsg msg = S.json $ object [ "msg" .= (msg :: Text) ]
 
 jsonMsgStr :: String -> S.ActionM ()
 jsonMsgStr = stringToLazyText >> jsonMsg
+
+addDefaultHeaders :: String -> Middleware
+addDefaultHeaders allowOrigin = addHeaders
+    [ ("Access-Control-Allow-Origin", U.stringToByteString allowOrigin ) ]
 
 type GameFetched = Either HTTP.HttpException (Status.Status, LBS.ByteString)
 
@@ -70,7 +76,6 @@ getGame config fetcher conn source gameId = do
         DB.Success record -> do
             S.status Status.status200
             S.setHeader "Content-Type" "application/sgf" -- charset is illegal anyway
-            S.setHeader "Access-Control-Allow-Origin" $ U.stringToLazyText $ E.allowOrigin config
             S.raw record
 
 getCurrentUnixTime :: IO Integer
@@ -84,6 +89,7 @@ main = do
     config <- E.readEnvVars
     conn <- DB.open "game-comment.sqlite3"
     S.scotty 6483 $ do
+        S.middleware $ addDefaultHeaders $ E.allowOrigin config
         S.get "/games/lg/:gameId" $ do
             gameId <- S.param "gameId"
             case U.stringToInt gameId of

@@ -20,6 +20,8 @@ dependencies:
     - sqlite-simple
     - text
     - time
+    - wai
+    - wai-extra
 
 library:
     source-dirs: src
