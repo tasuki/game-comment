@@ -13,6 +13,9 @@ lazyTextToByteString = LBS.toStrict . TLE.encodeUtf8
 byteStringToLazyText :: BS.ByteString -> TL.Text
 byteStringToLazyText = TL.fromStrict . TE.decodeUtf8
 
+byteStringToString :: BS.ByteString -> String
+byteStringToString = BS.unpack
+
 lbsToLazyText :: LBS.ByteString -> TL.Text
 lbsToLazyText = TLE.decodeUtf8
 

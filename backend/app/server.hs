@@ -12,7 +12,8 @@ import qualified Database.SQLite.Simple as SQL
 import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Client.TLS as TLS
 import qualified Network.HTTP.Types.Status as Status
-import Network.Wai (Middleware)
+import Network.Wai (Middleware, responseLBS)
+import Network.Wai.Internal (requestHeaders)
 import Network.Wai.Middleware.AddHeaders (addHeaders)
 import Text.Printf (printf)
 import qualified Web.Scotty as S
@@ -33,18 +34,31 @@ logMsg str = do
 jsonMsg :: Text -> S.ActionM ()
 jsonMsg msg = S.json $ object [ "msg" .= (msg :: Text) ]
 
-jsonMsgStr :: String -> S.ActionM ()
-jsonMsgStr = stringToLazyText >> jsonMsg
-
 addDefaultHeaders :: String -> Middleware
 addDefaultHeaders allowOrigin = addHeaders
     [ ("Access-Control-Allow-Origin", U.stringToByteString allowOrigin ) ]
+
+onlySignedIn :: String -> S.ActionM () -> S.ActionM ()
+onlySignedIn secretKey action = do
+    let respondUnauthorized = S.status Status.status401 >> jsonMsg "You must be logged in"
+    mToken <- S.header "Authorization"
+    case mToken of
+        Nothing -> do
+            respondUnauthorized
+        Just token -> do
+            -- Remove "Bearer " prefix
+            let jwtToken = drop 7 $ unpack token
+            case A.verifyJwt secretKey jwtToken of
+                Nothing -> respondUnauthorized
+                Just jwt -> action
+
+
 
 type GameFetched = Either HTTP.HttpException (Status.Status, LBS.ByteString)
 
 fetchLittleGolemGameRecord :: Text -> IO GameFetched
 fetchLittleGolemGameRecord gameId = do
-    let gameUrl = "https://www.littlegolem.net/servlet/sgf/" <> (unpack gameId) <> "/game.sgf"
+    let gameUrl = "https://www.littlegolem.net/servlet/sgf/" <> unpack gameId <> "/game.sgf"
     try $ do
         _ <- logMsg $ printf "Fetching game: %s" gameUrl
         manager <- HTTP.newManager TLS.tlsManagerSettings
@@ -71,12 +85,12 @@ getGame config fetcher conn source gameId = do
     _ <- liftIO $ maybeSaveRecord conn source gameId result
     record <- liftIO $ DB.fetchRecord conn source gameId
     case record of
-        DB.OtherError ->
-            S.status Status.status404 >> jsonMsg "Game record not found"
         DB.Success record -> do
             S.status Status.status200
             S.setHeader "Content-Type" "application/sgf" -- charset is illegal anyway
             S.raw record
+        _ ->
+            S.status Status.status404 >> jsonMsg "Game record not found"
 
 getCurrentUnixTime :: IO Integer
 getCurrentUnixTime = do
@@ -112,8 +126,14 @@ main = do
             creationResult <- liftIO $ DB.authenticateUser conn user
             case creationResult of
                 DB.Success (Right userData) ->
-                    S.json $ object [ "authToken" .= (A.createJwt (E.jwtSecret config) nowTime userData) ]
+                    S.json $ object [ "authToken" .= A.createJwt (E.jwtSecret config) nowTime userData ]
                 DB.Success (Left msg) ->
-                    S.status Status.status401 >> jsonMsgStr msg
+                    S.status Status.status401 >> jsonMsg (U.stringToLazyText msg)
                 _ ->
                     S.status Status.status500 >> jsonMsg "Unknown error"
+
+        S.post "/games/:source/:gameId/comments" $ do
+            onlySignedIn (E.jwtSecret config) (do
+                --gameId <- S.param "gameId"
+                --source <- S.param "source"
+                S.status Status.status500 >> jsonMsg "Not impl yet")
