@@ -19,6 +19,7 @@ import Text.Printf (printf)
 import qualified Web.Scotty as S
 
 import qualified ApiResources as API
+import qualified ApiResources as UD (UserData(id, username))
 import qualified Auth as A
 import qualified Database as DB
 import qualified Env as E
@@ -38,7 +39,7 @@ addDefaultHeaders :: String -> Middleware
 addDefaultHeaders allowOrigin = addHeaders
     [ ("Access-Control-Allow-Origin", U.stringToByteString allowOrigin ) ]
 
-onlySignedIn :: String -> S.ActionM () -> S.ActionM ()
+onlySignedIn :: String -> (API.UserData -> S.ActionM ()) -> S.ActionM ()
 onlySignedIn secretKey action = do
     let respondUnauthorized = S.status Status.status401 >> jsonMsg "You must be logged in"
     mToken <- S.header "Authorization"
@@ -50,7 +51,7 @@ onlySignedIn secretKey action = do
             let jwtToken = drop 7 $ unpack token
             case A.verifyJwt secretKey jwtToken of
                 Nothing -> respondUnauthorized
-                Just jwt -> action
+                Just userData -> action userData
 
 
 
@@ -132,8 +133,22 @@ main = do
                 _ ->
                     S.status Status.status500 >> jsonMsg "Unknown error"
 
+        S.get "/games/:source/:gameId/comments" $ do
+            gameId <- S.param "gameId"
+            source <- S.param "source"
+            commentResult <- liftIO $ DB.getComments conn source gameId
+            case commentResult of
+                DB.Success comments -> S.json comments
+                _ -> S.status Status.status500 >> jsonMsg "Unknown error"
+
         S.post "/games/:source/:gameId/comments" $ do
-            onlySignedIn (E.jwtSecret config) (do
-                --gameId <- S.param "gameId"
-                --source <- S.param "source"
-                S.status Status.status500 >> jsonMsg "Not impl yet")
+            onlySignedIn (E.jwtSecret config) (\user -> do
+                gameId <- S.param "gameId"
+                source <- S.param "source"
+                API.CreateComment comment <- S.jsonData :: S.ActionM API.CreateComment
+                commentResult <- liftIO $ DB.postComment conn (UD.id user) source gameId comment
+                case commentResult of
+                    DB.Success () -> jsonMsg "Comment posted"
+                    DB.ConstraintError -> S.status Status.status409 >> jsonMsg "No such game, or dupe comment, your choice!"
+                    _ -> S.status Status.status500 >> jsonMsg "Unknown error"
+                )

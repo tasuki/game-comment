@@ -5,9 +5,10 @@ module Database where
 import Control.Exception (try)
 import qualified Database.SQLite.Simple as S
 import Data.Text.Lazy (Text)
+import Data.Tuple.Curry (uncurryN)
 import qualified Data.ByteString.Lazy.Char8 as LBS
 
-import qualified ApiResources as AR
+import qualified ApiResources as API
 import qualified ApiResources as CU (CreateUser(username, password, email))
 import qualified ApiResources as CS (CreateSession(username, password))
 
@@ -41,13 +42,13 @@ createUser conn salt createUser = do
     writeResult result
     where query = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)"
 
-authenticateUser :: S.Connection -> CS.CreateSession -> IO (SqlResult (Either String AR.UserData))
+authenticateUser :: S.Connection -> CS.CreateSession -> IO (SqlResult (Either String API.UserData))
 authenticateUser conn createSession = do
     rows <- S.query conn query [CS.username createSession] :: IO [(Int, Text, Text)]
     return $ case rows of
         [(id, username, pass)] -> Success $
             if verifyPassword pass $ CS.password createSession then
-                Right $ AR.UserData id username
+                Right $ API.UserData id username
             else
                 Left "Username and password don't match"
         [] -> Success $ Left "No such user exists"
@@ -55,15 +56,32 @@ authenticateUser conn createSession = do
     where query = "SELECT id, username, password FROM users WHERE username = ?"
 
 saveRecord :: S.Connection -> Text -> Text -> LBS.ByteString -> IO (SqlResult ())
-saveRecord conn source id sgf = do
-    result <- try $ S.execute conn query (source, id, sgf)
+saveRecord conn source gameId sgf = do
+    result <- try $ S.execute conn query (source, gameId, sgf)
     writeResult result
-    where query = "REPLACE INTO games (source, id, sgf) VALUES (?, ?, ?)"
+    where query = "REPLACE INTO games (source, game_id, sgf) VALUES (?, ?, ?)"
 
 fetchRecord :: S.Connection -> Text -> Text -> IO (SqlResult LBS.ByteString)
-fetchRecord conn source id = do
-    rows <- S.query conn query (source, id) :: IO [S.Only LBS.ByteString]
+fetchRecord conn source gameId = do
+    rows <- S.query conn query (source, gameId) :: IO [S.Only LBS.ByteString]
     return $ case rows of
         [S.Only sgf] -> Success $ sgf
         _ -> OtherError
-    where query = "SELECT sgf FROM games WHERE source = ? AND id = ?"
+    where query = "SELECT sgf FROM games WHERE source = ? AND game_id = ?"
+
+getComments :: S.Connection -> Text -> Text -> IO (SqlResult [API.Comment])
+getComments conn source gameId = do
+    rows <- S.query conn query (source, gameId) :: IO [(Int, Int, Text, Text, Text)]
+    return $ Success $ map (uncurryN API.Comment) rows
+    where query = "\
+        \ SELECT c.id, c.user_id, u.username, c.comment, c.created \
+        \ FROM comments AS c \
+        \ JOIN users AS u ON u.id = c.user_id \
+        \ WHERE c.source = ? AND c.game_id = ? \
+        \ ORDER BY c.created"
+
+postComment :: S.Connection -> Int -> Text -> Text -> Text -> IO (SqlResult ())
+postComment conn userId source gameId comment = do
+    result <- try $ S.execute conn query (userId, source, gameId, comment)
+    writeResult result
+    where query = "INSERT INTO comments (user_id, source, game_id, comment) VALUES (?, ?, ?, ?)"

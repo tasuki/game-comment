@@ -38,3 +38,20 @@ data SessionData = SessionData
     } deriving (Show, Generic)
 instance A.FromJSON SessionData
 instance A.ToJSON SessionData
+
+
+data CreateComment = CreateComment
+    { comment :: Text
+    } deriving (Show, Generic)
+instance A.FromJSON CreateComment
+instance A.ToJSON CreateComment
+
+data Comment = Comment
+    { commentId :: Int
+    , userId :: Int
+    , username :: Text
+    , comment :: Text
+    , created :: Text
+    } deriving (Show, Generic)
+instance A.FromJSON Comment
+instance A.ToJSON Comment
