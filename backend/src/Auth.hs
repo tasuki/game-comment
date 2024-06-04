@@ -12,7 +12,7 @@ import qualified ApiResources as AR
 import qualified ApiResources as UD (UserData(id, username))
 import qualified Utils as U
 
-createJwt :: String -> Integer -> AR.UserData -> T.Text
+createJwt :: String -> Integer -> AR.UserData -> TL.Text
 createJwt secretKey nowTime userData =
     let
         cs = mempty
@@ -23,7 +23,7 @@ createJwt secretKey nowTime userData =
             , JWT.exp = JWT.numericDate $ fromIntegral $ nowTime + 60*60*24*365
             }
         key = JWT.hmacSecret (U.stringToText secretKey)
-    in JWT.encodeSigned key mempty cs
+    in TL.fromStrict $ JWT.encodeSigned key mempty cs
 
 verifyJwt :: String -> String -> Maybe AR.UserData
 verifyJwt secretKey jwt =

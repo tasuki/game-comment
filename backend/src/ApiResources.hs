@@ -14,13 +14,16 @@ data CreateUser = CreateUser
     , email :: Maybe Text
     } deriving (Show, Generic)
 instance A.FromJSON CreateUser
-instance A.ToJSON CreateUser
+
+data UpdatePassword = UpdatePassword
+    { password :: Text
+    } deriving (Show, Generic)
+instance A.FromJSON UpdatePassword
 
 data UserData = UserData
     { id :: Int
     , username :: Text
     } deriving (Show, Generic)
-instance A.FromJSON UserData
 instance A.ToJSON UserData
 --instance FromRow UserData where
 --    fromRow = UserData <$> field <*> field
@@ -31,12 +34,10 @@ data CreateSession = CreateSession
     , password :: Text
     } deriving (Show, Generic)
 instance A.FromJSON CreateSession
-instance A.ToJSON CreateSession
 
 data SessionData = SessionData
     { authToken :: Text
     } deriving (Show, Generic)
-instance A.FromJSON SessionData
 instance A.ToJSON SessionData
 
 
@@ -44,7 +45,6 @@ data CreateComment = CreateComment
     { comment :: Text
     } deriving (Show, Generic)
 instance A.FromJSON CreateComment
-instance A.ToJSON CreateComment
 
 data Comment = Comment
     { commentId :: Int
@@ -53,5 +53,4 @@ data Comment = Comment
     , comment :: Text
     , created :: Text
     } deriving (Show, Generic)
-instance A.FromJSON Comment
 instance A.ToJSON Comment

@@ -10,6 +10,8 @@ import qualified Data.ByteString.Lazy.Char8 as LBS
 
 import qualified ApiResources as API
 import qualified ApiResources as CU (CreateUser(username, password, email))
+import qualified ApiResources as UP (UpdatePassword(password))
+import qualified ApiResources as UD (UserData(id, username))
 import qualified ApiResources as CS (CreateSession(username, password))
 
 import Passwords (hashPassword, verifyPassword)
@@ -31,6 +33,7 @@ writeResult result =
         Right _ -> Success ()
         Left (S.SQLError S.ErrorConstraint _ _) -> ConstraintError
         Left _ -> OtherError
+
 
 createUser :: S.Connection -> String -> CU.CreateUser -> IO (SqlResult ())
 createUser conn salt createUser = do
@@ -54,6 +57,15 @@ authenticateUser conn createSession = do
         [] -> Success $ Left "No such user exists"
         _ -> OtherError
     where query = "SELECT id, username, password FROM users WHERE username = ?"
+
+updatePassword :: S.Connection -> String -> API.UserData -> UP.UpdatePassword -> IO (SqlResult ())
+updatePassword conn salt userData updatePassword = do
+    result <- try $ S.execute conn query
+        ( hashPassword salt $ UP.password updatePassword
+        , UD.id userData
+        )
+    writeResult result
+    where query = "UPDATE users SET password = ? WHERE id = ?"
 
 saveRecord :: S.Connection -> Text -> Text -> LBS.ByteString -> IO (SqlResult ())
 saveRecord conn source gameId sgf = do
@@ -80,8 +92,8 @@ getComments conn source gameId = do
         \ WHERE c.source = ? AND c.game_id = ? \
         \ ORDER BY c.created"
 
-postComment :: S.Connection -> Int -> Text -> Text -> Text -> IO (SqlResult ())
-postComment conn userId source gameId comment = do
-    result <- try $ S.execute conn query (userId, source, gameId, comment)
+postComment :: S.Connection -> API.UserData -> Text -> Text -> Text -> IO (SqlResult ())
+postComment conn userData source gameId comment = do
+    result <- try $ S.execute conn query (UD.id userData, source, gameId, comment)
     writeResult result
     where query = "INSERT INTO comments (user_id, source, game_id, comment) VALUES (?, ?, ?, ?)"
