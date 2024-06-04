@@ -20,7 +20,7 @@ applyMigration conn file = do
 wasMigrationAppliedAt :: S.Connection -> FilePath -> IO (Maybe String)
 wasMigrationAppliedAt conn file = do
     result <- S.query conn "SELECT applied_at FROM migrations WHERE name = ?" (S.Only $ takeFileName file) :: IO [S.Only String]
-    return $ listToMaybe [ts | S.Only ts <- result]
+    pure $ listToMaybe [ts | S.Only ts <- result]
 
 main :: IO ()
 main = do

@@ -52,7 +52,7 @@ jsonData = do
                     "jsonData - failed parsing: " `mappend` LBS.unpack b
                         `mappend` " Error was: " `mappend` err
             A.Success a -> do
-                return a
+                pure a
 
 addDefaultHeaders :: String -> Middleware
 addDefaultHeaders allowOrigin = addHeaders
@@ -76,4 +76,4 @@ getCurrentUnixTime :: IO Integer
 getCurrentUnixTime = do
     currentTime <- TCS.getSystemTime
     let (TCS.MkSystemTime seconds _) = currentTime
-    return $ fromIntegral seconds
+    pure $ fromIntegral seconds

@@ -10,7 +10,7 @@ bin:
 	stack build --copy-bins --local-bin-path bin/
 
 develop: dev-config
-	fd | entr -s "pkill gc-server; stack run gc-migrate && stack run gc-server &"
+	fd | entr -s "pkill gc-server; stack run gc-server &"
 
 dev-config:
 	cp -f .env.dev .env

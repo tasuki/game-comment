@@ -30,10 +30,10 @@ maybeSaveRecord conn source gameId eitherResult =
             DB.saveRecord conn source gameId sgf
         Right (responseStatus, _) -> do
             _ <- Api.logMsg $ printf "NOT saving game, status was: %s" (show responseStatus)
-            return $ DB.Success ()
+            pure $ DB.Success ()
         Left e -> do
             _ <- Api.logMsg $ printf "NOT saving game, exception: %s" (show e)
-            return $ DB.Success ()
+            pure $ DB.Success ()
 
 getGame :: GameFetcher -> SQL.Connection -> Text -> Text -> S.ActionM ()
 getGame fetcher conn source gameId = do
@@ -59,4 +59,4 @@ fetchLittleGolemGameRecord gameId = do
         manager <- HTTP.newManager TLS.tlsManagerSettings
         request <- HTTP.parseRequest gameUrl
         response <- HTTP.httpLbs request manager
-        return (HTTP.responseStatus response, HTTP.responseBody response)
+        pure (HTTP.responseStatus response, HTTP.responseBody response)

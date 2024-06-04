@@ -20,7 +20,7 @@ open :: String -> IO S.Connection
 open dbFileName = do
     conn <- S.open dbFileName
     S.execute_ conn "PRAGMA foreign_keys = ON;"
-    return conn
+    pure conn
 
 data SqlResult a
     = Success a
@@ -29,7 +29,7 @@ data SqlResult a
 
 writeResult :: Either S.SQLError () -> IO (SqlResult ())
 writeResult result =
-    return $ case result of
+    pure $ case result of
         Right _ -> Success ()
         Left (S.SQLError S.ErrorConstraint _ _) -> ConstraintError
         Left _ -> OtherError
@@ -48,7 +48,7 @@ createUser conn salt createUser = do
 authenticateUser :: S.Connection -> CS.CreateSession -> IO (SqlResult (Either String API.UserData))
 authenticateUser conn createSession = do
     rows <- S.query conn query [CS.username createSession] :: IO [(Int, Text, Text)]
-    return $ case rows of
+    pure $ case rows of
         [(id, username, pass)] -> Success $
             if verifyPassword pass $ CS.password createSession then
                 Right $ API.UserData id username
@@ -76,7 +76,7 @@ saveRecord conn source gameId sgf = do
 fetchRecord :: S.Connection -> Text -> Text -> IO (SqlResult LBS.ByteString)
 fetchRecord conn source gameId = do
     rows <- S.query conn query (source, gameId) :: IO [S.Only LBS.ByteString]
-    return $ case rows of
+    pure $ case rows of
         [S.Only sgf] -> Success $ sgf
         _ -> OtherError
     where query = "SELECT sgf FROM games WHERE source = ? AND game_id = ?"
@@ -84,7 +84,7 @@ fetchRecord conn source gameId = do
 getComments :: S.Connection -> Text -> Text -> IO (SqlResult [API.Comment])
 getComments conn source gameId = do
     rows <- S.query conn query (source, gameId) :: IO [(Int, Int, Text, Text, Text)]
-    return $ Success $ map (uncurryN API.Comment) rows
+    pure $ Success $ map (uncurryN API.Comment) rows
     where query = "\
         \ SELECT c.id, c.user_id, u.username, c.comment, c.created \
         \ FROM comments AS c \
