@@ -6,65 +6,8 @@
 
     <link rel="stylesheet" href="/public/pure-min.css" />
     <link rel="stylesheet" href="/public/pure-grids-responsive-min.css" />
+    <link rel="stylesheet" href="/public/style.css" />
     <link rel="icon" href="/public/favicon.svg">
-
-    <style>
-        @font-face {
-          font-family: 'Recursive Mono'; font-style: normal; font-weight: 400; font-display: swap;
-          src: url('/public/RecursiveMonoCslSt-Regular.woff2') format('woff2');
-        }
-
-        /* global */
-        html, button, input, select, textarea, .pure-g [class *= "pure-u"]
-            { font-family: "Recursive Mono", monospace; letter-spacing: 0; line-height: 18px; }
-        .narrower { max-width: 1100px; margin: auto; }
-        .wider { max-width: 1500px; margin: auto; }
-
-        button { background-color: transparent; border: none; margin: 0; padding: 0; }
-        button:hover { cursor: pointer; }
-        .clear { clear: both; }
-        .white { color: #FFF; }
-        .black { color: #000; }
-        .close { margin-left: 3px; }
-
-        .content p, .sidebar p, h3 { margin: 20px 0 0 0; padding: 0 10px; }
-        h3 { font-size: 20px; font-weight: normal; }
-
-        /* menu */
-        .menu-item { background-color: #EEE; border: 1px solid #CCC; border-top: none; display: inline-block; margin: 0 4px 4px 0; padding: 3px 6px; }
-        .menu-item a { color: #000; text-decoration: none; }
-        .menu-item button { height: 18px; }
-        .menu-item svg { vertical-align: middle; }
-        .menu-item:hover, .menu-item.current, .picker .content .active { background-color: #D5B565; border-color: #998146; }
-
-        /* home */
-        .picker .content button, .picker .content input { background-color: #EEE; border: 1px solid #CCC; margin: 10px; padding: 5px 10px; }
-        .picker .content input { background-color: #FFF; }
-        .picker .content .lg-picker { width: 80%; }
-
-        /* game */
-        .game-info { background-color: #999; margin: 10px; padding: 5px; }
-        @media screen and (min-width: 48em) { .game-info { margin-top: 0; } }
-        .game-info .game-nav { max-width: 350px; margin: auto; }
-        .game-info .game-nav div { display: flex; justify-content: center; align-items: center; }
-        .game-info .game-nav svg { vertical-align: middle; }
-        .player-info .player { font-size: 24px; padding: 7px 5px; }
-        .player-info .black { float: left; }
-        .player-info .white { float: right; }
-        .variations .variation { margin-top: 10px; border-left: 5px solid; }
-        .variations .player { padding: 2px 5px; }
-        .variations button svg { vertical-align: middle; }
-        .message { margin: 10px; padding: 5px; }
-
-        /* specific games */
-        .twixt .last-move.white { stroke: #C00; }
-        .twixt .last-move.black { stroke: #C00; fill: #C00; }
-        .go .last-move.white { stroke: #C00; }
-        .go .last-move.black { stroke: #A00; fill: #A00; }
-        .hex .last-move.white { stroke: #C00; }
-        .hex .last-move.black { stroke: #A00; fill: #A00; }
-    </style>
-
     <script src="/gc.js"></script>
 </head>
 <body>
