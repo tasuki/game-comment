@@ -7,6 +7,8 @@ import qualified Web.Scotty as S
 import Api (jsonData, jsonError, jsonMsg, onlySignedIn)
 import qualified Api
 import qualified ApiResources as Res
+import qualified ApiResources as UD (UserData(id))
+import qualified ApiResources as GG (GetGame(userId))
 import qualified Auth
 import qualified Database as DB
 import qualified Env
@@ -21,14 +23,8 @@ main = do
         S.middleware $ Api.addDefaultHeaders $ Env.allowOrigin config
         S.defaultHandler Api.customErrorHandler
 
-        S.get "/games/lg/:gameId" $ do
-            gameId <- S.param "gameId"
-            case U.stringToInt gameId of
-                Nothing ->
-                    jsonError Status.status400 "LG game id must be a number"
-                Just _ ->
-                    Games.getGame Games.fetchLittleGolemGameRecord conn "lg" $ U.stringToLazyText gameId
 
+        -- Users
         S.post "/users" $ do
             user <- jsonData :: S.ActionM Res.CreateUser
             creationResult <- liftIO $ DB.createUser conn (Env.passSalt config) user
@@ -59,6 +55,40 @@ main = do
                 )
 
 
+        -- Games
+        S.get "/games/lg/:gameId" $ do
+            gameId <- S.param "gameId"
+            case U.stringToInt gameId of
+                Nothing ->
+                    jsonError Status.status400 "LG game id must be a number"
+                Just _ ->
+                    Games.getGame Games.fetchLittleGolemGameRecord conn "lg" $ U.stringToLazyText gameId
+
+        S.get "/games/here/:gameId" $ do
+            let source = "here"
+            gameId <- S.param "gameId"
+            Games.getGame Games.fetchFail conn source $ U.stringToLazyText gameId
+
+        S.put "/games/here/:gameId" $ do
+            let source = "here"
+            gameId <- S.param "gameId"
+            record <- S.body
+            onlySignedIn (Env.jwtSecret config) (\user -> do
+                _ <- liftIO $ DB.beginTransaction conn
+                gotGame <- liftIO $ DB.getGame conn source gameId
+                let saveGame = liftIO $ DB.saveGame conn source gameId (Just user) record
+                savedGame <- case gotGame of
+                    DB.OtherError -> saveGame -- game not exist
+                    DB.Success gotGame | (GG.userId gotGame) == (UD.id user) -> saveGame -- our game
+                    _ -> liftIO $ pure DB.ConstraintError -- someone else's game
+                _ <- liftIO $ DB.commitTransaction conn
+                case savedGame of
+                    DB.Success () -> jsonMsg "Game saved"
+                    DB.ConstraintError -> jsonError Status.status403 "Not your game!"
+                    _ -> jsonError Status.status500 "Unknown error"
+                )
+
+        -- Comments
         S.get "/games/:source/:gameId/comments" $ do
             gameId <- S.param "gameId"
             source <- S.param "source"

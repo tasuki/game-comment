@@ -27,7 +27,7 @@ maybeSaveRecord conn source gameId eitherResult =
     case eitherResult of
         Right (responseStatus, sgf) | responseStatus == Status.status200 -> do
             _ <- Api.logMsg $ printf "Saving game: %s / %s" source gameId
-            DB.saveRecord conn source gameId sgf
+            DB.saveGame conn source gameId Nothing sgf
         Right (responseStatus, _) -> do
             _ <- Api.logMsg $ printf "NOT saving game, status was: %s" (show responseStatus)
             pure $ DB.Success ()
@@ -60,3 +60,7 @@ fetchLittleGolemGameRecord gameId = do
         request <- HTTP.parseRequest gameUrl
         response <- HTTP.httpLbs request manager
         pure (HTTP.responseStatus response, HTTP.responseBody response)
+
+fetchFail :: GameFetcher
+fetchFail gameId = do
+    pure $ Left $ HTTP.InvalidUrlException "" "This is a `here` game"

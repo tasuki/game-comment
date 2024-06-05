@@ -25,8 +25,6 @@ data UserData = UserData
     , username :: Text
     } deriving (Show, Generic)
 instance A.ToJSON UserData
---instance FromRow UserData where
---    fromRow = UserData <$> field <*> field
 
 
 data CreateSession = CreateSession
@@ -39,6 +37,14 @@ data SessionData = SessionData
     { authToken :: Text
     } deriving (Show, Generic)
 instance A.ToJSON SessionData
+
+
+data GetGame = GetGame
+    { source :: Text
+    , gameId :: Text
+    , userId :: Int
+    } deriving (Show, Generic)
+instance A.ToJSON GetGame
 
 
 data CreateComment = CreateComment

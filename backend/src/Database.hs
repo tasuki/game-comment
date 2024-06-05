@@ -16,6 +16,9 @@ import qualified ApiResources as CS (CreateSession(username, password))
 
 import Passwords (hashPassword, verifyPassword)
 
+import Api
+import Text.Printf (printf)
+
 open :: String -> IO S.Connection
 open dbFileName = do
     conn <- S.open dbFileName
@@ -33,6 +36,15 @@ writeResult result =
         Right _ -> Success ()
         Left (S.SQLError S.ErrorConstraint _ _) -> ConstraintError
         Left _ -> OtherError
+
+
+beginTransaction :: S.Connection -> IO ()
+beginTransaction conn =
+    S.execute_ conn "BEGIN TRANSACTION"
+
+commitTransaction :: S.Connection -> IO ()
+commitTransaction conn =
+    S.execute_ conn "COMMIT"
 
 
 createUser :: S.Connection -> String -> CU.CreateUser -> IO (SqlResult ())
@@ -67,11 +79,19 @@ updatePassword conn salt userData updatePassword = do
     writeResult result
     where query = "UPDATE users SET password = ? WHERE id = ?"
 
-saveRecord :: S.Connection -> Text -> Text -> LBS.ByteString -> IO (SqlResult ())
-saveRecord conn source gameId sgf = do
-    result <- try $ S.execute conn query (source, gameId, sgf)
+saveGame :: S.Connection -> Text -> Text -> Maybe API.UserData -> LBS.ByteString -> IO (SqlResult ())
+saveGame conn source gameId maybeUserData sgf = do
+    result <- try $ S.execute conn query (source, gameId, fmap (UD.id) maybeUserData, sgf)
     writeResult result
-    where query = "REPLACE INTO games (source, game_id, sgf) VALUES (?, ?, ?)"
+    where query = "REPLACE INTO games (source, game_id, user_id, sgf) VALUES (?, ?, ?, ?)"
+
+getGame :: S.Connection -> Text -> Text -> IO (SqlResult API.GetGame)
+getGame conn source gameId = do
+    rows <- S.query conn query (source, gameId) :: IO [(Text, Text, Int)]
+    pure $ case rows of
+        [game] -> Success $ (uncurryN API.GetGame) game
+        _ -> OtherError
+    where query = "SELECT source, game_id, user_id FROM games WHERE source = ? AND game_id = ?"
 
 fetchRecord :: S.Connection -> Text -> Text -> IO (SqlResult LBS.ByteString)
 fetchRecord conn source gameId = do
