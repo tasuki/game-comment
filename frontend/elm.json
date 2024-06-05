@@ -18,7 +18,8 @@
             "elm/url": "1.0.0",
             "elm-community/list-extra": "8.7.0",
             "elm-community/maybe-extra": "5.3.0",
-            "elm-explorations/test": "2.0.1"
+            "elm-explorations/test": "2.0.1",
+            "miniBill/elm-codec": "2.1.0"
         },
         "indirect": {
             "elm/file": "1.0.5",

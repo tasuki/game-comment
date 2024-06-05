@@ -1,10 +1,12 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Browser
 import Browser.Navigation as Nav
 import Dict exposing (Dict)
 import Html as H
 import Html.Attributes as HA
+import Json.Encode as E
+import LocalState exposing (LocalState)
 import Navigation
 import Page
 import Page.Game
@@ -21,11 +23,29 @@ main =
     Browser.application
         { init = init
         , view = view
-        , update = update
+        , update = updateWithStorage
         , subscriptions = subscriptions
         , onUrlRequest = LinkClicked
         , onUrlChange = UrlChanged
         }
+
+
+port setStorage : E.Value -> Cmd msg
+
+
+updateWithStorage : Msg -> Model -> ( Model, Cmd Msg )
+updateWithStorage msg oldModel =
+    let
+        ( model, cmds ) =
+            update msg oldModel
+
+        localState : E.Value
+        localState =
+            LocalState.encode { showFullMenu = model.showFullMenu, replays = model.replays }
+    in
+    ( model
+    , Cmd.batch [ setStorage localState, cmds ]
+    )
 
 
 
@@ -49,20 +69,37 @@ type alias Model =
     }
 
 
-init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init _ url key =
+emptyModel : Nav.Key -> Session -> Url -> Model
+emptyModel key session url =
+    { key = key
+    , showFullMenu = True
+    , page = NotFound session
+    , message = ""
+    , currentUrl = url
+    , replays = Dict.empty
+    }
+
+
+modelFromLocalState : Model -> LocalState -> Model
+modelFromLocalState empty ls =
+    { empty | showFullMenu = ls.showFullMenu, replays = ls.replays }
+
+
+init : E.Value -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init jsonValue url key =
     let
         session =
             { navKey = key }
+
+        model =
+            emptyModel key session url
+
+        maybeLocalState =
+            LocalState.decode jsonValue |> Result.toMaybe
     in
-    changeRouteTo url
-        { key = key
-        , showFullMenu = True
-        , page = NotFound session
-        , message = ""
-        , currentUrl = url
-        , replays = Dict.empty
-        }
+    changeRouteTo url <|
+        Maybe.withDefault model
+            (Maybe.map (modelFromLocalState model) maybeLocalState)
 
 
 
