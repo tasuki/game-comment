@@ -49,7 +49,7 @@ type Msg
     | PickBoardSize String
     | CreateBoard
     | EnterIdentifier String
-    | Fetch String
+    | FetchLG String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -89,10 +89,10 @@ update msg model =
             in
             ( { model | picker = { picker | identifier = identifier } }, Cmd.none )
 
-        Fetch identifier ->
+        FetchLG identifier ->
             case LG.toGameId identifier of
                 Ok gameId ->
-                    ( model, Nav.pushUrl model.session.navKey (Route.toUrl <| Route.LittleGolemGame gameId) )
+                    ( model, Nav.pushUrl model.session.navKey (Route.toUrl <| Route.Game "lg" gameId) )
 
                 Err error ->
                     ( { model
@@ -157,13 +157,13 @@ viewPicker picker =
             , HA.class "lg-picker"
             , HA.autofocus True
             , HE.onInput EnterIdentifier
-            , GH.onEnter <| Fetch picker.identifier
+            , GH.onEnter <| FetchLG picker.identifier
             ]
             []
         ]
     , H.div []
         [ H.button
-            [ HE.onClick <| Fetch picker.identifier ]
+            [ HE.onClick <| FetchLG picker.identifier ]
             [ H.text "Load game" ]
         ]
     ]

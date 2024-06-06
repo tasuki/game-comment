@@ -82,10 +82,10 @@ sgfResponseToResult =
     resolve (BE.toByteValues >> List.map toStr >> String.concat >> Ok)
 
 
-getLittleGolemSgf : (SgfResult -> msg) -> String -> Cmd msg
-getLittleGolemSgf msg gameId =
+getSgf : (SgfResult -> msg) -> String -> String -> Cmd msg
+getSgf msg source gameId =
     Http.get
-        { url = baseUrl ++ "/games/lg/" ++ gameId
+        { url = baseUrl ++ "/games/" ++ source ++ "/" ++ gameId
         , expect =
             Http.expectBytesResponse
                 (decodeErrors >> Result.andThen LG.parse >> msg)

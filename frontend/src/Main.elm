@@ -242,8 +242,8 @@ changeRouteTo url model =
             maybeLoadReplay (Page.Game.initEmpty game size session)
                 |> updateWith newModel Game GameMsg
 
-        Just (Route.LittleGolemGame lgId) ->
-            maybeLoadReplay (Page.Game.initLg lgId session)
+        Just (Route.Game source id) ->
+            maybeLoadReplay (Page.Game.initGame source id session)
                 |> updateWith newModel Game GameMsg
 
         Nothing ->

@@ -50,13 +50,13 @@ initEmpty game size session =
     )
 
 
-initLg : String -> Session -> ( Model, Cmd Msg )
-initLg lgId session =
+initGame : String -> String -> Session -> ( Model, Cmd Msg )
+initGame source id session =
     ( { session = session
       , replay = Nothing
       , message = sidebarMsg
       }
-    , AC.getLittleGolemSgf Fetched lgId
+    , AC.getSgf Fetched source id
     )
 
 
@@ -98,8 +98,8 @@ update msg model currentUrl =
 
         Reload ->
             case Url.Parser.parse Route.parser currentUrl of
-                Just (Route.LittleGolemGame lgId) ->
-                    ( model, AC.getLittleGolemSgf Fetched lgId )
+                Just (Route.Game source lgId) ->
+                    ( model, AC.getSgf Fetched source lgId )
 
                 _ ->
                     ( model, Cmd.none )
