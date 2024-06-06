@@ -2,7 +2,7 @@ module LocalState exposing (LocalState, decode, encode)
 
 import Codec exposing (Codec, Value)
 import Dict exposing (Dict)
-import GameRecord as G exposing (Game(..))
+import GameRecord as G
 import Replay as R
 
 
