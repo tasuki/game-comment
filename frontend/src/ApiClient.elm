@@ -16,6 +16,26 @@ type alias SgfResult =
     Result String G.Record
 
 
+resolve : (body -> Result String a) -> Http.Response body -> Result Http.Error a
+resolve toResult response =
+    -- taken verbatim from Http.resolve
+    case response of
+        Http.BadUrl_ url ->
+            Err (Http.BadUrl url)
+
+        Http.Timeout_ ->
+            Err Http.Timeout
+
+        Http.NetworkError_ ->
+            Err Http.NetworkError
+
+        Http.BadStatus_ metadata _ ->
+            Err (Http.BadStatus metadata.statusCode)
+
+        Http.GoodStatus_ _ body ->
+            Result.mapError Http.BadBody (toResult body)
+
+
 httpErrorToString : Http.Error -> String
 httpErrorToString error =
     case error of
@@ -32,11 +52,11 @@ httpErrorToString error =
             "Bad status: " ++ String.fromInt status
 
         Http.BadBody body ->
-            "Bad boy"
+            "Bad boy: " ++ body
 
 
 responseToResult : Http.Response B.Bytes -> Result Http.Error String
-responseToResult res =
+responseToResult =
     let
         toStr val =
             if val < 127 then
@@ -45,12 +65,7 @@ responseToResult res =
             else
                 "{{" ++ String.fromInt val ++ "}}"
     in
-    case res of
-        Http.GoodStatus_ _ bytes ->
-            Ok <| String.concat <| List.map toStr <| BE.toByteValues bytes
-
-        _ ->
-            Err <| Http.BadBody "Actually discarded error sorry"
+    resolve (BE.toByteValues >> List.map toStr >> String.concat >> Ok)
 
 
 decodeResult : Result Http.Error String -> SgfResult
