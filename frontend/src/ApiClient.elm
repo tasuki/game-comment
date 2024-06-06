@@ -2,6 +2,7 @@ module ApiClient exposing (..)
 
 import Bytes as B
 import Bytes.Extra as BE
+import Comments as C
 import Config
 import GameRecord as G
 import Http
@@ -14,6 +15,14 @@ baseUrl =
 
 type alias SgfResult =
     Result String G.Record
+
+
+type alias CommentsResult =
+    Result String (List C.Comment)
+
+
+
+-- General things
 
 
 resolve : (body -> Result String a) -> Http.Response body -> Result Http.Error a
@@ -55,8 +64,13 @@ httpErrorToString error =
             "Bad boy: " ++ body
 
 
-responseToResult : Http.Response B.Bytes -> Result Http.Error String
-responseToResult =
+decodeErrors : Result Http.Error a -> Result String a
+decodeErrors =
+    Result.mapError httpErrorToString
+
+
+sgfResponseToResult : Http.Response B.Bytes -> Result Http.Error String
+sgfResponseToResult =
     let
         toStr val =
             if val < 127 then
@@ -68,14 +82,20 @@ responseToResult =
     resolve (BE.toByteValues >> List.map toStr >> String.concat >> Ok)
 
 
-decodeResult : Result Http.Error String -> SgfResult
-decodeResult result =
-    Result.mapError httpErrorToString result |> Result.andThen LG.parse
-
-
 getLittleGolemSgf : (SgfResult -> msg) -> String -> Cmd msg
 getLittleGolemSgf msg gameId =
     Http.get
         { url = baseUrl ++ "/games/lg/" ++ gameId
-        , expect = Http.expectBytesResponse (decodeResult >> msg) responseToResult
+        , expect =
+            Http.expectBytesResponse
+                (decodeErrors >> Result.andThen LG.parse >> msg)
+                sgfResponseToResult
+        }
+
+
+getComments : (CommentsResult -> msg) -> String -> String -> Cmd msg
+getComments msg source gameId =
+    Http.get
+        { url = baseUrl ++ "/games/" ++ source ++ "/" ++ gameId ++ "/comments"
+        , expect = Http.expectJson (decodeErrors >> msg) C.commentsDecoder
         }
