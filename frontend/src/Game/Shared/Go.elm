@@ -169,7 +169,7 @@ isMoveLegal neighbors move replay =
     Maybe.Extra.isJust <|
         maybePlay
             neighbors
-            (G.onMove replay.lookingAt.move G.Go)
+            (R.onMove G.Go replay)
             move
             (positionFromReplay neighbors replay)
 

@@ -1,9 +1,11 @@
 module LocalState exposing (LocalState, decode, encode)
 
-import Codec exposing (Codec, Value)
+import Codec exposing (Codec, Value, value)
 import Dict exposing (Dict)
 import GameRecord as G
 import Replay as R
+import Replay.GameTree as GT
+import Replay.Tree as T
 
 
 type alias LocalState =
@@ -39,27 +41,62 @@ replayCodec =
     Codec.object R.Replay
         |> Codec.field "name" .name Codec.string
         |> Codec.field "record" .record recordCodec
-        |> Codec.field "alterable" .alterable Codec.bool
-        |> Codec.field "lookingAt" .lookingAt lookingAtCodec
-        |> Codec.field "variations" .variations (Codec.list variationCodec)
+        |> Codec.field "gameTree" .gameTree gameViewCodec
         |> Codec.buildObject
 
 
-lookingAtCodec : Codec R.LookAt
-lookingAtCodec =
-    Codec.object R.LookAt
-        |> Codec.field "variation" .variation (Codec.maybe Codec.int)
-        |> Codec.field "move" .move Codec.int
+gameViewCodec : Codec GT.GameView
+gameViewCodec =
+    zipperCodec moveCodec
+
+
+
+-- Tree codecs
+
+
+zipperCodec : Codec a -> Codec (T.Zipper a)
+zipperCodec meta =
+    Codec.object T.Zipper
+        |> Codec.field "focus" .focus (treeCodec meta)
+        |> Codec.field "before" .before (Codec.list (treeCodec meta))
+        |> Codec.field "after" .after (Codec.list (treeCodec meta))
+        |> Codec.field "crumbs" .crumbs (Codec.list (crumbCodec meta))
         |> Codec.buildObject
 
 
-variationCodec : Codec R.Variation
-variationCodec =
-    Codec.object R.Variation
-        |> Codec.field "colour" .colour Codec.string
-        |> Codec.field "fromMove" .fromMove Codec.int
-        |> Codec.field "moves" .moves (Codec.list moveCodec)
+crumbCodec : Codec a -> Codec (T.Crumb a)
+crumbCodec meta =
+    Codec.object T.Crumb
+        |> Codec.field "value" .value meta
+        |> Codec.field "before" .before (Codec.list (treeCodec meta))
+        |> Codec.field "after" .after (Codec.list (treeCodec meta))
         |> Codec.buildObject
+
+
+treeNodeDataCodec : Codec a -> Codec (T.TreeNodeData a)
+treeNodeDataCodec meta =
+    Codec.object T.TreeNodeData
+        |> Codec.field "value" .value meta
+        |> Codec.field "defaultChild" .defaultChild Codec.int
+        |> Codec.field "children" .children (Codec.list (treeCodec meta))
+        |> Codec.buildObject
+
+
+treeCodec : Codec a -> Codec (T.Tree a)
+treeCodec meta =
+    let
+        match locked tree value =
+            case value of
+                T.Locked ->
+                    locked
+
+                T.Tree x ->
+                    tree x
+    in
+    Codec.custom match
+        |> Codec.variant0 "locked" T.Locked
+        |> Codec.variant1 "tree" T.Tree (Codec.lazy (\_ -> treeNodeDataCodec meta))
+        |> Codec.buildCustom
 
 
 

@@ -271,7 +271,7 @@ view replay playMsg =
             ++ viewBoardSides size
             ++ viewHexes
                 position
-                (R.lastMove replay)
+                (R.lastPlayed replay)
                 playMsg
                 coordList
         )

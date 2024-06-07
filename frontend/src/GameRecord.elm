@@ -31,8 +31,8 @@ type alias Move =
     }
 
 
-onMove : Int -> Game -> Player
-onMove moveNum game =
+onMove : Game -> Int -> Player
+onMove game moveNum =
     let
         firstPlayer =
             case game of
@@ -149,3 +149,13 @@ coordsFromComparable ( x, y ) =
 addMove : Move -> Record -> Record
 addMove move record =
     { record | moves = record.moves ++ [ move ] }
+
+
+maybeCoords : Play -> Maybe Coords
+maybeCoords play =
+    case play of
+        Place coords ->
+            Just coords
+
+        _ ->
+            Nothing

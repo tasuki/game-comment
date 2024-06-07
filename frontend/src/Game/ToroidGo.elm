@@ -105,6 +105,6 @@ view replay playMsg =
                 min
                 max
                 (positionFromReplay neighbors replay)
-                (R.lastMove replay)
+                (R.lastPlayed replay)
                 playMsg
         )

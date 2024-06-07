@@ -329,7 +329,7 @@ view replay playMsg =
             ++ drawPegs
                 size
                 position
-                (R.lastMove replay)
-                (G.onMove replay.lookingAt.move G.TwixT)
+                (R.lastPlayed replay)
+                (R.onMove G.TwixT replay)
                 playMsg
         )

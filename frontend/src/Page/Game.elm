@@ -83,10 +83,10 @@ type Msg
     | Backward
     | Start
     | End
-    | Jump R.LookAt
+    | Jump R.GameView
     | PrevVariation
     | NextVariation
-    | DeleteCurrentVariation
+    | CutVariation
     | DeleteVariation Int
 
 
@@ -134,14 +134,18 @@ update msg model currentUrl =
         NextVariation ->
             ( { model | replay = Maybe.map R.nextVariation model.replay }, Cmd.none )
 
-        DeleteCurrentVariation ->
-            ( { model | replay = Maybe.map R.deleteCurrentVariation model.replay }, Cmd.none )
+        CutVariation ->
+            -- TODO
+            --( { model | replay = Maybe.map R.cutVariation model.replay }, Cmd.none )
+            ( model, Cmd.none )
 
         DeleteVariation varNum ->
-            ( { model | replay = Maybe.map (R.deleteVariation varNum) model.replay }, Cmd.none )
+            -- TODO
+            --( { model | replay = Maybe.map (R.deleteVariation varNum) model.replay }, Cmd.none )
+            ( model, Cmd.none )
 
-        Jump lookAt ->
-            ( { model | replay = Maybe.map (R.jump lookAt) model.replay }, Cmd.none )
+        Jump zipper ->
+            ( { model | replay = Maybe.map (R.jump zipper) model.replay }, Cmd.none )
 
         Play coords ->
             let
@@ -204,7 +208,7 @@ keydown keycode =
             NextVariation
 
         "x" ->
-            DeleteCurrentVariation
+            CutVariation
 
         "g" ->
             Start
@@ -286,7 +290,7 @@ sideView model =
         moveNum =
             case model.replay of
                 Just replay ->
-                    replay.lookingAt.move
+                    R.currentMoveNumber replay
 
                 Nothing ->
                     0
@@ -294,7 +298,7 @@ sideView model =
         navColor : String
         navColor =
             model.replay
-                |> Maybe.Extra.filter (\r -> r.lookingAt.variation == Nothing)
+                -- TODO |> Maybe.Extra.filter (\r -> r.lookingAt.variation == Nothing)
                 |> Maybe.map (always C.colourMain)
                 |> Maybe.withDefault "inherit"
 
