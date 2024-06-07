@@ -72,13 +72,14 @@ coordParser =
         decrease i =
             i - 96
 
-        charToCoord : String -> Int
+        charToCoord : String -> Parser Int
         charToCoord str =
-            -- actually is one char as per chompIf _ -> True
-            String.toList str
-                |> List.head
-                |> Maybe.withDefault 'a'
-                |> Char.toCode
+            case String.uncons str of
+                Just ( c, "" ) ->
+                    succeed <| decrease <| Char.toCode <| c
+
+                _ ->
+                    problem "Expected exactly one character"
     in
     oneOf
         [ succeed decrease
@@ -86,8 +87,7 @@ coordParser =
             |= int
             |. symbol "}}"
             |> backtrackable
-        , succeed (charToCoord >> decrease)
-            |= (getChompedString <| chompIf (\_ -> True))
+        , getChompedString (chompIf (\_ -> True)) |> andThen charToCoord
         ]
 
 
