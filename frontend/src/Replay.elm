@@ -28,7 +28,7 @@ emptyReplay : G.Record -> Replay
 emptyReplay record =
     { name = G.recordName record
     , record = record
-    , gameTree = GT.treesFromRecord record |> GT.treesToGameView
+    , gameTree = GT.treeFromRecord record |> GT.treeToGameView
     }
 
 
@@ -38,7 +38,7 @@ withRecord record maybeReplay =
         Just r ->
             { r
                 | gameTree =
-                    GT.withRecord (GT.treesFromRecord record) r.gameTree
+                    GT.withRecord (GT.treeFromRecord record) r.gameTree
             }
 
         Nothing ->
@@ -61,13 +61,7 @@ currentMoves replay =
 
 lastPlayed : Replay -> Maybe G.Move
 lastPlayed replay =
-    -- wrong abstraction but oh so convenient
-    case replay.gameTree.crumbs of
-        crumb :: _ ->
-            Just crumb.value
-
-        [] ->
-            Nothing
+    T.getValue replay.gameTree.focus
 
 
 currentMoveNumber : Replay -> Int
@@ -86,8 +80,14 @@ onMove game =
 
 playCoords : G.Coords -> Replay -> Replay
 playCoords coords replay =
-    -- TODO
-    replay
+    let
+        move : G.Move
+        move =
+            { player = onMove replay.record.game replay
+            , play = G.Place coords
+            }
+    in
+    { replay | gameTree = GT.addOrVisitChild move replay.gameTree }
 
 
 next : Replay -> Replay

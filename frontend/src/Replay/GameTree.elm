@@ -8,32 +8,32 @@ type alias GameView =
     T.Zipper G.Move
 
 
-treesToGameView : T.Trees G.Move -> GameView
-treesToGameView =
+treeToGameView : T.Tree G.Move -> GameView
+treeToGameView =
     T.makeZipper
 
 
-treesFromRecord : G.Record -> List (T.Tree G.Move)
-treesFromRecord record =
+treeFromRecord : G.Record -> T.Tree G.Move
+treeFromRecord record =
+    T.listToLockedTree record.moves
+
+
+addOrVisitChild : G.Move -> GameView -> GameView
+addOrVisitChild move gameView =
     let
-        movesToTree : List a -> List (T.Tree a)
-        movesToTree moves =
-            case moves of
-                head :: tail ->
-                    [ T.Tree
-                        { value = head
-                        , defaultChild = 0
-                        , children = movesToTree tail
-                        }
-                    ]
+        ( index, newView ) =
+            case T.findChildIndex move gameView of
+                Just i ->
+                    ( i, gameView )
 
-                [] ->
-                    [ T.Locked ]
+                Nothing ->
+                    T.addChild move gameView
     in
-    movesToTree record.moves
+    T.lookNextByIndex index newView
+        |> Maybe.withDefault gameView
 
 
-withRecord : T.Trees G.Move -> GameView -> GameView
+withRecord : T.Tree G.Move -> GameView -> GameView
 withRecord record zipper =
     -- TODO
     zipper

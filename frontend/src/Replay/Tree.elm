@@ -1,28 +1,77 @@
 module Replay.Tree exposing (..)
 
+import List.Extra
 
-type alias TreeNodeData a =
-    { value : a
+
+
+-- Tree
+
+
+type alias Node a =
+    { value : Maybe a
     , defaultChild : Int
-    , children : Trees a
+    , children : Forest a
     }
 
 
 type Tree a
-    = Locked
-    | Tree (TreeNodeData a)
+    = Tree (Node a)
+    | Locked
 
 
-type alias Trees a =
+type alias Forest a =
     List (Tree a)
 
 
+listToLockedTree : List a -> Tree a
+listToLockedTree children =
+    let
+        helper chlds =
+            case chlds of
+                head :: tail ->
+                    [ Tree
+                        { value = Just head
+                        , defaultChild = 0
+                        , children = helper tail
+                        }
+                    ]
 
--- Zippers
+                [] ->
+                    [ Locked ]
+    in
+    Tree
+        { value = Nothing
+        , defaultChild = 0
+        , children = helper children
+        }
+
+
+getTreeNodeData : Tree a -> Maybe (Node a)
+getTreeNodeData tree =
+    case tree of
+        Tree tnd ->
+            Just tnd
+
+        Locked ->
+            Nothing
+
+
+getValue : Tree a -> Maybe a
+getValue =
+    getTreeNodeData >> Maybe.andThen .value
+
+
+getChildren : Tree a -> Maybe (Forest a)
+getChildren =
+    getTreeNodeData >> Maybe.map .children
+
+
+
+-- Zipper
 
 
 type alias Crumb a =
-    { value : a
+    { value : Maybe a
     , before : List (Tree a)
     , after : List (Tree a)
     }
@@ -36,63 +85,22 @@ type alias Zipper a =
     }
 
 
-makeZipper : Trees a -> Zipper a
-makeZipper trees =
-    case trees of
-        t :: ts ->
-            { focus = t, before = [], after = ts, crumbs = [] }
 
-        _ ->
-            { focus = Locked, before = [], after = [], crumbs = [] }
+-- Zipper from trees and vice versa
 
 
-makeTrees : Zipper a -> Trees a
-makeTrees zipper =
-    let
-        root : Zipper a
-        root =
-            lookStart zipper
-    in
-    List.reverse root.before ++ [ root.focus ] ++ root.after
+makeZipper : Tree a -> Zipper a
+makeZipper tree =
+    { focus = tree, before = [], after = [], crumbs = [] }
 
 
-reconstruct : a -> List (Tree a) -> Tree a -> List (Tree a) -> Tree a
-reconstruct value before focus after =
-    Tree
-        { value = value
-        , defaultChild = List.length before
-        , children = List.reverse before ++ [ focus ] ++ after
-        }
+makeTree : Zipper a -> Tree a
+makeTree =
+    lookStart >> .focus
 
 
-splitAround : Int -> List a -> Maybe ( List a, a, List a )
-splitAround n xs =
-    case ( List.take n xs, List.drop n xs ) of
-        ( before, el :: after ) ->
-            Just ( before, el, after )
 
-        _ ->
-            Nothing
-
-
-pickChild : TreeNodeData a -> Zipper a -> Maybe (Zipper a)
-pickChild { value, defaultChild, children } zipper =
-    let
-        helper : ( List (Tree a), Tree a, List (Tree a) ) -> Zipper a
-        helper ( before, child, after ) =
-            { focus = child
-            , before = before
-            , after = after
-            , crumbs =
-                { value = value
-                , before = zipper.before
-                , after = zipper.after
-                }
-                    :: zipper.crumbs
-            }
-    in
-    splitAround defaultChild children
-        |> Maybe.map helper
+-- Looking around zipper
 
 
 lookPrev : Zipper a -> Maybe (Zipper a)
@@ -116,8 +124,18 @@ lookNext zipper =
         Locked ->
             Nothing
 
-        Tree treeNodeData ->
-            pickChild treeNodeData zipper
+        Tree tnd ->
+            lookChild tnd.defaultChild tnd zipper
+
+
+lookNextByIndex : Int -> Zipper a -> Maybe (Zipper a)
+lookNextByIndex childIndex zipper =
+    case zipper.focus of
+        Locked ->
+            Nothing
+
+        Tree tnd ->
+            lookChild childIndex tnd zipper
 
 
 lookStart : Zipper a -> Zipper a
@@ -152,6 +170,116 @@ lookNextVar zipper =
     zipper
 
 
+currentValues : Zipper a -> List a
+currentValues zipper =
+    -- values from root to current view
+    zipper.crumbs
+        |> List.map .value
+        |> (::) (getValue zipper.focus)
+        |> List.filterMap identity
+        |> List.reverse
+
+
+allValues : Zipper a -> List a
+allValues zipper =
+    -- values from root to end of current variation
+    currentValues zipper ++ defaultChildList zipper
+
+
+
+-- Children
+
+
+findChildIndex : a -> Zipper a -> Maybe Int
+findChildIndex child zipper =
+    case zipper.focus of
+        Tree { children } ->
+            List.Extra.findIndex (\c -> getValue c == Just child) children
+
+        Locked ->
+            Nothing
+
+
+addChild : a -> Zipper a -> ( Int, Zipper a )
+addChild child zipper =
+    case zipper.focus of
+        Tree { value, children } ->
+            let
+                childTree : Tree a
+                childTree =
+                    Tree
+                        { value = Just child
+                        , defaultChild = 0
+                        , children = []
+                        }
+
+                newChildren =
+                    children ++ [ childTree ]
+            in
+            ( List.length children
+            , { zipper
+                | focus =
+                    Tree
+                        { value = value
+                        , defaultChild = List.length children
+                        , children = newChildren
+                        }
+              }
+            )
+
+        Locked ->
+            ( 0, zipper )
+
+
+
+-- Helpers
+
+
+reconstruct : Maybe a -> List (Tree a) -> Tree a -> List (Tree a) -> Tree a
+reconstruct value before focus after =
+    Tree
+        { value = value
+        , defaultChild = List.length before
+        , children = List.reverse before ++ [ focus ] ++ after
+        }
+
+
+splitAround : Int -> List a -> Maybe ( List a, a, List a )
+splitAround n xs =
+    case ( List.take n xs, List.drop n xs ) of
+        ( before, el :: after ) ->
+            Just ( before, el, after )
+
+        _ ->
+            Nothing
+
+
+lookChild : Int -> Node a -> Zipper a -> Maybe (Zipper a)
+lookChild chosenChild { value, children } zipper =
+    let
+        helper : ( List (Tree a), Tree a, List (Tree a) ) -> Maybe (Zipper a)
+        helper ( before, child, after ) =
+            case child of
+                Locked ->
+                    Nothing
+
+                Tree _ ->
+                    Just
+                        { focus = child
+                        , before = before
+                        , after = after
+                        , crumbs =
+                            { value = value
+                            , before = zipper.before
+                            , after = zipper.after
+                            }
+                                :: zipper.crumbs
+                        }
+    in
+    splitAround chosenChild children
+        |> Maybe.andThen helper
+
+
 defaultChildList : Zipper a -> List a
 defaultChildList =
     let
@@ -164,19 +292,14 @@ defaultChildList =
                 Just z ->
                     case z.focus of
                         Tree { value } ->
-                            helper (value :: acc) z
+                            case value of
+                                Just v ->
+                                    helper (v :: acc) z
+
+                                Nothing ->
+                                    helper acc z
 
                         Locked ->
                             acc
     in
-    helper []
-
-
-currentValues : Zipper a -> List a
-currentValues zipper =
-    zipper.crumbs |> List.map .value |> List.reverse
-
-
-allValues : Zipper a -> List a
-allValues zipper =
-    currentValues zipper ++ defaultChildList zipper
+    helper [] >> List.reverse

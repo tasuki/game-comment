@@ -23,13 +23,13 @@ localStateCodec =
 
 
 encode : LocalState -> Value
-encode ls =
-    Codec.encoder localStateCodec ls
+encode =
+    Codec.encoder localStateCodec
 
 
 decode : Value -> Result Codec.Error LocalState
-decode val =
-    Codec.decodeValue localStateCodec val
+decode =
+    Codec.decodeValue localStateCodec
 
 
 
@@ -67,16 +67,16 @@ zipperCodec meta =
 crumbCodec : Codec a -> Codec (T.Crumb a)
 crumbCodec meta =
     Codec.object T.Crumb
-        |> Codec.field "value" .value meta
+        |> Codec.field "value" .value (Codec.maybe meta)
         |> Codec.field "before" .before (Codec.list (treeCodec meta))
         |> Codec.field "after" .after (Codec.list (treeCodec meta))
         |> Codec.buildObject
 
 
-treeNodeDataCodec : Codec a -> Codec (T.TreeNodeData a)
+treeNodeDataCodec : Codec a -> Codec (T.Node a)
 treeNodeDataCodec meta =
-    Codec.object T.TreeNodeData
-        |> Codec.field "value" .value meta
+    Codec.object T.Node
+        |> Codec.field "value" .value (Codec.maybe meta)
         |> Codec.field "defaultChild" .defaultChild Codec.int
         |> Codec.field "children" .children (Codec.list (treeCodec meta))
         |> Codec.buildObject
