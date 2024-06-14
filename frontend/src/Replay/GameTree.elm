@@ -58,7 +58,7 @@ withRecord record zipper =
 
         goToMove : Int -> Maybe GameView -> Maybe GameView
         goToMove num mz =
-            if num <= 0 then
+            if num <= 1 then
                 mz
 
             else
