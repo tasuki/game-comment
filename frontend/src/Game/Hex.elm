@@ -202,6 +202,26 @@ viewBoardSides size =
         ]
 
 
+drawChildren : List G.Coords -> List (Svg msg)
+drawChildren children =
+    let
+        drawChild : G.Coords -> Svg msg
+        drawChild coords =
+            let
+                ( centerX, centerY ) =
+                    hexCenter coords
+            in
+            Svg.circle
+                [ SA.cx centerX
+                , SA.cy centerY
+                , SA.r "0.2"
+                , SA.fill "#0003"
+                ]
+                []
+    in
+    List.map drawChild children
+
+
 viewHexes : Position -> Maybe G.Move -> (G.Coords -> msg) -> List G.Coords -> List (Svg msg)
 viewHexes position lastMove playMsg =
     let
@@ -269,6 +289,7 @@ view replay playMsg =
         (background boardWidth boardHeight
             ++ List.map (viewBoardHex <| R.currentColour replay) coordList
             ++ viewBoardSides size
+            ++ drawChildren (R.children replay)
             ++ viewHexes
                 position
                 (R.lastPlayed replay)

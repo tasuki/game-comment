@@ -37,7 +37,7 @@ h3 { font-size: 20px; font-weight: normal; }
 .game-info .game-nav { max-width: 350px; margin: auto; }
 .game-info .game-nav div { display: flex; justify-content: center; align-items: center; }
 .game-info .game-nav svg { vertical-align: middle; }
-.player-info .player { font-size: 24px; padding: 7px 5px; }
+.player-info .player { padding: 3px 5px; }
 .player-info .black { float: left; }
 .player-info .white { float: right; }
 .variations .variation { margin-top: 10px; border-left: 5px solid; }

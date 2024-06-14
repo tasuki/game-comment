@@ -159,3 +159,8 @@ maybeCoords play =
 
         _ ->
             Nothing
+
+
+moveCoords : Move -> Maybe Coords
+moveCoords { play } =
+    maybeCoords play

@@ -178,6 +178,22 @@ isMoveLegal neighbors move replay =
 -- VIEW
 
 
+drawChildren : List G.Coords -> List (Svg msg)
+drawChildren children =
+    let
+        drawChild : G.Coords -> Svg msg
+        drawChild coords =
+            Svg.circle
+                [ SA.cx <| String.fromInt coords.x
+                , SA.cy <| String.fromInt coords.y
+                , SA.r "0.2"
+                , SA.fill "#0003"
+                ]
+                []
+    in
+    List.map drawChild children
+
+
 viewLines : Float -> Float -> Int -> Int -> List (Svg msg)
 viewLines lineMin lineMax offsetMin offsetMax =
     let

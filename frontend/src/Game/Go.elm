@@ -74,6 +74,7 @@ view replay playMsg =
         , SA.class "go"
         ]
         (background (R.currentColour replay) size
+            ++ drawChildren (R.children replay)
             ++ viewLines (toFloat min) (toFloat max) min max
             ++ viewStars size
             ++ viewStones

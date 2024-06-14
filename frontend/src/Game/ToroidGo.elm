@@ -99,6 +99,7 @@ view replay playMsg =
         (contextBackground colour from to
             ++ contextBackground "#3336" from to
             ++ background colour size
+            ++ drawChildren (R.children replay)
             ++ viewLines (toFloat min - 0.5) (toFloat max + 0.5) min max
             ++ viewStones
                 normaliseCoords

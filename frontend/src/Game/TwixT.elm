@@ -249,6 +249,22 @@ drawPoints size =
     List.map toHole (coordList size)
 
 
+drawChildren : List G.Coords -> List (Svg msg)
+drawChildren children =
+    let
+        drawChild : G.Coords -> Svg msg
+        drawChild coords =
+            Svg.circle
+                [ SA.cx <| String.fromInt coords.x
+                , SA.cy <| String.fromInt coords.y
+                , SA.r "0.3"
+                , SA.fill "#0003"
+                ]
+                []
+    in
+    List.map drawChild children
+
+
 drawLinks : Position -> List (Svg msg)
 drawLinks position =
     let
@@ -324,6 +340,7 @@ view replay playMsg =
         (background (R.currentColour replay) size
             ++ drawBorders size
             ++ drawGuidelines size
+            ++ drawChildren (R.children replay)
             ++ drawPoints size
             ++ drawLinks position
             ++ drawPegs
