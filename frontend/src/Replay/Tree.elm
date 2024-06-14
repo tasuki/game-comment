@@ -231,6 +231,36 @@ addChild child zipper =
             ( 0, zipper )
 
 
+replaceFirstVar : List a -> Tree a -> Tree a
+replaceFirstVar new old =
+    case ( new, old ) of
+        ( [], _ ) ->
+            Locked
+
+        ( head :: tail, Locked ) ->
+            Tree
+                { value = Just head
+                , defaultChild = 0
+                , children = [ replaceFirstVar tail Locked ]
+                }
+
+        ( head :: tail, Tree node ) ->
+            let
+                newChildren =
+                    case node.children of
+                        [] ->
+                            [ replaceFirstVar tail Locked ]
+
+                        firstChild :: otherChildren ->
+                            replaceFirstVar tail firstChild :: otherChildren
+            in
+            Tree
+                { value = Just head
+                , defaultChild = node.defaultChild
+                , children = newChildren
+                }
+
+
 
 -- Helpers
 

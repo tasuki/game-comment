@@ -36,9 +36,9 @@ withRecord : G.Record -> Maybe Replay -> Replay
 withRecord record maybeReplay =
     case maybeReplay of
         Just r ->
-            { r
-                | gameTree =
-                    GT.withRecord (GT.treeFromRecord record) r.gameTree
+            { name = G.recordName record
+            , record = record
+            , gameTree = GT.withRecord record.moves r.gameTree
             }
 
         Nothing ->
@@ -56,17 +56,17 @@ allMoves replay =
 
 currentMoves : Replay -> List G.Move
 currentMoves replay =
-    T.currentValues replay.gameTree
+    GT.currentMoves replay.gameTree
+
+
+currentMoveNumber : Replay -> Int
+currentMoveNumber replay =
+    GT.currentMoveNumber replay.gameTree
 
 
 lastPlayed : Replay -> Maybe G.Move
 lastPlayed replay =
     T.getValue replay.gameTree.focus
-
-
-currentMoveNumber : Replay -> Int
-currentMoveNumber =
-    currentMoves >> List.length
 
 
 onMove : G.Game -> Replay -> G.Player

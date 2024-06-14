@@ -87,6 +87,7 @@ basicZipperTest =
         ]
 
 
+var1Zip : Zipper String
 var1Zip =
     zipper
         |> lookEnd
@@ -213,4 +214,92 @@ varZipperTest =
                         |> lookNextByIndex 2
                         |> maybeZipperValue
                     )
+        ]
+
+
+
+-- Brace!
+
+
+t : a -> Forest a -> Tree a
+t v c =
+    Tree { value = Just v, defaultChild = 0, children = c }
+
+
+trickyTree : Zipper String
+trickyTree =
+    t "root"
+        [ t "A1"
+            [ t "A2"
+                [ t "A3"
+                    [ Locked
+                    , t "E4" []
+                    , t "F4"
+                        [ t "F5"
+                            [ t "F6" []
+                            ]
+                        ]
+                    , t "G4" []
+                    ]
+                ]
+            ]
+        , t "B1"
+            [ t "B2"
+                [ t "B3" []
+                ]
+            , t "C2"
+                [ t "C3"
+                    [ t "C4" []
+                    ]
+                ]
+            ]
+        ]
+        |> makeZipper
+
+
+replaceFirstTest : Test
+replaceFirstTest =
+    describe "replaceFirstVar"
+        [ test "Can replace tricky tree with longer main var" <|
+            let
+                record : List String
+                record =
+                    [ "root", "A1", "A2", "A3", "A4", "A5" ]
+            in
+            Expect.all
+                [ \_ ->
+                    Expect.equal
+                        (t "root"
+                            [ t "A1"
+                                [ t "A2"
+                                    [ t "A3"
+                                        [ t "A4"
+                                            [ t "A5"
+                                                [ Locked
+                                                ]
+                                            ]
+                                        , t "E4" []
+                                        , t "F4"
+                                            [ t "F5"
+                                                [ t "F6" []
+                                                ]
+                                            ]
+                                        , t "G4" []
+                                        ]
+                                    ]
+                                ]
+                            , t "B1"
+                                [ t "B2"
+                                    [ t "B3" []
+                                    ]
+                                , t "C2"
+                                    [ t "C3"
+                                        [ t "C4" []
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        )
+                        (replaceFirstVar record (makeTree trickyTree))
+                ]
         ]
