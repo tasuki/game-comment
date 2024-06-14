@@ -303,3 +303,64 @@ replaceFirstTest =
                         (replaceFirstVar record (makeTree trickyTree))
                 ]
         ]
+
+
+findOne : String -> Zipper String -> Maybe (Zipper String)
+findOne str zip =
+    case findAll ((==) str) zip of
+        [ z ] ->
+            Just z
+
+        _ ->
+            Nothing
+
+
+switchVariationCases : List ( String, String, String )
+switchVariationCases =
+    -- So far we only switch when the variations
+    -- share the immediate direct ancestor.
+    [ ( "root", "next", "root" )
+    , ( "root", "prev", "root" )
+    , ( "A1", "next", "B1" )
+    , ( "B1", "next", "B1" )
+    , ( "A1", "prev", "A1" )
+    , ( "B1", "prev", "A1" )
+    , ( "A2", "next", "A2" ) -- only local
+    , ( "B2", "next", "C2" )
+    , ( "C2", "next", "C2" )
+    , ( "A2", "prev", "A2" )
+    , ( "B2", "prev", "B2" ) -- only local
+    , ( "C2", "prev", "B2" )
+    ]
+
+
+canSwitchVariation : ( String, String, String ) -> Test
+canSwitchVariation ( from, dir, to ) =
+    let
+        fun : Zipper a -> Zipper a
+        fun =
+            case dir of
+                "next" ->
+                    lookNextVar
+
+                "prev" ->
+                    lookPrevVar
+
+                _ ->
+                    identity
+    in
+    test ("Switch " ++ dir ++ " from " ++ from ++ " to " ++ to) <|
+        \_ ->
+            Expect.equal
+                (Just to)
+                (findOne from trickyTree
+                    |> Maybe.map fun
+                    |> maybeZipperValue
+                )
+
+
+switchVariationsTest : Test
+switchVariationsTest =
+    describe "Switch variations" <|
+        List.map canSwitchVariation <|
+            switchVariationCases

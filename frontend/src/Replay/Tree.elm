@@ -1,6 +1,7 @@
 module Replay.Tree exposing (..)
 
 import List.Extra
+import Maybe.Extra
 
 
 
@@ -165,14 +166,30 @@ lookEnd zipper =
 
 lookPrevVar : Zipper a -> Zipper a
 lookPrevVar zipper =
-    -- TODO
-    zipper
+    case zipper.before of
+        [] ->
+            zipper
+
+        previous :: rest ->
+            { focus = previous
+            , before = rest
+            , after = zipper.focus :: zipper.after
+            , crumbs = zipper.crumbs
+            }
 
 
 lookNextVar : Zipper a -> Zipper a
 lookNextVar zipper =
-    -- TODO
-    zipper
+    case zipper.after of
+        [] ->
+            zipper
+
+        next :: rest ->
+            { focus = next
+            , before = zipper.focus :: zipper.before
+            , after = rest
+            , crumbs = zipper.crumbs
+            }
 
 
 currentValues : Zipper a -> List a
@@ -236,6 +253,43 @@ addChild child zipper =
             ( 0, zipper )
 
 
+
+-- The Others
+
+
+findAll : (a -> Bool) -> Zipper a -> List (Zipper a)
+findAll isGood zipper =
+    let
+        add : Zipper a -> List (Zipper a)
+        add z =
+            z.focus
+                |> getValue
+                |> Maybe.Extra.filter isGood
+                |> Maybe.map (\_ -> z)
+                |> Maybe.Extra.toList
+
+        childCount : Zipper a -> Int
+        childCount z =
+            z.focus
+                |> getChildren
+                |> Maybe.map List.length
+                |> Maybe.withDefault 0
+
+        childZippers : Zipper a -> List (Zipper a)
+        childZippers z =
+            -- for child count 0, we want []
+            -- for child count 1, we want [0]
+            -- for child count 2, we want [0, 1]
+            List.range 0 (childCount z - 1)
+                |> List.filterMap (\i -> lookNextByIndex i z)
+
+        helper : Zipper a -> List (Zipper a)
+        helper z =
+            add z ++ List.Extra.andThen helper (childZippers z)
+    in
+    helper <| lookStart zipper
+
+
 replaceFirstVar : List (Maybe a) -> Tree a -> Tree a
 replaceFirstVar new old =
     case new of
@@ -294,7 +348,7 @@ lookChild chosenChild { value, children } zipper =
                 Tree _ ->
                     Just
                         { focus = child
-                        , before = before
+                        , before = List.reverse before
                         , after = after
                         , crumbs =
                             { value = value
