@@ -66,6 +66,11 @@ getChildren =
     getTreeNodeData >> Maybe.map .children
 
 
+defaultChild : Tree a -> Maybe Int
+defaultChild =
+    getTreeNodeData >> Maybe.map .defaultChild
+
+
 
 -- Zipper
 
@@ -233,21 +238,14 @@ addChild child zipper =
 
 replaceFirstVar : List a -> Tree a -> Tree a
 replaceFirstVar new old =
-    case ( new, old ) of
-        ( [], _ ) ->
+    case new of
+        [] ->
             Locked
 
-        ( head :: tail, Locked ) ->
-            Tree
-                { value = Just head
-                , defaultChild = 0
-                , children = [ replaceFirstVar tail Locked ]
-                }
-
-        ( head :: tail, Tree node ) ->
+        head :: tail ->
             let
                 newChildren =
-                    case node.children of
+                    case getChildren old |> Maybe.withDefault [] of
                         [] ->
                             [ replaceFirstVar tail Locked ]
 
@@ -256,7 +254,7 @@ replaceFirstVar new old =
             in
             Tree
                 { value = Just head
-                , defaultChild = node.defaultChild
+                , defaultChild = defaultChild old |> Maybe.withDefault 0
                 , children = newChildren
                 }
 
