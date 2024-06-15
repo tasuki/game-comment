@@ -115,8 +115,13 @@ defaultSize g =
             13
 
 
+type GameSource
+    = GameSource String String
+
+
 type alias Record =
-    { black : String
+    { source : GameSource
+    , black : String
     , white : String
     , game : Game
     , size : Int
@@ -127,7 +132,8 @@ type alias Record =
 
 empty : Game -> Int -> Record
 empty game size =
-    { black = "Black"
+    { source = GameSource "here" "TODO"
+    , black = "Black"
     , white = "White"
     , game = game
     , size = size

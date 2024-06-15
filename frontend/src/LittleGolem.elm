@@ -135,8 +135,8 @@ getMove blackMove whiteMove node =
             Err <| "A node with too many moves: " ++ nodeToStr node
 
 
-gameToRecord : Game -> Node -> List Node -> Result String Record
-gameToRecord game first rest =
+gameToRecord : GameSource -> Game -> Node -> List Node -> Result String Record
+gameToRecord gameSource game first rest =
     let
         ( ( blackName, whiteName ), ( blackMove, whiteMove ) ) =
             if game == TwixT then
@@ -156,7 +156,8 @@ gameToRecord game first rest =
     in
     Result.map
         (\moves ->
-            { black = doFind first blackName
+            { source = gameSource
+            , black = doFind first blackName
             , white = doFind first whiteName
             , game = game
             , size = doFind first "SZ" |> String.toInt |> Maybe.withDefault 0
@@ -167,8 +168,8 @@ gameToRecord game first rest =
         resultMoves
 
 
-nodesToRecord : List Node -> Result String Record
-nodesToRecord nodes =
+nodesToRecord : GameSource -> List Node -> Result String Record
+nodesToRecord gameSource nodes =
     let
         first =
             List.head nodes |> Maybe.withDefault []
@@ -201,7 +202,7 @@ nodesToRecord nodes =
     in
     case ( maybeGame, List.tail nodes ) of
         ( Just game, Just rest ) ->
-            gameToRecord game first rest
+            gameToRecord gameSource game first rest
 
         ( Nothing, _ ) ->
             Err "We don't support this game (or perhaps could not determine the type of game record)"
@@ -215,11 +216,11 @@ showDeadEnds deadEnds =
     "Problem when parsing: [ " ++ Parser.deadEndsToString deadEnds ++ " ]"
 
 
-parse : String -> Result String Record
-parse input =
+parse : GameSource -> String -> Result String Record
+parse gameSource input =
     Parser.run parser input
         |> Result.mapError showDeadEnds
-        |> Result.andThen nodesToRecord
+        |> Result.andThen (nodesToRecord gameSource)
 
 
 gameIdParser : Parser String

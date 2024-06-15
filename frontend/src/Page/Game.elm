@@ -50,13 +50,13 @@ initEmpty game size session =
     )
 
 
-initGame : String -> String -> Session -> ( Model, Cmd Msg )
-initGame source id session =
+initGame : G.GameSource -> Session -> ( Model, Cmd Msg )
+initGame gameSource session =
     ( { session = session
       , replay = Nothing
       , message = sidebarMsg
       }
-    , AC.getSgf Fetched source id
+    , AC.getSgf Fetched gameSource
     )
 
 
@@ -99,7 +99,7 @@ update msg model currentUrl =
         Reload ->
             case Url.Parser.parse Route.parser currentUrl of
                 Just (Route.Game source lgId) ->
-                    ( model, AC.getSgf Fetched source lgId )
+                    ( model, AC.getSgf Fetched (G.GameSource source lgId) )
 
                 _ ->
                     ( model, Cmd.none )
@@ -107,9 +107,19 @@ update msg model currentUrl =
         Fetched result ->
             case result of
                 Ok record ->
-                    ( { model | replay = Just <| R.withRecord record model.replay }
-                    , Cmd.none
-                    )
+                    let
+                        shouldUpdate =
+                            model.replay
+                                |> Maybe.map (\r -> r.record.source == record.source)
+                                |> Maybe.withDefault True
+                    in
+                    if shouldUpdate then
+                        ( { model | replay = Just <| R.withRecord record model.replay }
+                        , Cmd.none
+                        )
+
+                    else
+                        ( model, Cmd.none )
 
                 Err error ->
                     ( { model | message = "Could not load game: [ " ++ error ++ " ]" }

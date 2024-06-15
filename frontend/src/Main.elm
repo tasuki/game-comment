@@ -3,6 +3,7 @@ port module Main exposing (..)
 import Browser
 import Browser.Navigation as Nav
 import Dict exposing (Dict)
+import GameRecord as G
 import Html as H
 import Html.Attributes as HA
 import Json.Encode as E
@@ -243,7 +244,7 @@ changeRouteTo url model =
                 |> updateWith newModel Game GameMsg
 
         Just (Route.Game source id) ->
-            maybeLoadReplay (Page.Game.initGame source id session)
+            maybeLoadReplay (Page.Game.initGame (G.GameSource source id) session)
                 |> updateWith newModel Game GameMsg
 
         Nothing ->

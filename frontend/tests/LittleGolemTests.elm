@@ -1,7 +1,7 @@
 module LittleGolemTests exposing (..)
 
 import Expect
-import GameRecord exposing (Coords, Move, Play(..), Player(..), Record)
+import GameRecord exposing (Coords, GameSource(..), Move, Play(..), Player(..), Record)
 import LittleGolem exposing (..)
 import LittleGolemRecords exposing (..)
 import Parser
@@ -133,7 +133,7 @@ recordMoves : String -> ( Record, List Move )
 recordMoves game =
     let
         record =
-            parse game |> Result.withDefault (GameRecord.empty GameRecord.TwixT 24)
+            parse (GameSource "" "") game |> Result.withDefault (GameRecord.empty GameRecord.TwixT 24)
     in
     ( record, record.moves )
 

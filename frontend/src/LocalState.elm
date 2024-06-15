@@ -106,6 +106,7 @@ treeCodec meta =
 recordCodec : Codec G.Record
 recordCodec =
     Codec.object G.Record
+        |> Codec.field "source" .source gameSourceCodec
         |> Codec.field "black" .black Codec.string
         |> Codec.field "white" .white Codec.string
         |> Codec.field "game" .game gameCodec
@@ -113,6 +114,19 @@ recordCodec =
         |> Codec.field "result" .result Codec.string
         |> Codec.field "moves" .moves (Codec.list moveCodec)
         |> Codec.buildObject
+
+
+gameSourceCodec : Codec G.GameSource
+gameSourceCodec =
+    let
+        match gameSource value =
+            case value of
+                G.GameSource source gameId ->
+                    gameSource source gameId
+    in
+    Codec.custom match
+        |> Codec.variant2 "gameSource" G.GameSource Codec.string Codec.string
+        |> Codec.buildCustom
 
 
 gameCodec : Codec G.Game
