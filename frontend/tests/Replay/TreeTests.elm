@@ -262,9 +262,9 @@ replaceFirstTest =
     describe "replaceFirstVar"
         [ test "Can replace tricky tree with longer main var" <|
             let
-                record : List String
+                record : List (Maybe String)
                 record =
-                    [ "root", "A1", "A2", "A3", "A4", "A5" ]
+                    List.map Just [ "root", "A1", "A2", "A3", "A4", "A5" ]
             in
             Expect.all
                 [ \_ ->

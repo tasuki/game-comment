@@ -236,7 +236,7 @@ addChild child zipper =
             ( 0, zipper )
 
 
-replaceFirstVar : List a -> Tree a -> Tree a
+replaceFirstVar : List (Maybe a) -> Tree a -> Tree a
 replaceFirstVar new old =
     case new of
         [] ->
@@ -253,7 +253,7 @@ replaceFirstVar new old =
                             replaceFirstVar tail firstChild :: otherChildren
             in
             Tree
-                { value = Just head
+                { value = head
                 , defaultChild = defaultChild old |> Maybe.withDefault 0
                 , children = newChildren
                 }

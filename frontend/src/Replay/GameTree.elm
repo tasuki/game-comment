@@ -53,7 +53,7 @@ withRecord record zipper =
         replaced : T.Zipper G.Move
         replaced =
             T.makeTree zipper
-                |> T.replaceFirstVar record
+                |> T.replaceFirstVar (Nothing :: List.map Just record)
                 |> T.makeZipper
 
         goToMove : Int -> Maybe GameView -> Maybe GameView
