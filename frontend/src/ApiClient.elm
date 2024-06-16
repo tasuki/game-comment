@@ -18,7 +18,7 @@ type alias SgfResult =
 
 
 type alias CommentsResult =
-    Result String (List C.Comment)
+    Result String (List C.CommentResponse)
 
 
 
