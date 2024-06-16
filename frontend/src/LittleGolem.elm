@@ -13,44 +13,40 @@ type alias Node =
     List Property
 
 
+many : Parser a -> Parser (List a)
+many item =
+    sequence
+        { item = item
+        , start = ""
+        , separator = ""
+        , end = ""
+        , spaces = succeed ()
+        , trailing = Optional
+        }
+
+
 propertyParser : Parser Property
 propertyParser =
     succeed Tuple.pair
-        |= (getChompedString <| chompUntil "[")
+        |= (getChompedString <| chompWhile Char.isAlpha)
         |. symbol "["
         |= (getChompedString <| chompUntil "]")
         |. symbol "]"
 
 
-nodeHelp : List Property -> Parser (Step (List Property) (List Property))
-nodeHelp revProps =
-    oneOf
-        [ succeed (\_ -> Done (List.reverse revProps))
-            |= oneOf [ symbol ";", symbol ")" ]
-        , succeed (\p -> Loop (p :: revProps))
-            |= propertyParser
-        ]
-
-
 nodeParser : Parser Node
 nodeParser =
     succeed identity
-        |= loop [] nodeHelp
-
-
-parserHelp revNodes =
-    oneOf
-        [ succeed (\n -> Loop (n :: revNodes)) |= nodeParser
-        , succeed () |> map (\_ -> Done (List.reverse revNodes))
-        ]
+        |. symbol ";"
+        |= many propertyParser
 
 
 parser : Parser (List Node)
 parser =
     succeed identity
         |. symbol "("
-        |. symbol ";"
-        |= loop [] parserHelp
+        |= many nodeParser
+        |. symbol ")"
         |. end
 
 

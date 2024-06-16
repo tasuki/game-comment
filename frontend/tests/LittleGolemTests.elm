@@ -86,7 +86,7 @@ nodeParserTest =
                     )
                     (Parser.run
                         nodeParser
-                        "FF[4]EV[twixt.ch.23.1.1]PB[spd_iv]PW[tasuki]SZ[24];B[aa]"
+                        ";FF[4]EV[twixt.ch.23.1.1]PB[spd_iv]PW[tasuki]SZ[24];B[aa]"
                     )
         ]
 
