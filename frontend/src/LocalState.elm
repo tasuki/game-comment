@@ -39,7 +39,6 @@ decode =
 replayCodec : Codec R.Replay
 replayCodec =
     Codec.object R.Replay
-        |> Codec.field "name" .name Codec.string
         |> Codec.field "record" .record recordCodec
         |> Codec.field "gameTree" .gameTree gameViewCodec
         |> Codec.buildObject

@@ -14,8 +14,7 @@ type alias GameView =
 
 
 type alias Replay =
-    { name : String
-    , record : G.Record
+    { record : G.Record
     , gameTree : GameView
     }
 
@@ -26,8 +25,7 @@ type alias Replay =
 
 emptyReplay : G.Record -> Replay
 emptyReplay record =
-    { name = G.recordName record
-    , record = record
+    { record = record
     , gameTree = GT.treeFromRecord record |> GT.treeToGameView
     }
 
@@ -36,8 +34,7 @@ withRecord : G.Record -> Maybe Replay -> Replay
 withRecord record maybeReplay =
     case maybeReplay of
         Just r ->
-            { name = G.recordName record
-            , record = record
+            { record = record
             , gameTree = GT.withRecord record.moves r.gameTree
             }
 

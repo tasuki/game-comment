@@ -20,11 +20,12 @@ button:hover { cursor: pointer; }
 h3 { font-size: 20px; font-weight: normal; }
 
 /* menu */
-.menu-item { background-color: #EEE; border: 1px solid #CCC; border-top: none; display: inline-block; margin: 0 4px 4px 0; padding: 3px 6px; }
-.menu-item a { color: #000; text-decoration: none; }
+.menu-item { background-color: #BBB; border: 1px solid #888; border-top: none; display: inline-block; margin: 0 4px 4px 0; padding: 3px 6px; }
+.menu-item a { color: #555; text-decoration: none; }
 .menu-item button { height: 18px; }
 .menu-item svg { vertical-align: middle; }
-.menu-item:hover, .menu-item.current, .picker .content .active { background-color: #D5B565; border-color: #998146; }
+.menu-item:hover, .menu-item.current, .picker .content .active { background-color: #D5B565; border-color: #998146; color: #6E5C30; }
+.menu-item:hover a, .menu-item.current a, .picker .content .active a { color: #6E5C30; }
 
 /* home */
 .picker .content button, .picker .content input { background-color: #EEE; border: 1px solid #CCC; margin: 10px; padding: 5px 10px; }

@@ -81,7 +81,7 @@ gameString g =
             "Go"
 
         ToroidGo ->
-            "Toroid Go"
+            "TorusGo"
 
         TwixT ->
             "TwixT"

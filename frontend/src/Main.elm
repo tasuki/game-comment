@@ -279,7 +279,7 @@ view model =
 
         nav : List (H.Html Msg)
         nav =
-            [ Navigation.getNavigationTiles ToggleMenu model.currentUrl gamesTiles ]
+            [ Navigation.getNavigationTiles ToggleMenu model.showFullMenu model.currentUrl gamesTiles ]
     in
     case model.page of
         Home m ->

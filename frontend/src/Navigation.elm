@@ -5,6 +5,7 @@ import GameRecord as G
 import Html as H
 import Html.Attributes as HA
 import Html.Events as HE
+import List.Extra
 import Replay as R
 import Route
 import SvgImages as SI
@@ -13,7 +14,9 @@ import Url exposing (Url)
 
 type alias NavTile msg =
     { url : String
-    , text : H.Html msg
+    , full : List (H.Html msg)
+    , short : List (H.Html msg)
+    , first : List (H.Html msg)
     , msg : Maybe msg
     }
 
@@ -28,16 +31,25 @@ firstLetter str =
             first
 
 
-showTile : Url -> NavTile msg -> List (H.Html msg)
-showTile currentUrl navTile =
+showTile : Bool -> Url -> NavTile msg -> List (H.Html msg)
+showTile showFullMenu currentUrl navTile =
     let
-        getClass : String -> String
-        getClass url =
-            if url == currentUrl.path then
+        class =
+            if navTile.url == currentUrl.path then
                 "current"
 
             else
                 ""
+
+        text =
+            if showFullMenu then
+                navTile.full
+
+            else if navTile.url == currentUrl.path then
+                navTile.short
+
+            else
+                navTile.first
 
         showCloseLink : List (H.Html msg)
         showCloseLink =
@@ -50,25 +62,56 @@ showTile currentUrl navTile =
 
         showLink : List (H.Html msg)
         showLink =
-            [ H.a [ HA.href navTile.url ] [ navTile.text ] ]
+            [ H.a [ HA.href navTile.url ] text ]
     in
     [ H.div
         [ HA.class "menu-item "
-        , HA.class (getClass navTile.url)
+        , HA.class class
         ]
         (showLink ++ showCloseLink)
     ]
 
 
+cutToFirstWordOrTenChars : String -> String
+cutToFirstWordOrTenChars str =
+    let
+        chars =
+            String.toList str
+
+        firstWord =
+            List.Extra.takeWhile (\c -> c /= ' ') chars
+    in
+    if List.length firstWord <= 10 then
+        firstWord |> String.fromList
+
+    else
+        List.take 10 chars |> String.fromList
+
+
 gameNavTile : Bool -> (String -> msg) -> ( String, R.Replay ) -> NavTile msg
 gameNavTile showFullMenu closeMsg ( url, replay ) =
     let
-        gameTileText =
-            if showFullMenu then
-                G.recordName replay.record
+        fullText =
+            [ H.text <| G.gameString replay.record.game
+            , H.span [] [ H.text ": " ]
+            , H.span [ HA.class "player black" ] [ H.text replay.record.black ]
+            , H.span [] [ H.text " vs " ]
+            , H.span [ HA.class "player white" ] [ H.text replay.record.white ]
+            ]
 
-            else
-                String.fromChar <| firstLetter <| G.recordName replay.record
+        shortText =
+            [ H.span
+                [ HA.class "player black" ]
+                [ H.text <| cutToFirstWordOrTenChars replay.record.black ]
+            , H.span [] [ H.text " vs " ]
+            , H.span
+                [ HA.class "player white" ]
+                [ H.text <| cutToFirstWordOrTenChars replay.record.white ]
+            ]
+
+        firstL =
+            [ H.text <| String.fromChar <| firstLetter <| G.gameString replay.record.game
+            ]
 
         gameCloseMsg =
             if showFullMenu then
@@ -77,7 +120,7 @@ gameNavTile showFullMenu closeMsg ( url, replay ) =
             else
                 Nothing
     in
-    NavTile url (H.text <| gameTileText) gameCloseMsg
+    NavTile url fullText shortText firstL gameCloseMsg
 
 
 getGamesTiles : (String -> msg) -> Bool -> Dict String R.Replay -> List (NavTile msg)
@@ -89,13 +132,13 @@ getGamesTiles closeMsg showFullMenu replays =
 
 firstTiles : List (NavTile msg)
 firstTiles =
-    [ NavTile (Route.toUrl Route.Home) (H.text "new") Nothing
-    , NavTile (Route.toUrl Route.Help) (H.text "help") Nothing
+    [ NavTile (Route.toUrl Route.Home) [ H.text "new" ] [ H.text "new" ] [ H.text "n" ] Nothing
+    , NavTile (Route.toUrl Route.Help) [ H.text "help" ] [ H.text "?" ] [ H.text "?" ] Nothing
     ]
 
 
-getNavigationTiles : msg -> Url -> List (NavTile msg) -> H.Html msg
-getNavigationTiles toggleMenuMsg currentUrl gamesTiles =
+getNavigationTiles : msg -> Bool -> Url -> List (NavTile msg) -> H.Html msg
+getNavigationTiles toggleMenuMsg showFullMenu currentUrl gamesTiles =
     let
         toggleButton : H.Html msg
         toggleButton =
@@ -105,6 +148,6 @@ getNavigationTiles toggleMenuMsg currentUrl gamesTiles =
 
         tiles : List (H.Html msg)
         tiles =
-            List.concatMap (showTile currentUrl) (firstTiles ++ gamesTiles)
+            List.concatMap (showTile showFullMenu currentUrl) (firstTiles ++ gamesTiles)
     in
     H.div [] <| toggleButton :: tiles
