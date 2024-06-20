@@ -17,7 +17,6 @@ import Replay as R
 import Route
 import Session exposing (Session)
 import Url exposing (Url)
-import Url.Parser
 
 
 main =
@@ -230,7 +229,7 @@ changeRouteTo url model =
                 Nothing ->
                     defaultModel
     in
-    case Url.Parser.parse Route.parser url of
+    case Route.parse url of
         Just Route.Home ->
             Page.Home.init session
                 |> updateWith newModel Home HomeMsg

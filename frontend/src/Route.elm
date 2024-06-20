@@ -1,7 +1,8 @@
 module Route exposing (..)
 
 import GameRecord as G
-import Url.Builder as Url
+import Url exposing (Url)
+import Url.Builder as Builder
 import Url.Parser as Parser exposing ((</>), (<?>), Parser, s)
 
 
@@ -10,6 +11,11 @@ type Route
     | Help
     | Game String String
     | EmptyGame G.Game Int
+
+
+parse : Url -> Maybe Route
+parse url =
+    Parser.parse parser url
 
 
 parser : Parser (Route -> Route) Route
@@ -26,16 +32,16 @@ toUrl : Route -> String
 toUrl r =
     case r of
         Home ->
-            Url.absolute [] []
+            Builder.absolute [] []
 
         Help ->
-            Url.absolute [ "help" ] []
+            Builder.absolute [ "help" ] []
 
         Game source id ->
-            Url.absolute [ "game", source, id ] []
+            Builder.absolute [ "game", source, id ] []
 
         EmptyGame game size ->
-            Url.absolute [ "board", gameToUrl game, String.fromInt size ] []
+            Builder.absolute [ "board", gameToUrl game, String.fromInt size ] []
 
 
 

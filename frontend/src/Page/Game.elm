@@ -21,7 +21,6 @@ import Svg exposing (Svg)
 import Svg.Attributes as SA
 import Task
 import Url exposing (Url)
-import Url.Parser
 
 
 
@@ -97,7 +96,7 @@ update msg model currentUrl =
             ( model, Cmd.none )
 
         Reload ->
-            case Url.Parser.parse Route.parser currentUrl of
+            case Route.parse currentUrl of
                 Just (Route.Game source lgId) ->
                     ( model, AC.getSgf Fetched (G.GameSource source lgId) )
 
