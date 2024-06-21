@@ -2,7 +2,8 @@ module Page.Game exposing (..)
 
 import ApiClient as AC
 import Browser.Events
-import Colours as C
+import Colours
+import Comments as C
 import Game.Go
 import Game.Hex
 import Game.ToroidGo
@@ -25,6 +26,11 @@ import Url exposing (Url)
 
 
 -- MODEL
+
+
+type Viewing
+    = ViewReplay
+    | ViewComment Int C.CommentView
 
 
 type alias Model =
@@ -308,7 +314,7 @@ sideView model =
         navColor =
             model.replay
                 -- TODO |> Maybe.Extra.filter (\r -> r.lookingAt.variation == Nothing)
-                |> Maybe.map (always C.colourMain)
+                |> Maybe.map (always Colours.colourMain)
                 |> Maybe.withDefault "inherit"
 
         gameNav : H.Html Msg

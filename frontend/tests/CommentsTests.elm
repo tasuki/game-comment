@@ -2,6 +2,8 @@ module CommentsTests exposing (..)
 
 import Comments exposing (..)
 import Expect
+import GameRecord as G
+import List.Extra
 import Test exposing (..)
 
 
@@ -37,35 +39,172 @@ clickableThingsTest =
         [ test "Can parse clickable things out of a comment" <|
             \_ ->
                 Expect.equal
-                    [ MoveFromMain (NumberedMove 17 { x = 10, y = 9 })
-                    , Move (NumberedMove 18 { x = 8, y = 9 })
-                    , Move (NumberedMove 19 { x = 11, y = 11 })
-                    , Coords { x = 10, y = 9 }
-                    , Move (NumberedMove 20 { x = 10, y = 11 })
-                    , Move (NumberedMove 21 { x = 10, y = 10 })
-                    , MoveFromMain (NumberedMove 17 { x = 11, y = 11 })
-                    , Coords { x = 8, y = 9 }
-                    , Move (NumberedMove 18 { x = 7, y = 8 })
-                    , Move (NumberedMove 19 { x = 8, y = 9 })
-                    , Move (NumberedMove 20 { x = 7, y = 9 })
-                    , Move (NumberedMove 21 { x = 7, y = 10 })
-                    , Move (NumberedMove 22 { x = 8, y = 8 })
-                    , Move (NumberedMove 23 { x = 7, y = 11 })
-                    , Move (NumberedMove 24 { x = 8, y = 9 })
-                    , Move (NumberedMove 20 { x = 6, y = 11 })
-                    , Move (NumberedMove 21 { x = 7, y = 11 })
-                    , Move (NumberedMove 22 { x = 7, y = 10 })
-                    , Move (NumberedMove 23 { x = 6, y = 10 })
-                    , Move (NumberedMove 24 { x = 7, y = 9 })
-                    , Move (NumberedMove 25 { x = 5, y = 1 })
-                    , Move (NumberedMove 18 { x = 6, y = 11 })
-                    , MoveFromMain (NumberedMove 20 { x = 9, y = 7 })
-                    , MoveFromMain (NumberedMove 9 { x = 8, y = 1 })
-                    , Move (NumberedMove 10 { x = 9, y = 1 })
-                    , MoveFromMain (NumberedMove 28 { x = 5, y = 8 })
-                    , Move (NumberedMove 28 { x = 10, y = 5 })
-                    , MoveFromMain (NumberedMove 29 { x = 9, y = 4 })
-                    , Move (NumberedMove 31 { x = 10, y = 5 })
+                    [ ( "|17.j9", MoveFromMain (NumberedMove 17 { x = 10, y = 9 }) )
+                    , ( "18.h9", Move (NumberedMove 18 { x = 8, y = 9 }) )
+                    , ( "19.k11", Move (NumberedMove 19 { x = 11, y = 11 }) )
+                    , ( "j9", Coords { x = 10, y = 9 } )
+                    , ( "20.j11", Move (NumberedMove 20 { x = 10, y = 11 }) )
+                    , ( "21.j10", Move (NumberedMove 21 { x = 10, y = 10 }) )
+                    , ( "|17.k11", MoveFromMain (NumberedMove 17 { x = 11, y = 11 }) )
+                    , ( "h9", Coords { x = 8, y = 9 } )
+                    , ( "18.g8", Move (NumberedMove 18 { x = 7, y = 8 }) )
+                    , ( "19.h9", Move (NumberedMove 19 { x = 8, y = 9 }) )
+                    , ( "20.g9", Move (NumberedMove 20 { x = 7, y = 9 }) )
+                    , ( "21.g10", Move (NumberedMove 21 { x = 7, y = 10 }) )
+                    , ( "22.h8", Move (NumberedMove 22 { x = 8, y = 8 }) )
+                    , ( "23.g11", Move (NumberedMove 23 { x = 7, y = 11 }) )
+                    , ( "24.h9", Move (NumberedMove 24 { x = 8, y = 9 }) )
+                    , ( "20.f11", Move (NumberedMove 20 { x = 6, y = 11 }) )
+                    , ( "21.g11", Move (NumberedMove 21 { x = 7, y = 11 }) )
+                    , ( "22.g10", Move (NumberedMove 22 { x = 7, y = 10 }) )
+                    , ( "23.f10", Move (NumberedMove 23 { x = 6, y = 10 }) )
+                    , ( "24.g9", Move (NumberedMove 24 { x = 7, y = 9 }) )
+                    , ( "25.e1", Move (NumberedMove 25 { x = 5, y = 1 }) )
+                    , ( "18.f11", Move (NumberedMove 18 { x = 6, y = 11 }) )
+                    , ( "|20.i7", MoveFromMain (NumberedMove 20 { x = 9, y = 7 }) )
+                    , ( "|9.h1", MoveFromMain (NumberedMove 9 { x = 8, y = 1 }) )
+                    , ( "10.i1", Move (NumberedMove 10 { x = 9, y = 1 }) )
+                    , ( "|28.e8", MoveFromMain (NumberedMove 28 { x = 5, y = 8 }) )
+                    , ( "28.j5", Move (NumberedMove 28 { x = 10, y = 5 }) )
+                    , ( "|29.i4", MoveFromMain (NumberedMove 29 { x = 9, y = 4 }) )
+                    , ( "31.j5", Move (NumberedMove 31 { x = 10, y = 5 }) )
                     ]
                     (clickableThings sampleComment)
+        ]
+
+
+createMove : G.Player -> Int -> Int -> G.Move
+createMove player x y =
+    G.Move player (G.Place { x = x, y = y })
+
+
+gameRecord : G.Record
+gameRecord =
+    let
+        g =
+            G.empty G.Go 19
+    in
+    { g
+        | moves =
+            List.range 1 5
+                |> List.map (\i -> createMove (G.onMove G.Go <| i - 1) i i)
+    }
+
+
+takeFromRecord : Int -> List G.Move
+takeFromRecord n =
+    List.take n gameRecord.moves
+
+
+testClickableThings : String
+testClickableThings =
+    "Hi |4.a2, 5.b3, 6.c4 or 6.c5 or even 5.b4. |5.g5 then i9 6.g6 and take the rest."
+
+
+clickableExpectParts : List ClickablePartData
+clickableExpectParts =
+    [ ClickablePartData "|4.a2"
+        (takeFromRecord 3
+            ++ [ createMove G.White 1 2
+               ]
+        )
+        Nothing
+    , ClickablePartData "5.b3"
+        (takeFromRecord 3
+            ++ [ createMove G.White 1 2
+               , createMove G.Black 2 3
+               ]
+        )
+        Nothing
+    , ClickablePartData "6.c4"
+        (takeFromRecord 3
+            ++ [ createMove G.White 1 2
+               , createMove G.Black 2 3
+               , createMove G.White 3 4
+               ]
+        )
+        Nothing
+    , ClickablePartData "6.c5"
+        (takeFromRecord 3
+            ++ [ createMove G.White 1 2
+               , createMove G.Black 2 3
+               , createMove G.White 3 5
+               ]
+        )
+        Nothing
+    , ClickablePartData "5.b4"
+        (takeFromRecord 3
+            ++ [ createMove G.White 1 2
+               , createMove G.Black 2 4
+               ]
+        )
+        Nothing
+    , ClickablePartData "|5.g5"
+        (takeFromRecord 4
+            ++ [ createMove G.Black 7 5
+               ]
+        )
+        Nothing
+    , ClickablePartData "i9"
+        (takeFromRecord 4
+            ++ [ createMove G.Black 7 5
+               ]
+        )
+        (Just <| G.Coords 9 9)
+    , ClickablePartData "6.g6"
+        (takeFromRecord 4
+            ++ [ createMove G.Black 7 5
+               , createMove G.White 7 6
+               ]
+        )
+        Nothing
+    ]
+
+
+clickablePartsTest : Test
+clickablePartsTest =
+    describe "clickableParts"
+        [ test "Can parse clickable things out of a comment" <|
+            \_ ->
+                Expect.equal
+                    clickableExpectParts
+                    (clickableParts
+                        gameRecord
+                        (clickableThings testClickableThings)
+                    )
+        ]
+
+
+getPart : Int -> CommentPart
+getPart i =
+    List.Extra.getAt i clickableExpectParts
+        |> Maybe.withDefault (ClickablePartData "" [] Nothing)
+        |> ClickablePart
+
+
+commentViewTest : Test
+commentViewTest =
+    describe "commentViewTest"
+        [ test "Return the parsed comment" <|
+            \_ ->
+                Expect.equal
+                    [ TextPart "Hi "
+                    , getPart 0
+                    , TextPart ", "
+                    , getPart 1
+                    , TextPart ", "
+                    , getPart 2
+                    , TextPart " or "
+                    , getPart 3
+                    , TextPart " or even "
+                    , getPart 4
+                    , TextPart ". "
+                    , getPart 5
+                    , TextPart " then "
+                    , getPart 6
+                    , TextPart " "
+                    , getPart 7
+                    , TextPart " and take the rest."
+                    ]
+                    (commentView gameRecord testClickableThings)
         ]
