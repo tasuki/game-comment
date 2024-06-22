@@ -38,24 +38,21 @@ view _ =
     { title = "Help - Game Comment"
     , extraClass = "narrower"
     , content =
-        [ H.p [] [ H.text "The UI is a work in progress and might change at any time." ]
-        , H.br [] []
+        [ H.p [] [ H.text "The UI is a work in progress!" ]
         , H.p [] [ H.text "Navigating the game:" ]
         , list
             [ H.text "Use the arrows on the sidebar to move forward/backward in the game."
-            , H.text "Clicking anywhere on the board starts a variation from the current move."
+            , H.text "Click anywhere on the board to start a variation."
+            , H.text "Click on a highlighted move in a comment to preview it."
             ]
-        , H.br [] []
-        , H.p [] [ H.text "There are some useful keyboard shortcuts:" ]
+        , H.p [] [ H.text "Keyboard shortcuts:" ]
         , list
-            [ H.text "Use the left/right keys to explore the game."
-            , H.text "Up/down to switch between variations at the current move."
+            [ H.text "Use the left/right (or h/l) keys to see next/previous move."
+            , H.text "Up/down to switch between the analysis mode and go through the comments."
             ]
-        , H.br [] []
-        , H.p [] [ H.text "You can also use the more complicated vim bindings:" ]
+        , H.p [] [ H.text "Keyboard shortcuts in analysis mode:" ]
         , list
             [ H.text "g/G to go to the start/end of the game"
-            , H.text "h/l for previous/next move"
             , H.text "k/j for previous/next variation"
             , H.text "x to delete the current variation"
             ]

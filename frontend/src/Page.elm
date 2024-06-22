@@ -27,8 +27,8 @@ viewPage toMsg pageView navigation =
     , body =
         [ H.div [ HA.class "pure-g", HA.class extraClass ] navigation
         , H.div [ HA.class "pure-g", HA.class extraClass ]
-            [ H.div [ HA.class "content pure-u-1 pure-u-md-2-3" ] (listToMsg content)
-            , H.div [ HA.class "sidebar pure-u-1 pure-u-md-1-3" ] (listToMsg sidebar)
+            [ H.div [ HA.class "content pure-u-1 pure-u-md-3-5 pure-u-xl-1-2" ] (listToMsg content)
+            , H.div [ HA.class "sidebar pure-u-1 pure-u-md-2-5 pure-u-xl-1-2" ] (listToMsg sidebar)
             ]
         ]
     }
@@ -46,6 +46,8 @@ sideHelp =
     , H.p []
         [ H.text "You can "
         , H.a [ HA.href "https://github.com/tasuki/game-comment" ] [ H.text "see the source code" ]
+        , H.text " and "
+        , H.a [ HA.href "https://github.com/tasuki/game-comment/issues" ] [ H.text "submit bug reports" ]
         , H.text "."
         ]
     ]
