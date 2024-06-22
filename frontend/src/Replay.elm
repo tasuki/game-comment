@@ -176,37 +176,3 @@ viewMoveHtml jumpMsg backgroundColour moveNum { player, play } =
         , HA.style "background-color" backgroundColour
         ]
         [ H.text <| String.fromInt moveNum ++ "." ++ moveStr ]
-
-
-view : (GameView -> msg) -> (Int -> msg) -> H.Html msg -> Replay -> List (H.Html msg)
-view jumpMsg deleteVarMsg gameNav replay =
-    let
-        char : Int -> Char
-        char coord =
-            List.drop (coord - 1) chars |> List.head |> Maybe.withDefault '.'
-
-        moveStr { player, play } =
-            case play of
-                G.Place coords ->
-                    String.fromChar (char coords.x) ++ String.fromInt coords.y
-
-                G.Swap ->
-                    "Swap"
-
-                G.Resign ->
-                    "Resign"
-
-        str : String
-        str =
-            String.fromInt (currentMoveNumber replay)
-                ++ "."
-                ++ (Maybe.map moveStr (lastPlayed replay) |> Maybe.withDefault "")
-    in
-    [ H.div [ HA.class "player-info" ]
-        [ H.div [ HA.class "player black" ] [ H.text replay.record.black ]
-        , H.div [ HA.class "player white" ] [ H.text replay.record.white ]
-        , H.div [ HA.class "clear" ] []
-        ]
-    , gameNav
-    , H.div [ HA.class "variations" ] []
-    ]

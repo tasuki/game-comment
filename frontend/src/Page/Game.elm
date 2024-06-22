@@ -30,12 +30,14 @@ import Url exposing (Url)
 
 type Viewing
     = ViewReplay
-    | ViewComment Int C.CommentView
+    | ViewComment Int Int
 
 
 type alias Model =
     { session : Session
+    , viewing : Viewing
     , replay : Maybe R.Replay
+    , comments : List C.Comment
     , message : String
     }
 
@@ -48,7 +50,9 @@ sidebarMsg =
 initEmpty : G.Game -> Int -> Session -> ( Model, Cmd Msg )
 initEmpty game size session =
     ( { session = session
+      , viewing = ViewReplay
       , replay = Just <| R.emptyReplay <| G.empty game size
+      , comments = []
       , message = sidebarMsg
       }
     , Cmd.none
@@ -58,7 +62,9 @@ initEmpty game size session =
 initGame : G.GameSource -> Session -> ( Model, Cmd Msg )
 initGame gameSource session =
     ( { session = session
+      , viewing = ViewReplay
       , replay = Nothing
+      , comments = []
       , message = sidebarMsg
       }
     , AC.getSgf Fetched gameSource
@@ -68,7 +74,9 @@ initGame gameSource session =
 initPrevious : R.Replay -> Session -> ( Model, Cmd Msg )
 initPrevious replay session =
     ( { session = session
+      , viewing = ViewReplay -- TODO preserve previous view?
       , replay = Just replay
+      , comments = [] -- TODO definitely preserve comments!
       , message = ""
       }
     , Task.succeed Reload |> Task.perform identity
@@ -83,16 +91,16 @@ type Msg
     = Noop
     | Reload
     | Fetched AC.SgfResult
+    | FetchedComments AC.CommentsResult
     | Play G.Coords
     | Forward
     | Backward
     | Start
     | End
-    | Jump R.GameView
+    | JumpComment Int Int
     | PrevVariation
     | NextVariation
     | CutVariation
-    | DeleteVariation Int
 
 
 update : Msg -> Model -> Url -> ( Model, Cmd Msg )
@@ -104,7 +112,13 @@ update msg model currentUrl =
         Reload ->
             case Route.parse currentUrl of
                 Just (Route.Game source lgId) ->
-                    ( model, AC.getSgf Fetched (G.GameSource source lgId) )
+                    let
+                        gameSource =
+                            G.GameSource source lgId
+                    in
+                    ( model
+                    , AC.getSgf Fetched gameSource
+                    )
 
                 _ ->
                     ( model, Cmd.none )
@@ -120,7 +134,7 @@ update msg model currentUrl =
                     in
                     if shouldUpdate then
                         ( { model | replay = Just <| R.withRecord record model.replay }
-                        , Cmd.none
+                        , AC.getComments FetchedComments record.source
                         )
 
                     else
@@ -128,6 +142,25 @@ update msg model currentUrl =
 
                 Err error ->
                     ( { model | message = "Could not load game: [ " ++ error ++ " ]" }
+                    , Cmd.none
+                    )
+
+        FetchedComments result ->
+            case result of
+                Ok comments ->
+                    case model.replay of
+                        Just replay ->
+                            ( { model | comments = List.map (C.getComment replay.record) comments }
+                            , Cmd.none
+                            )
+
+                        Nothing ->
+                            ( { model | message = "No replay, so not showing comments..." }
+                            , Cmd.none
+                            )
+
+                Err error ->
+                    ( { model | message = "Could not load comments: [ " ++ error ++ " ]" }
                     , Cmd.none
                     )
 
@@ -154,13 +187,8 @@ update msg model currentUrl =
             --( { model | replay = Maybe.map R.cutVariation model.replay }, Cmd.none )
             ( model, Cmd.none )
 
-        DeleteVariation varNum ->
-            -- TODO
-            --( { model | replay = Maybe.map (R.deleteVariation varNum) model.replay }, Cmd.none )
-            ( model, Cmd.none )
-
-        Jump zipper ->
-            ( { model | replay = Maybe.map (R.jump zipper) model.replay }, Cmd.none )
+        JumpComment comment move ->
+            ( { model | viewing = ViewComment comment move }, Cmd.none )
 
         Play coords ->
             let
@@ -310,13 +338,6 @@ sideView model =
                 Nothing ->
                     0
 
-        navColor : String
-        navColor =
-            model.replay
-                -- TODO |> Maybe.Extra.filter (\r -> r.lookingAt.variation == Nothing)
-                |> Maybe.map (always Colours.colourMain)
-                |> Maybe.withDefault "inherit"
-
         gameNav : H.Html Msg
         gameNav =
             H.div [ HA.class "pure-g game-nav" ]
@@ -324,23 +345,15 @@ sideView model =
                 , H.div [ HA.class "pure-u-1-5" ] [ H.button [ HE.onClick Backward ] [ backward ] ]
                 , H.div [ HA.class "pure-u-1-5" ]
                     [ H.div
-                        [ HA.style "padding" "7px 10px", HA.style "background-color" navColor ]
+                        [ HA.style "padding" "7px 10px" ]
                         [ H.text <| String.fromInt moveNum ]
                     ]
                 , H.div [ HA.class "pure-u-1-5" ] [ H.button [ HE.onClick Forward ] [ forward ] ]
                 , H.div [ HA.class "pure-u-1-5" ] [ H.button [ HE.onClick End ] [ end ] ]
                 ]
-
-        gameInfo : List (H.Html Msg)
-        gameInfo =
-            case model.replay of
-                Just replay ->
-                    R.view Jump DeleteVariation gameNav replay
-
-                Nothing ->
-                    []
     in
-    [ H.div [ HA.class "game-info" ] gameInfo
+    [ H.div [ HA.class "game-info" ] [ gameNav ]
+    , H.div [ HA.class "comments" ] (C.view JumpComment model.comments)
     , H.div [ HA.class "message" ] [ H.text model.message ]
     ]
 

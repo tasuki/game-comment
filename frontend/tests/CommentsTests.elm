@@ -182,9 +182,9 @@ getPart i =
         |> ClickablePart
 
 
-commentViewTest : Test
-commentViewTest =
-    describe "commentViewTest"
+getCommentContentTest : Test
+getCommentContentTest =
+    describe "getCommentContentTest"
         [ test "Return the parsed comment" <|
             \_ ->
                 Expect.equal
@@ -206,5 +206,5 @@ commentViewTest =
                     , getPart 7
                     , TextPart " and take the rest."
                     ]
-                    (commentView gameRecord testClickableThings)
+                    (commentParts gameRecord testClickableThings)
         ]

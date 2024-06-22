@@ -1,6 +1,9 @@
 module Comments exposing (..)
 
 import GameRecord as G
+import Html as H
+import Html.Attributes as HA
+import Html.Events as HE
 import Json.Decode as D
 import Maybe.Extra
 import Regex
@@ -158,8 +161,14 @@ type CommentPart
     | ClickablePart ClickablePartData
 
 
-type alias CommentView =
-    List CommentPart
+type alias Comment =
+    { source : G.GameSource
+    , commentId : Int
+    , userId : Int
+    , username : String
+    , comment : List CommentPart
+    , created : String
+    }
 
 
 thingToClickablePartData :
@@ -233,13 +242,13 @@ clickableParts record things =
         |> List.map (\cpd -> { cpd | position = List.reverse cpd.position })
 
 
-commentViewHelper : String -> List CommentPart -> List ClickablePartData -> List CommentPart
-commentViewHelper commentText acc cpds =
+commentPartsHelper : String -> List CommentPart -> List ClickablePartData -> List CommentPart
+commentPartsHelper commentText acc cpds =
     case cpds of
         cp :: cps ->
             case String.indexes cp.clickable commentText |> List.head of
                 Just n ->
-                    commentViewHelper
+                    commentPartsHelper
                         (String.dropLeft (n + String.length cp.clickable) commentText)
                         (ClickablePart cp :: (TextPart <| String.left n commentText) :: acc)
                         cps
@@ -251,10 +260,69 @@ commentViewHelper commentText acc cpds =
             TextPart commentText :: acc
 
 
-commentView : G.Record -> String -> CommentView
-commentView record comment =
-    comment
+commentParts : G.Record -> String -> List CommentPart
+commentParts record commentStr =
+    commentStr
         |> clickableThings
         |> clickableParts record
-        |> commentViewHelper comment []
+        |> commentPartsHelper commentStr []
         |> List.reverse
+
+
+getComment : G.Record -> CommentResponse -> Comment
+getComment record commentResponse =
+    { source = record.source
+    , commentId = commentResponse.commentId
+    , userId = commentResponse.userId
+    , username = commentResponse.username
+    , comment = commentParts record commentResponse.comment
+    , created = commentResponse.created
+    }
+
+
+
+-- View
+
+
+viewTextPart : String -> H.Html msg
+viewTextPart str =
+    H.span []
+        (String.split "\n" str
+            |> List.map H.text
+            |> List.intersperse (H.br [] [])
+        )
+
+
+viewClickablePart : msg -> ClickablePartData -> H.Html msg
+viewClickablePart jumpMsg cpd =
+    H.button [ HE.onClick jumpMsg ] [ H.text cpd.clickable ]
+
+
+viewCommentParts : (Int -> msg) -> Int -> List (H.Html msg) -> List CommentPart -> List (H.Html msg)
+viewCommentParts jumpMsg movePos acc parts =
+    case parts of
+        [] ->
+            List.reverse acc
+
+        (TextPart str) :: tailParts ->
+            viewCommentParts jumpMsg
+                movePos
+                (viewTextPart str :: acc)
+                tailParts
+
+        (ClickablePart cpd) :: tailParts ->
+            viewCommentParts jumpMsg
+                (movePos + 1)
+                (viewClickablePart (jumpMsg movePos) cpd :: acc)
+                tailParts
+
+
+viewComment : (Int -> Int -> msg) -> Int -> Comment -> List (H.Html msg)
+viewComment jumpMsg commentPos comment =
+    viewCommentParts (jumpMsg commentPos) 0 [] comment.comment
+
+
+view : (Int -> Int -> msg) -> List Comment -> List (H.Html msg)
+view jumpMsg comments =
+    List.indexedMap (viewComment jumpMsg) comments
+        |> List.concat

@@ -97,8 +97,12 @@ getSgf msg gameSource =
         }
 
 
-getComments : (CommentsResult -> msg) -> String -> String -> Cmd msg
-getComments msg source gameId =
+getComments : (CommentsResult -> msg) -> G.GameSource -> Cmd msg
+getComments msg gameSource =
+    let
+        (G.GameSource source gameId) =
+            gameSource
+    in
     Http.get
         { url = baseUrl ++ "/games/" ++ source ++ "/" ++ gameId ++ "/comments"
         , expect = Http.expectJson (decodeErrors >> msg) C.commentsDecoder

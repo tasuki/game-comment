@@ -33,17 +33,14 @@ h3 { font-size: 20px; font-weight: normal; }
 .picker .content .lg-picker { width: 80%; }
 
 /* game */
-.game-info { background-color: #999; margin: 10px; padding: 5px; }
-@media screen and (min-width: 48em) { .game-info { margin-top: 0; } }
 .game-info .game-nav { max-width: 350px; margin: auto; }
 .game-info .game-nav div { display: flex; justify-content: center; align-items: center; }
 .game-info .game-nav svg { vertical-align: middle; }
 .player-info .player { padding: 3px 5px; }
 .player-info .black { float: left; }
 .player-info .white { float: right; }
-.variations .variation { margin-top: 10px; border-left: 5px solid; }
-.variations .player { padding: 2px 5px; }
-.variations button svg { vertical-align: middle; }
+.comments { padding: 10px; }
+.comments button { background-color: #D5B565; padding: 1px 4.6px 1px 5px; }
 .message { margin: 10px; padding: 5px; }
 
 /* specific games */
