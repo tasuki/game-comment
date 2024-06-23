@@ -2,17 +2,18 @@ module Page.Game exposing (..)
 
 import ApiClient as AC
 import Browser.Events
-import Colours
 import Comments as C
 import Game.Go
 import Game.Hex
 import Game.ToroidGo
 import Game.TwixT
+import GameHelpers as GH
 import GameRecord as G
 import Html as H
 import Html.Attributes as HA
 import Html.Events as HE
 import Json.Decode as D
+import List.Extra
 import Maybe.Extra
 import Page exposing (Page)
 import Replay as R
@@ -305,7 +306,7 @@ boardView model =
     case model.replay of
         Just replay ->
             let
-                specificView : R.Replay -> (G.Coords -> msg) -> Svg msg
+                specificView : GH.GameView msg
                 specificView =
                     case replay.record.game of
                         G.TwixT ->
@@ -320,7 +321,31 @@ boardView model =
                         G.Hex ->
                             Game.Hex.view
             in
-            specificView replay Play
+            case model.viewing of
+                ViewReplay ->
+                    specificView
+                        replay.record.size
+                        (R.currentMoves replay)
+                        (R.currentColour replay)
+                        (R.children replay)
+                        (R.lastPlayed replay)
+                        (R.onMove replay.record.game replay)
+                        Play
+
+                ViewComment commentPos clickablePos ->
+                    case C.getClickable commentPos clickablePos model.comments of
+                        Just cpd ->
+                            specificView
+                                replay.record.size
+                                cpd.position
+                                (R.currentColour replay)
+                                []
+                                (List.Extra.last cpd.position)
+                                (G.onMove replay.record.game <| List.length cpd.position)
+                                Play
+
+                        Nothing ->
+                            H.text "If I were a better programmer, this branch wouldn't even exist."
 
         Nothing ->
             H.div [] []

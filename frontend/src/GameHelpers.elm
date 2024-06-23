@@ -4,7 +4,19 @@ import GameRecord as G
 import Html as H
 import Html.Events as HE
 import Json.Decode as Json
+import Svg exposing (Svg)
 import Svg.Attributes as SA
+
+
+type alias GameView msg =
+    Int -- boardSize
+    -> List G.Move -- currentMoves
+    -> String -- currentColour
+    -> List G.Coords -- children
+    -> Maybe G.Move -- lastPlayed
+    -> G.Player -- onMove
+    -> (G.Coords -> msg) -- playMsg
+    -> Svg msg
 
 
 intsToStr : List Int -> String

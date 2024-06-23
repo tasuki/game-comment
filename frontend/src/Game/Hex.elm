@@ -266,33 +266,26 @@ viewHexes position lastMove playMsg =
     List.map showPosition
 
 
-view : R.Replay -> (G.Coords -> msg) -> Svg msg
-view replay playMsg =
+view : GH.GameView msg
+view boardSize currentMoves currentColour children lastPlayed onMove playMsg =
     let
-        size =
-            replay.record.size
-
         ( boardWidth, boardHeight ) =
-            ( hexWidth * 1.5 * toFloat size + 1, hexHeight * toFloat size * 3 / 4 + 1.5 )
+            ( hexWidth * 1.5 * toFloat boardSize + 1, hexHeight * toFloat boardSize * 3 / 4 + 1.5 )
 
         coordList : List G.Coords
         coordList =
-            GH.coordList 1 size
+            GH.coordList 1 boardSize
 
         position =
-            List.foldl add (emptyPosition size) (R.currentMoves replay)
+            List.foldl add (emptyPosition boardSize) currentMoves
     in
     Svg.svg
         [ SA.viewBox (GH.floatsToStr [ 0, 0, boardWidth, boardHeight ])
         , SA.class "hex"
         ]
         (background boardWidth boardHeight
-            ++ List.map (viewBoardHex <| R.currentColour replay) coordList
-            ++ viewBoardSides size
-            ++ drawChildren (R.children replay)
-            ++ viewHexes
-                position
-                (R.lastPlayed replay)
-                playMsg
-                coordList
+            ++ List.map (viewBoardHex <| currentColour) coordList
+            ++ viewBoardSides boardSize
+            ++ drawChildren children
+            ++ viewHexes position lastPlayed playMsg coordList
         )

@@ -1,6 +1,7 @@
 module Game.ToroidGo exposing (..)
 
 import Game.Shared.Go exposing (..)
+import GameHelpers as GH
 import GameRecord as G
 import Replay as R
 import Svg exposing (Svg)
@@ -72,40 +73,34 @@ contextBackground fill from to =
     ]
 
 
-view : R.Replay -> (G.Coords -> msg) -> Svg msg
-view replay playMsg =
+view : GH.GameView msg
+view boardSize currentMoves currentColour children lastPlayed onMove playMsg =
     let
-        size =
-            replay.record.size
-
         borderAdjust =
             0.05
 
         ( from, to ) =
             ( String.fromFloat <| 0.5 - context - borderAdjust
-            , String.fromFloat <| toFloat size + (context * 2) + (borderAdjust * 2)
+            , String.fromFloat <| toFloat boardSize + (context * 2) + (borderAdjust * 2)
             )
 
         ( min, max ) =
-            ( 1 - context, size + context )
-
-        colour =
-            R.currentColour replay
+            ( 1 - context, boardSize + context )
     in
     Svg.svg
         [ SA.viewBox <| String.join " " [ from, from, to, to ]
         , SA.class "go"
         ]
-        (contextBackground colour from to
+        (contextBackground currentColour from to
             ++ contextBackground "#3336" from to
-            ++ background colour size
-            ++ drawChildren (R.children replay)
+            ++ background currentColour boardSize
+            ++ drawChildren children
             ++ viewLines (toFloat min - 0.5) (toFloat max + 0.5) min max
             ++ viewStones
                 normaliseCoords
                 min
                 max
-                (positionFromReplay neighbors replay)
-                (R.lastPlayed replay)
+                (positionFromReplay neighbors boardSize currentMoves)
+                lastPlayed
                 playMsg
         )

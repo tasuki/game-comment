@@ -159,9 +159,9 @@ add neighbors { player, play } position =
             position
 
 
-positionFromReplay : Neighbors -> R.Replay -> Position
-positionFromReplay neighbors replay =
-    List.foldl (add neighbors) (emptyPosition replay.record.size) (R.currentMoves replay)
+positionFromReplay : Neighbors -> Int -> List G.Move -> Position
+positionFromReplay neighbors boardSize currentMoves =
+    List.foldl (add neighbors) (emptyPosition boardSize) currentMoves
 
 
 isMoveLegal : Neighbors -> G.Coords -> R.Replay -> Bool
@@ -171,7 +171,7 @@ isMoveLegal neighbors move replay =
             neighbors
             (R.onMove G.Go replay)
             move
-            (positionFromReplay neighbors replay)
+            (positionFromReplay neighbors replay.record.size (R.currentMoves replay))
 
 
 

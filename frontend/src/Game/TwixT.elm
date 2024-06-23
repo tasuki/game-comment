@@ -326,27 +326,19 @@ drawPegs size position lastMove onMove playMsg =
     List.map drawCoords (coordList size)
 
 
-view : R.Replay -> (G.Coords -> msg) -> Svg msg
-view replay playMsg =
+view : GH.GameView msg
+view boardSize currentMoves currentColour children lastPlayed onMove playMsg =
     let
-        size =
-            replay.record.size
-
         position =
-            positionFromMoves (R.currentMoves replay)
+            positionFromMoves currentMoves
     in
     Svg.svg
-        [ SA.viewBox (GH.floatsToStr [ 0.5, 0.5, toFloat size, toFloat size ]), SA.class "twixt" ]
-        (background (R.currentColour replay) size
-            ++ drawBorders size
-            ++ drawGuidelines size
-            ++ drawChildren (R.children replay)
-            ++ drawPoints size
+        [ SA.viewBox (GH.floatsToStr [ 0.5, 0.5, toFloat boardSize, toFloat boardSize ]), SA.class "twixt" ]
+        (background currentColour boardSize
+            ++ drawBorders boardSize
+            ++ drawGuidelines boardSize
+            ++ drawChildren children
+            ++ drawPoints boardSize
             ++ drawLinks position
-            ++ drawPegs
-                size
-                position
-                (R.lastPlayed replay)
-                (R.onMove G.TwixT replay)
-                playMsg
+            ++ drawPegs boardSize position lastPlayed onMove playMsg
         )

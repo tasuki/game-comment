@@ -5,6 +5,7 @@ import Html as H
 import Html.Attributes as HA
 import Html.Events as HE
 import Json.Decode as D
+import List.Extra
 import Maybe.Extra
 import Regex
 
@@ -278,6 +279,30 @@ getComment record commentResponse =
     , comment = commentParts record commentResponse.comment
     , created = commentResponse.created
     }
+
+
+getClickable : Int -> Int -> List Comment -> Maybe ClickablePartData
+getClickable commentPos clickablePos comments =
+    let
+        findClickable : Int -> List CommentPart -> Maybe ClickablePartData
+        findClickable pos parts =
+            case parts of
+                (ClickablePart cpd) :: tailParts ->
+                    if pos == 0 then
+                        Just cpd
+
+                    else
+                        findClickable (pos - 1) tailParts
+
+                (TextPart _) :: tailParts ->
+                    findClickable pos tailParts
+
+                [] ->
+                    Nothing
+    in
+    comments
+        |> List.Extra.getAt commentPos
+        |> Maybe.andThen (\c -> findClickable clickablePos c.comment)
 
 
 

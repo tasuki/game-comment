@@ -54,34 +54,31 @@ background colour size =
     [ lazy rect size ]
 
 
-view : R.Replay -> (G.Coords -> msg) -> Svg msg
-view replay playMsg =
+view : GH.GameView msg
+view boardSize currentMoves currentColour children lastPlayed onMove playMsg =
     let
-        size =
-            replay.record.size
-
         borderAdjust =
             0.2
 
         ( from, to ) =
-            ( 0.5 - borderAdjust, toFloat size + 2 * borderAdjust )
+            ( 0.5 - borderAdjust, toFloat boardSize + 2 * borderAdjust )
 
         ( min, max ) =
-            ( 1, size )
+            ( 1, boardSize )
     in
     Svg.svg
         [ SA.viewBox (GH.floatsToStr [ from, from, to, to ])
         , SA.class "go"
         ]
-        (background (R.currentColour replay) size
-            ++ drawChildren (R.children replay)
+        (background currentColour boardSize
+            ++ drawChildren children
             ++ viewLines (toFloat min) (toFloat max) min max
-            ++ viewStars size
+            ++ viewStars boardSize
             ++ viewStones
                 normaliseCoords
                 min
                 max
-                (positionFromReplay neighbors replay)
-                (R.lastPlayed replay)
+                (positionFromReplay neighbors boardSize currentMoves)
+                lastPlayed
                 playMsg
         )
