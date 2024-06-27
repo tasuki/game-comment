@@ -102,7 +102,14 @@ next replay =
 
 prev : Replay -> Replay
 prev replay =
-    { replay | gameTree = T.lookPrev replay.gameTree |> Maybe.withDefault replay.gameTree }
+    let
+        defaultToFirstChild : GameView
+        defaultToFirstChild =
+            T.lookNextByIndex 0 replay.gameTree
+                |> Maybe.andThen T.lookPrev
+                |> Maybe.withDefault replay.gameTree
+    in
+    { replay | gameTree = T.lookPrev replay.gameTree |> Maybe.withDefault defaultToFirstChild }
 
 
 start : Replay -> Replay
