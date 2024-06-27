@@ -19,6 +19,8 @@ sudo apt install haskell-stack libtinfo-dev zlib1g-dev
 
 ## Develop
 
+[![CI](https://github.com/tasuki/game-comment/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/tasuki/game-comment/actions/workflows/ci.yml)
+
 Run `make develop` in both `backend/` and `frontend/` directories. Also possible to run it just once in root, but noisy intermingled output is not fun.
 
 ## Deploy

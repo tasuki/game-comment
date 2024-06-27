@@ -1,0 +1,23 @@
+name: CI
+
+on:
+    push:
+        branches: [ master ]
+    pull_request:
+        branches: [ master ]
+
+jobs:
+    frontend:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: ./frontend
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                node-version: 18
+            - run: npm install -g elm@latest-0.19.1 elm-test
+            - run: make dev
+            - run: elm make src/Main.elm --output=gc.js
+            - run: elm-test
