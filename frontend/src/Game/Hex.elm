@@ -266,8 +266,31 @@ viewHexes position lastMove playMsg =
     List.map showPosition
 
 
+viewHighlight : Maybe G.Coords -> List (Svg msg)
+viewHighlight maybeCoords =
+    case maybeCoords of
+        Just coords ->
+            let
+                ( centerX, centerY ) =
+                    hexCenter coords
+            in
+            [ Svg.circle
+                [ SA.cx <| centerX
+                , SA.cy <| centerY
+                , SA.r <| "0.5"
+                , SA.class "last-move white"
+                , SA.fill <| "transparent"
+                , SA.strokeWidth ".15"
+                ]
+                []
+            ]
+
+        Nothing ->
+            []
+
+
 view : GH.GameView msg
-view boardSize currentMoves currentColour children lastPlayed onMove playMsg =
+view boardSize currentMoves highlight currentColour children lastPlayed onMove playMsg =
     let
         ( boardWidth, boardHeight ) =
             ( hexWidth * 1.5 * toFloat boardSize + 1, hexHeight * toFloat boardSize * 3 / 4 + 1.5 )
@@ -288,4 +311,5 @@ view boardSize currentMoves currentColour children lastPlayed onMove playMsg =
             ++ viewBoardSides boardSize
             ++ drawChildren children
             ++ viewHexes position lastPlayed playMsg coordList
+            ++ viewHighlight highlight
         )

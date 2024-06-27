@@ -11,6 +11,7 @@ import Svg.Attributes as SA
 type alias GameView msg =
     Int -- boardSize
     -> List G.Move -- currentMoves
+    -> Maybe G.Coords -- highlight
     -> String -- currentColour
     -> List G.Coords -- children
     -> Maybe G.Move -- lastPlayed

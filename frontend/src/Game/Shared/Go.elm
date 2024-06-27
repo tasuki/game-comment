@@ -351,3 +351,22 @@ viewStones normaliseCoords min max position lastMove playMsg =
             )
     in
     List.singleton <| Svg.Keyed.node "g" [] <| List.map showKeyedPosition (GH.coordList min max)
+
+
+viewHighlight : Maybe G.Coords -> List (Svg msg)
+viewHighlight maybeCoords =
+    case maybeCoords of
+        Just coords ->
+            [ Svg.circle
+                [ SA.cx <| String.fromInt coords.x
+                , SA.cy <| String.fromInt coords.y
+                , SA.r <| "0.3"
+                , SA.class "last-move white"
+                , SA.fill <| "transparent"
+                , SA.strokeWidth ".1"
+                ]
+                []
+            ]
+
+        Nothing ->
+            []

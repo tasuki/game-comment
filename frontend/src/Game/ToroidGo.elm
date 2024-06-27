@@ -74,7 +74,7 @@ contextBackground fill from to =
 
 
 view : GH.GameView msg
-view boardSize currentMoves currentColour children lastPlayed onMove playMsg =
+view boardSize currentMoves highlight currentColour children lastPlayed onMove playMsg =
     let
         borderAdjust =
             0.05
@@ -103,4 +103,5 @@ view boardSize currentMoves currentColour children lastPlayed onMove playMsg =
                 (positionFromReplay neighbors boardSize currentMoves)
                 lastPlayed
                 playMsg
+            ++ viewHighlight highlight
         )

@@ -326,6 +326,7 @@ boardView model =
                     specificView
                         replay.record.size
                         (R.currentMoves replay)
+                        Nothing
                         (R.currentColour replay)
                         (R.children replay)
                         (R.lastPlayed replay)
@@ -338,9 +339,15 @@ boardView model =
                             specificView
                                 replay.record.size
                                 cpd.position
+                                cpd.highlight
                                 (R.currentColour replay)
                                 []
-                                (List.Extra.last cpd.position)
+                                (if Maybe.Extra.isJust cpd.highlight then
+                                    Nothing
+
+                                 else
+                                    List.Extra.last cpd.position
+                                )
                                 (G.onMove replay.record.game <| List.length cpd.position)
                                 Play
 

@@ -326,8 +326,27 @@ drawPegs size position lastMove onMove playMsg =
     List.map drawCoords (coordList size)
 
 
+viewHighlight : Maybe G.Coords -> List (Svg msg)
+viewHighlight maybeCoords =
+    case maybeCoords of
+        Just coords ->
+            [ Svg.circle
+                [ SA.cx <| String.fromInt coords.x
+                , SA.cy <| String.fromInt coords.y
+                , SA.r <| "0.35"
+                , SA.class "last-move white"
+                , SA.fill <| "transparent"
+                , SA.strokeWidth ".13"
+                ]
+                []
+            ]
+
+        Nothing ->
+            []
+
+
 view : GH.GameView msg
-view boardSize currentMoves currentColour children lastPlayed onMove playMsg =
+view boardSize currentMoves highlight currentColour children lastPlayed onMove playMsg =
     let
         position =
             positionFromMoves currentMoves
@@ -341,4 +360,5 @@ view boardSize currentMoves currentColour children lastPlayed onMove playMsg =
             ++ drawPoints boardSize
             ++ drawLinks position
             ++ drawPegs boardSize position lastPlayed onMove playMsg
+            ++ viewHighlight highlight
         )
