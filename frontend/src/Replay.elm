@@ -74,7 +74,6 @@ onMove game =
 children : Replay -> List G.Coords
 children replay =
     T.getChildren replay.gameTree.focus
-        |> Maybe.withDefault []
         |> List.filterMap T.getValue
         |> List.filterMap G.moveCoords
 

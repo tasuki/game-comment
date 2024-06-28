@@ -62,9 +62,11 @@ getValue =
     getTreeNodeData >> Maybe.andThen .value
 
 
-getChildren : Tree a -> Maybe (Forest a)
+getChildren : Tree a -> Forest a
 getChildren =
-    getTreeNodeData >> Maybe.map .children
+    getTreeNodeData
+        >> Maybe.map .children
+        >> Maybe.withDefault []
 
 
 defaultChild : Tree a -> Maybe Int
@@ -273,10 +275,7 @@ findAll isGood zipper =
 
         childCount : Zipper a -> Int
         childCount z =
-            z.focus
-                |> getChildren
-                |> Maybe.map List.length
-                |> Maybe.withDefault 0
+            List.length <| getChildren z.focus
 
         childZippers : Zipper a -> List (Zipper a)
         childZippers z =
@@ -302,7 +301,7 @@ replaceFirstVar new old =
         head :: tail ->
             let
                 newChildren =
-                    case getChildren old |> Maybe.withDefault [] of
+                    case getChildren old of
                         [] ->
                             [ replaceFirstVar tail Locked ]
 
