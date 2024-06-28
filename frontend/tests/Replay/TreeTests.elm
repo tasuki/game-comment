@@ -7,7 +7,7 @@ import Test exposing (..)
 
 testTree : Tree String
 testTree =
-    listToLockedTree [ "main1", "main2", "main3", "main4" ]
+    createLockedTree [ "main1", "main2", "main3", "main4" ]
 
 
 zipper : Zipper String
@@ -46,7 +46,7 @@ basicZipperTest =
                 Expect.equal
                     (Just "main1")
                     (zipper
-                        |> lookNext
+                        |> descend
                         |> maybeZipperValue
                     )
         , test "Move next next ends at second move" <|
@@ -54,8 +54,8 @@ basicZipperTest =
                 Expect.equal
                     (Just "main2")
                     (zipper
-                        |> lookNext
-                        |> Maybe.andThen lookNext
+                        |> descend
+                        |> Maybe.andThen descend
                         |> maybeZipperValue
                     )
         , test "Move end ends at end" <|
@@ -63,7 +63,7 @@ basicZipperTest =
                 Expect.equal
                     (Just "main4")
                     (zipper
-                        |> lookEnd
+                        |> descendEnd
                         |> zipperValue
                     )
         , test "Move end+start ends at start" <|
@@ -71,8 +71,8 @@ basicZipperTest =
                 Expect.equal
                     Nothing
                     (zipper
-                        |> lookEnd
-                        |> lookStart
+                        |> descendEnd
+                        |> ascendStart
                         |> zipperValue
                     )
         , test "Move end+prev ends one before last" <|
@@ -80,8 +80,8 @@ basicZipperTest =
                 Expect.equal
                     (Just "main3")
                     (zipper
-                        |> lookEnd
-                        |> lookPrev
+                        |> descendEnd
+                        |> ascend
                         |> maybeZipperValue
                     )
         ]
@@ -90,7 +90,7 @@ basicZipperTest =
 var1Zip : Zipper String
 var1Zip =
     zipper
-        |> lookEnd
+        |> descendEnd
         |> (addChild "var1" >> Tuple.second)
 
 
@@ -101,22 +101,22 @@ gettingValuesTest =
             \_ ->
                 Expect.equal
                     (Just [ "main1", "main2", "main3", "main4", "var1" ])
-                    (var1Zip |> lookNext |> Maybe.map currentValues)
+                    (var1Zip |> descend |> Maybe.map currentValues)
         , test "Can get all values in var" <|
             \_ ->
                 Expect.equal
                     (Just [ "main1", "main2", "main3", "main4", "var1" ])
-                    (var1Zip |> lookNext |> Maybe.map allValues)
+                    (var1Zip |> descend |> Maybe.map allValues)
         , test "Can get current values in middle" <|
             \_ ->
                 Expect.equal
                     (Just [ "main1", "main2", "main3" ])
-                    (var1Zip |> lookPrev |> Maybe.map currentValues)
+                    (var1Zip |> ascend |> Maybe.map currentValues)
         , test "Can get all values in middle" <|
             \_ ->
                 Expect.equal
                     (Just [ "main1", "main2", "main3", "main4", "var1" ])
-                    (var1Zip |> lookPrev |> Maybe.map allValues)
+                    (var1Zip |> ascend |> Maybe.map allValues)
         ]
 
 
@@ -128,9 +128,9 @@ varZipperTest =
                 Expect.equal
                     (Just "var1")
                     (zipper
-                        |> lookEnd
+                        |> descendEnd
                         |> (addChild "var1" >> Tuple.second)
-                        |> lookNext
+                        |> descend
                         |> maybeZipperValue
                     )
         , test "Can add a child at the end of main, then start to go back to beginning" <|
@@ -138,11 +138,11 @@ varZipperTest =
                 Expect.equal
                     Nothing
                     (zipper
-                        |> lookEnd
+                        |> descendEnd
                         |> addChild "var1"
                         |> Tuple.second
-                        |> lookNext
-                        |> Maybe.map lookStart
+                        |> descend
+                        |> Maybe.map ascendStart
                         |> maybeZipperValue
                     )
         , test "Can add a child at the end of main, then start+end to get to it again" <|
@@ -150,11 +150,11 @@ varZipperTest =
                 Expect.equal
                     (Just "var1")
                     (zipper
-                        |> lookEnd
+                        |> descendEnd
                         |> (addChild "var1" >> Tuple.second)
-                        |> lookNext
-                        |> Maybe.map lookStart
-                        |> Maybe.map lookEnd
+                        |> descend
+                        |> Maybe.map ascendStart
+                        |> Maybe.map descendEnd
                         |> maybeZipperValue
                     )
         , test "Goes to the most recently added child at the end of main" <|
@@ -162,11 +162,11 @@ varZipperTest =
                 Expect.equal
                     (Just "var3")
                     (zipper
-                        |> lookEnd
+                        |> descendEnd
                         |> (addChild "var1" >> Tuple.second)
                         |> (addChild "var2" >> Tuple.second)
                         |> (addChild "var3" >> Tuple.second)
-                        |> lookNext
+                        |> descend
                         |> maybeZipperValue
                     )
         , test "Goes to selected child at the end of main" <|
@@ -174,11 +174,11 @@ varZipperTest =
                 Expect.equal
                     (Just "var2")
                     (zipper
-                        |> lookEnd
+                        |> descendEnd
                         |> (addChild "var1" >> Tuple.second)
                         |> (addChild "var2" >> Tuple.second)
                         |> (addChild "var3" >> Tuple.second)
-                        |> lookNextByIndex 2
+                        |> descendToIndex 2
                         |> maybeZipperValue
                     )
         , test "Can add a child at the start of main, then start+end to get to it again" <|
@@ -187,9 +187,9 @@ varZipperTest =
                     (Just "var1")
                     (zipper
                         |> (addChild "var1" >> Tuple.second)
-                        |> lookNext
-                        |> Maybe.map lookStart
-                        |> Maybe.map lookEnd
+                        |> descend
+                        |> Maybe.map ascendStart
+                        |> Maybe.map descendEnd
                         |> maybeZipperValue
                     )
         , test "Goes to the most recently added child at the start of main" <|
@@ -200,7 +200,7 @@ varZipperTest =
                         |> (addChild "var1" >> Tuple.second)
                         |> (addChild "var2" >> Tuple.second)
                         |> (addChild "var3" >> Tuple.second)
-                        |> lookNext
+                        |> descend
                         |> maybeZipperValue
                     )
         , test "Goes to selected child at the start of main" <|
@@ -211,7 +211,7 @@ varZipperTest =
                         |> (addChild "var1" >> Tuple.second)
                         |> (addChild "var2" >> Tuple.second)
                         |> (addChild "var3" >> Tuple.second)
-                        |> lookNextByIndex 2
+                        |> descendToIndex 2
                         |> maybeZipperValue
                     )
         ]
@@ -341,10 +341,10 @@ canSwitchVariation ( from, dir, to ) =
         fun =
             case dir of
                 "next" ->
-                    lookNextVar
+                    nextVariation
 
                 "prev" ->
-                    lookPrevVar
+                    prevVariation
 
                 _ ->
                     identity

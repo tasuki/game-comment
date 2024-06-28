@@ -97,7 +97,7 @@ playCoords coords replay =
 
 next : Replay -> Replay
 next replay =
-    { replay | gameTree = T.lookNext replay.gameTree |> Maybe.withDefault replay.gameTree }
+    { replay | gameTree = T.descend replay.gameTree |> Maybe.withDefault replay.gameTree }
 
 
 prev : Replay -> Replay
@@ -105,36 +105,36 @@ prev replay =
     let
         defaultToFirstChild : GameView
         defaultToFirstChild =
-            T.lookNextByIndex 0 replay.gameTree
-                |> Maybe.andThen T.lookPrev
+            T.descendToIndex 0 replay.gameTree
+                |> Maybe.andThen T.ascend
                 |> Maybe.withDefault replay.gameTree
     in
-    { replay | gameTree = T.lookPrev replay.gameTree |> Maybe.withDefault defaultToFirstChild }
+    { replay | gameTree = T.ascend replay.gameTree |> Maybe.withDefault defaultToFirstChild }
 
 
 start : Replay -> Replay
 start replay =
-    { replay | gameTree = T.lookStart replay.gameTree }
+    { replay | gameTree = T.ascendStart replay.gameTree }
 
 
 end : Replay -> Replay
 end replay =
-    { replay | gameTree = T.lookEnd replay.gameTree }
+    { replay | gameTree = T.descendEnd replay.gameTree }
 
 
 nextVariation : Replay -> Replay
 nextVariation replay =
-    { replay | gameTree = T.lookNextVar replay.gameTree }
+    { replay | gameTree = T.nextVariation replay.gameTree }
 
 
 prevVariation : Replay -> Replay
 prevVariation replay =
-    { replay | gameTree = T.lookPrevVar replay.gameTree }
+    { replay | gameTree = T.prevVariation replay.gameTree }
 
 
 cutVariation : Replay -> Replay
 cutVariation replay =
-    { replay | gameTree = T.cutVar replay.gameTree }
+    { replay | gameTree = T.cutVariation replay.gameTree }
 
 
 jump : GameView -> Replay -> Replay

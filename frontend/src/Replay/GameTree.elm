@@ -19,7 +19,7 @@ treeToGameView =
 
 treeFromRecord : G.Record -> MoveTree
 treeFromRecord record =
-    T.listToLockedTree record.moves
+    T.createLockedTree record.moves
 
 
 addOrVisitChild : G.Move -> GameView -> GameView
@@ -33,7 +33,7 @@ addOrVisitChild move gameView =
                 Nothing ->
                     T.addChild move gameView
     in
-    T.lookNextByIndex index newView
+    T.descendToIndex index newView
         |> Maybe.withDefault gameView
 
 
@@ -62,7 +62,7 @@ withRecord record zipper =
                 mz
 
             else
-                goToMove (num - 1) (Maybe.andThen T.lookNext mz)
+                goToMove (num - 1) (Maybe.andThen T.descend mz)
     in
     goToMove (currentMoveNumber zipper) (Just replaced)
         |> Maybe.withDefault zipper

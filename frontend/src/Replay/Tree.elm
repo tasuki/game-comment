@@ -24,8 +24,8 @@ type alias Forest a =
     List (Tree a)
 
 
-listToLockedTree : List a -> Tree a
-listToLockedTree children =
+createLockedTree : List a -> Tree a
+createLockedTree children =
     let
         helper chlds =
             case chlds of
@@ -92,7 +92,7 @@ type alias Zipper a =
 
 
 
--- Zipper from trees and vice versa
+-- Zipper from tree and vice versa
 
 
 makeZipper : Tree a -> Zipper a
@@ -102,70 +102,70 @@ makeZipper tree =
 
 makeTree : Zipper a -> Tree a
 makeTree =
-    lookStart >> .focus
+    ascendStart >> .focus
 
 
 
 -- Looking around zipper
 
 
-lookPrev : Zipper a -> Maybe (Zipper a)
-lookPrev zipper =
+ascend : Zipper a -> Maybe (Zipper a)
+ascend zipper =
     case zipper.crumbs of
         [] ->
             Nothing
 
         crumb :: rest ->
             Just
-                { focus = reconstruct crumb.value zipper.before zipper.focus zipper.after
+                { focus = reconstructTree crumb.value zipper.before zipper.focus zipper.after
                 , before = crumb.before
                 , after = crumb.after
                 , crumbs = rest
                 }
 
 
-lookNext : Zipper a -> Maybe (Zipper a)
-lookNext zipper =
+descend : Zipper a -> Maybe (Zipper a)
+descend zipper =
     case zipper.focus of
         Locked ->
             Nothing
 
         Tree tnd ->
-            lookChild tnd.defaultChild tnd zipper
+            descendToChild tnd.defaultChild tnd zipper
 
 
-lookNextByIndex : Int -> Zipper a -> Maybe (Zipper a)
-lookNextByIndex childIndex zipper =
+descendToIndex : Int -> Zipper a -> Maybe (Zipper a)
+descendToIndex childIndex zipper =
     case zipper.focus of
         Locked ->
             Nothing
 
         Tree tnd ->
-            lookChild childIndex tnd zipper
+            descendToChild childIndex tnd zipper
 
 
-lookStart : Zipper a -> Zipper a
-lookStart zipper =
-    case lookPrev zipper of
+ascendStart : Zipper a -> Zipper a
+ascendStart zipper =
+    case ascend zipper of
         Nothing ->
             zipper
 
         Just z ->
-            lookStart z
+            ascendStart z
 
 
-lookEnd : Zipper a -> Zipper a
-lookEnd zipper =
-    case lookNext zipper of
+descendEnd : Zipper a -> Zipper a
+descendEnd zipper =
+    case descend zipper of
         Nothing ->
             zipper
 
         Just z ->
-            lookEnd z
+            descendEnd z
 
 
-lookPrevVar : Zipper a -> Zipper a
-lookPrevVar zipper =
+prevVariation : Zipper a -> Zipper a
+prevVariation zipper =
     case zipper.before of
         [] ->
             zipper
@@ -178,8 +178,8 @@ lookPrevVar zipper =
             }
 
 
-lookNextVar : Zipper a -> Zipper a
-lookNextVar zipper =
+nextVariation : Zipper a -> Zipper a
+nextVariation zipper =
     case zipper.after of
         [] ->
             zipper
@@ -192,8 +192,8 @@ lookNextVar zipper =
             }
 
 
-cutVar : Zipper a -> Zipper a
-cutVar zipper =
+cutVariation : Zipper a -> Zipper a
+cutVariation zipper =
     case zipper.crumbs of
         [] ->
             zipper
@@ -209,22 +209,6 @@ cutVar zipper =
             , after = crumb.after
             , crumbs = rest
             }
-
-
-currentValues : Zipper a -> List a
-currentValues zipper =
-    -- values from root to current view
-    zipper.crumbs
-        |> List.map .value
-        |> (::) (getValue zipper.focus)
-        |> List.filterMap identity
-        |> List.reverse
-
-
-allValues : Zipper a -> List a
-allValues zipper =
-    -- values from root to end of current variation
-    currentValues zipper ++ defaultChildList zipper
 
 
 
@@ -300,13 +284,13 @@ findAll isGood zipper =
             -- for child count 1, we want [0]
             -- for child count 2, we want [0, 1]
             List.range 0 (childCount z - 1)
-                |> List.filterMap (\i -> lookNextByIndex i z)
+                |> List.filterMap (\i -> descendToIndex i z)
 
         helper : Zipper a -> List (Zipper a)
         helper z =
             add z ++ List.Extra.andThen helper (childZippers z)
     in
-    helper <| lookStart zipper
+    helper <| ascendStart zipper
 
 
 replaceFirstVar : List (Maybe a) -> Tree a -> Tree a
@@ -333,11 +317,31 @@ replaceFirstVar new old =
 
 
 
+-- Zipper to list
+
+
+currentValues : Zipper a -> List a
+currentValues zipper =
+    -- values from root to current view
+    zipper.crumbs
+        |> List.map .value
+        |> (::) (getValue zipper.focus)
+        |> List.filterMap identity
+        |> List.reverse
+
+
+allValues : Zipper a -> List a
+allValues zipper =
+    -- values from root to end of current variation
+    currentValues zipper ++ defaultChildList zipper
+
+
+
 -- Helpers
 
 
-reconstruct : Maybe a -> List (Tree a) -> Tree a -> List (Tree a) -> Tree a
-reconstruct value before focus after =
+reconstructTree : Maybe a -> List (Tree a) -> Tree a -> List (Tree a) -> Tree a
+reconstructTree value before focus after =
     Tree
         { value = value
         , defaultChild = List.length before
@@ -355,8 +359,8 @@ splitAround n xs =
             Nothing
 
 
-lookChild : Int -> Node a -> Zipper a -> Maybe (Zipper a)
-lookChild chosenChild { value, children } zipper =
+descendToChild : Int -> Node a -> Zipper a -> Maybe (Zipper a)
+descendToChild chosenChild { value, children } zipper =
     let
         helper : ( List (Tree a), Tree a, List (Tree a) ) -> Maybe (Zipper a)
         helper ( before, child, after ) =
@@ -386,7 +390,7 @@ defaultChildList =
     let
         helper : List a -> Zipper a -> List a
         helper acc zipper =
-            case lookNext zipper of
+            case descend zipper of
                 Nothing ->
                     acc
 
