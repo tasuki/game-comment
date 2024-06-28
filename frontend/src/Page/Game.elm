@@ -184,9 +184,7 @@ update msg model currentUrl =
             ( { model | replay = Maybe.map R.nextVariation model.replay }, Cmd.none )
 
         CutVariation ->
-            -- TODO
-            --( { model | replay = Maybe.map R.cutVariation model.replay }, Cmd.none )
-            ( model, Cmd.none )
+            ( { model | replay = Maybe.map R.cutVariation model.replay }, Cmd.none )
 
         JumpComment comment move ->
             ( { model | viewing = ViewComment comment move }, Cmd.none )

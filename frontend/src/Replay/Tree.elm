@@ -192,6 +192,25 @@ lookNextVar zipper =
             }
 
 
+cutVar : Zipper a -> Zipper a
+cutVar zipper =
+    case zipper.crumbs of
+        [] ->
+            zipper
+
+        crumb :: rest ->
+            { focus =
+                Tree
+                    { value = crumb.value
+                    , defaultChild = 0
+                    , children = List.reverse zipper.before ++ zipper.after
+                    }
+            , before = crumb.before
+            , after = crumb.after
+            , crumbs = rest
+            }
+
+
 currentValues : Zipper a -> List a
 currentValues zipper =
     -- values from root to current view

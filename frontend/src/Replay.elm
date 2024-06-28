@@ -132,6 +132,11 @@ prevVariation replay =
     { replay | gameTree = T.lookPrevVar replay.gameTree }
 
 
+cutVariation : Replay -> Replay
+cutVariation replay =
+    { replay | gameTree = T.cutVar replay.gameTree }
+
+
 jump : GameView -> Replay -> Replay
 jump gameTree replay =
     { replay | gameTree = gameTree }
