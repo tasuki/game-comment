@@ -17,12 +17,10 @@ import List.Extra
 import Maybe.Extra
 import Page exposing (Page)
 import Replay as R
-import Route
 import Session exposing (Session)
 import Svg exposing (Svg)
 import Svg.Attributes as SA
 import Task
-import Url exposing (Url)
 
 
 
@@ -79,6 +77,7 @@ currentComment v =
 type alias Model =
     { session : Session
     , view : View
+    , source : Maybe G.GameSource
     , replay : Maybe R.Replay
     , comments : List C.Comment
     , message : String
@@ -94,6 +93,7 @@ initEmpty : G.Game -> Int -> Session -> ( Model, Cmd Msg )
 initEmpty game size session =
     ( { session = session
       , view = ViewReplay
+      , source = Nothing
       , replay = Just <| R.emptyReplay <| G.empty game size
       , comments = []
       , message = sidebarMsg
@@ -106,6 +106,7 @@ initGame : G.GameSource -> Session -> ( Model, Cmd Msg )
 initGame gameSource session =
     ( { session = session
       , view = ViewReplay
+      , source = Just gameSource
       , replay = Nothing
       , comments = []
       , message = sidebarMsg
@@ -114,10 +115,11 @@ initGame gameSource session =
     )
 
 
-initPrevious : R.Replay -> Session -> ( Model, Cmd Msg )
-initPrevious replay session =
+initPrevious : G.GameSource -> R.Replay -> Session -> ( Model, Cmd Msg )
+initPrevious gameSource replay session =
     ( { session = session
       , view = ViewReplay -- TODO preserve previous view?
+      , source = Just gameSource
       , replay = Just replay
       , comments = [] -- TODO definitely preserve comments!
       , message = ""
@@ -158,19 +160,15 @@ onlyInReplay model new =
             ( model, Cmd.none )
 
 
-update : Msg -> Model -> Url -> ( Model, Cmd Msg )
-update msg model currentUrl =
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
     case msg of
         Noop ->
             ( model, Cmd.none )
 
         Reload ->
-            case Route.parse currentUrl of
-                Just (Route.Game source lgId) ->
-                    let
-                        gameSource =
-                            G.GameSource source lgId
-                    in
+            case model.source of
+                Just gameSource ->
                     ( model
                     , AC.getSgf Fetched gameSource
                     )
@@ -181,13 +179,7 @@ update msg model currentUrl =
         Fetched result ->
             case result of
                 Ok record ->
-                    let
-                        shouldUpdate =
-                            model.replay
-                                |> Maybe.map (\r -> r.record.source == record.source)
-                                |> Maybe.withDefault True
-                    in
-                    if shouldUpdate then
+                    if Just record.source == model.source then
                         ( { model | replay = Just <| R.withRecord record model.replay }
                         , AC.getComments FetchedComments record.source
                         )

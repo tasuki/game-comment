@@ -149,7 +149,7 @@ updateGamePage : Model -> Page.Game.Msg -> Page.Game.Model -> ( Model, Cmd Msg )
 updateGamePage model msg m =
     let
         ( newModel, newCmd ) =
-            Page.Game.update msg m model.currentUrl
+            Page.Game.update msg m
 
         newReplays =
             case newModel.replay of
@@ -221,10 +221,10 @@ changeRouteTo url model =
         newModel =
             { model | currentUrl = url }
 
-        maybeLoadReplay defaultModel =
+        maybeLoadReplay source defaultModel =
             case Dict.get url.path model.replays of
                 Just replay ->
-                    Page.Game.initPrevious replay (getSession model.page)
+                    Page.Game.initPrevious source replay (getSession model.page)
 
                 Nothing ->
                     defaultModel
@@ -239,11 +239,15 @@ changeRouteTo url model =
                 |> updateWith newModel Help HelpMsg
 
         Just (Route.EmptyGame game size) ->
-            maybeLoadReplay (Page.Game.initEmpty game size session)
+            maybeLoadReplay (G.GameSource "" "") (Page.Game.initEmpty game size session)
                 |> updateWith newModel Game GameMsg
 
-        Just (Route.Game source id) ->
-            maybeLoadReplay (Page.Game.initGame (G.GameSource source id) session)
+        Just (Route.Game src id) ->
+            let
+                source =
+                    G.GameSource src id
+            in
+            maybeLoadReplay source (Page.Game.initGame source session)
                 |> updateWith newModel Game GameMsg
 
         Nothing ->
