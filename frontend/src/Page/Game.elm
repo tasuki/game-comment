@@ -375,27 +375,47 @@ forward =
 
 boardView : Model -> H.Html Msg
 boardView model =
+    let
+        specificView : R.Replay -> GH.GameView msg
+        specificView replay =
+            case replay.record.game of
+                G.TwixT ->
+                    Game.TwixT.view
+
+                G.ToroidGo ->
+                    Game.ToroidGo.view
+
+                G.Go ->
+                    Game.Go.view
+
+                G.Hex ->
+                    Game.Hex.view
+
+        highlightLastMove : C.ClickablePartData -> Maybe G.Move
+        highlightLastMove cpd =
+            if Maybe.Extra.isJust cpd.highlight then
+                Nothing
+
+            else
+                List.Extra.last cpd.position
+
+        viewComment : R.Replay -> C.ClickablePartData -> Svg Msg
+        viewComment replay cpd =
+            specificView replay
+                replay.record.size
+                cpd.position
+                cpd.highlight
+                (R.currentColour replay)
+                []
+                (highlightLastMove cpd)
+                (G.onMove replay.record.game <| List.length cpd.position)
+                Play
+    in
     case model.replay of
         Just replay ->
-            let
-                specificView : GH.GameView msg
-                specificView =
-                    case replay.record.game of
-                        G.TwixT ->
-                            Game.TwixT.view
-
-                        G.ToroidGo ->
-                            Game.ToroidGo.view
-
-                        G.Go ->
-                            Game.Go.view
-
-                        G.Hex ->
-                            Game.Hex.view
-            in
             case model.view of
                 ViewReplay ->
-                    specificView
+                    specificView replay
                         replay.record.size
                         (R.currentMoves replay)
                         Nothing
@@ -406,25 +426,10 @@ boardView model =
                         Play
 
                 ViewComment commentPos clickablePos ->
-                    case C.getClickable commentPos clickablePos model.comments of
-                        Just cpd ->
-                            specificView
-                                replay.record.size
-                                cpd.position
-                                cpd.highlight
-                                (R.currentColour replay)
-                                []
-                                (if Maybe.Extra.isJust cpd.highlight then
-                                    Nothing
-
-                                 else
-                                    List.Extra.last cpd.position
-                                )
-                                (G.onMove replay.record.game <| List.length cpd.position)
-                                Play
-
-                        Nothing ->
-                            H.text "If I were a better programmer, this branch wouldn't even exist."
+                    C.getClickable commentPos clickablePos model.comments
+                        |> Maybe.map (viewComment replay)
+                        |> Maybe.withDefault
+                            (H.text "This branch shouldn't even exist...")
 
         Nothing ->
             H.div [] []
