@@ -136,7 +136,7 @@ type Msg
     = Noop
     | Reload
     | Fetched AC.SgfResult
-    | FetchedComments AC.CommentsResult
+    | FetchedComments G.GameSource AC.CommentsResult
     | PrevView
     | NextView
     | Play G.Coords
@@ -181,7 +181,7 @@ update msg model =
                 Ok record ->
                     if Just record.source == model.source then
                         ( { model | replay = Just <| R.withRecord record model.replay }
-                        , AC.getComments FetchedComments record.source
+                        , AC.getComments (FetchedComments record.source) record.source
                         )
 
                     else
@@ -192,19 +192,25 @@ update msg model =
                     , Cmd.none
                     )
 
-        FetchedComments result ->
+        FetchedComments source result ->
             case result of
                 Ok comments ->
-                    case model.replay of
-                        Just replay ->
-                            ( { model | comments = List.map (C.getComment replay.record) comments }
-                            , Cmd.none
-                            )
+                    if Just source == model.source then
+                        case model.replay of
+                            Just replay ->
+                                ( { model | comments = List.map (C.getComment replay.record) comments }
+                                , Cmd.none
+                                )
 
-                        Nothing ->
-                            ( { model | message = "No replay, so not showing comments..." }
-                            , Cmd.none
-                            )
+                            Nothing ->
+                                ( { model | message = "No replay, so not showing comments..." }
+                                , Cmd.none
+                                )
+
+                    else
+                        ( { model | message = "Comments for a different game" }
+                        , Cmd.none
+                        )
 
                 Err error ->
                     ( { model | message = "Could not load comments: [ " ++ error ++ " ]" }
