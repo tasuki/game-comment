@@ -39,7 +39,8 @@ h3 { font-size: 20px; font-weight: normal; }
 .game-info .game-nav div { display: flex; justify-content: center; align-items: center; }
 .game-info .game-nav svg { vertical-align: middle; }
 .comments { padding: 10px; }
-.comments button { background-color: #D5B565; padding: 1px 4.6px 1px 5px; }
+.comments button, button#back-review { background-color: #D5B565; padding: 1px 4.6px 1px 5px; }
+.comments button.highlight { color: #D5B565; background-color: #000; padding: 1px 4.6px 1px 5px; }
 .message { margin: 10px; padding: 5px; }
 
 /* specific games */

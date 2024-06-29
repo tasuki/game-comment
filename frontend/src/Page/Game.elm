@@ -26,17 +26,59 @@ import Url exposing (Url)
 
 
 
--- MODEL
+-- Viewing
 
 
-type Viewing
+type View
     = ViewReplay
     | ViewComment Int Int
 
 
+viewPrevious : View -> View
+viewPrevious v =
+    case v of
+        ViewReplay ->
+            v
+
+        ViewComment comment _ ->
+            if comment > 0 then
+                ViewComment (comment - 1) 0
+
+            else
+                ViewReplay
+
+
+viewNext : Int -> View -> View
+viewNext comments v =
+    case v of
+        ViewReplay ->
+            ViewComment 0 0
+
+        ViewComment comment _ ->
+            if comment < comments - 1 then
+                ViewComment (comment + 1) 0
+
+            else
+                v
+
+
+currentComment : View -> Maybe ( Int, Int )
+currentComment v =
+    case v of
+        ViewComment c m ->
+            Just ( c, m )
+
+        _ ->
+            Nothing
+
+
+
+-- MODEL
+
+
 type alias Model =
     { session : Session
-    , viewing : Viewing
+    , view : View
     , replay : Maybe R.Replay
     , comments : List C.Comment
     , message : String
@@ -51,7 +93,7 @@ sidebarMsg =
 initEmpty : G.Game -> Int -> Session -> ( Model, Cmd Msg )
 initEmpty game size session =
     ( { session = session
-      , viewing = ViewReplay
+      , view = ViewReplay
       , replay = Just <| R.emptyReplay <| G.empty game size
       , comments = []
       , message = sidebarMsg
@@ -63,7 +105,7 @@ initEmpty game size session =
 initGame : G.GameSource -> Session -> ( Model, Cmd Msg )
 initGame gameSource session =
     ( { session = session
-      , viewing = ViewReplay
+      , view = ViewReplay
       , replay = Nothing
       , comments = []
       , message = sidebarMsg
@@ -75,7 +117,7 @@ initGame gameSource session =
 initPrevious : R.Replay -> Session -> ( Model, Cmd Msg )
 initPrevious replay session =
     ( { session = session
-      , viewing = ViewReplay -- TODO preserve previous view?
+      , view = ViewReplay -- TODO preserve previous view?
       , replay = Just replay
       , comments = [] -- TODO definitely preserve comments!
       , message = ""
@@ -93,15 +135,27 @@ type Msg
     | Reload
     | Fetched AC.SgfResult
     | FetchedComments AC.CommentsResult
+    | PrevView
+    | NextView
     | Play G.Coords
     | Forward
     | Backward
     | Start
     | End
-    | JumpComment Int Int
+    | Jump View
     | PrevVariation
     | NextVariation
     | CutVariation
+
+
+onlyInReplay : Model -> Model -> ( Model, Cmd msg )
+onlyInReplay model new =
+    case model.view of
+        ViewReplay ->
+            ( new, Cmd.none )
+
+        _ ->
+            ( model, Cmd.none )
 
 
 update : Msg -> Model -> Url -> ( Model, Cmd Msg )
@@ -165,29 +219,50 @@ update msg model currentUrl =
                     , Cmd.none
                     )
 
-        Start ->
-            ( { model | replay = Maybe.map R.start model.replay }, Cmd.none )
+        PrevView ->
+            ( { model | view = viewPrevious model.view }, Cmd.none )
+
+        NextView ->
+            ( { model | view = viewNext (List.length model.comments) model.view }, Cmd.none )
+
+        Jump jumpView ->
+            ( { model | view = jumpView }, Cmd.none )
 
         Backward ->
-            ( { model | replay = Maybe.map R.prev model.replay }, Cmd.none )
+            case model.view of
+                ViewReplay ->
+                    ( { model | replay = Maybe.map R.prev model.replay }, Cmd.none )
+
+                ViewComment cPos clickable ->
+                    ( { model | view = ViewComment cPos (C.prevClickable clickable) }, Cmd.none )
 
         Forward ->
-            ( { model | replay = Maybe.map R.next model.replay }, Cmd.none )
+            case model.view of
+                ViewReplay ->
+                    ( { model | replay = Maybe.map R.next model.replay }, Cmd.none )
+
+                ViewComment cPos clickable ->
+                    case List.Extra.getAt cPos model.comments of
+                        Just comment ->
+                            ( { model | view = ViewComment cPos (C.nextClickable comment clickable) }, Cmd.none )
+
+                        Nothing ->
+                            ( model, Cmd.none )
+
+        Start ->
+            onlyInReplay model { model | replay = Maybe.map R.start model.replay }
 
         End ->
-            ( { model | replay = Maybe.map R.end model.replay }, Cmd.none )
+            onlyInReplay model { model | replay = Maybe.map R.end model.replay }
 
         PrevVariation ->
-            ( { model | replay = Maybe.map R.prevVariation model.replay }, Cmd.none )
+            onlyInReplay model { model | replay = Maybe.map R.prevVariation model.replay }
 
         NextVariation ->
-            ( { model | replay = Maybe.map R.nextVariation model.replay }, Cmd.none )
+            onlyInReplay model { model | replay = Maybe.map R.nextVariation model.replay }
 
         CutVariation ->
-            ( { model | replay = Maybe.map R.cutVariation model.replay }, Cmd.none )
-
-        JumpComment comment move ->
-            ( { model | viewing = ViewComment comment move }, Cmd.none )
+            onlyInReplay model { model | replay = Maybe.map R.cutVariation model.replay }
 
         Play coords ->
             let
@@ -202,14 +277,13 @@ update msg model currentUrl =
                         _ ->
                             True
             in
-            case Maybe.map isMoveLegal model.replay of
-                Just True ->
-                    ( { model | replay = Maybe.map (R.playCoords coords) model.replay }
-                    , Cmd.none
-                    )
+            onlyInReplay model <|
+                case Maybe.map isMoveLegal model.replay of
+                    Just True ->
+                        { model | replay = Maybe.map (R.playCoords coords) model.replay }
 
-                _ ->
-                    ( model, Cmd.none )
+                    _ ->
+                        model
 
 
 
@@ -232,10 +306,10 @@ keydown keycode =
             Forward
 
         "ArrowUp" ->
-            PrevVariation
+            PrevView
 
         "ArrowDown" ->
-            NextVariation
+            NextView
 
         "h" ->
             Backward
@@ -319,7 +393,7 @@ boardView model =
                         G.Hex ->
                             Game.Hex.view
             in
-            case model.viewing of
+            case model.view of
                 ViewReplay ->
                     specificView
                         replay.record.size
@@ -368,22 +442,39 @@ sideView model =
                 Nothing ->
                     0
 
+        navMidItem =
+            case model.view of
+                ViewReplay ->
+                    [ H.text <| String.fromInt moveNum ]
+
+                _ ->
+                    [ H.button
+                        [ HA.id "back-review", HE.onClick <| Jump ViewReplay ]
+                        [ H.text "review" ]
+                    ]
+
         gameNav : H.Html Msg
         gameNav =
             H.div [ HA.class "pure-g game-nav" ]
-                [ H.div [ HA.class "pure-u-1-5" ] [ H.button [ HE.onClick Start ] [ start ] ]
-                , H.div [ HA.class "pure-u-1-5" ] [ H.button [ HE.onClick Backward ] [ backward ] ]
+                [ H.div [ HA.class "pure-u-1-5" ]
+                    [ H.button [ HE.onClick Start ] [ start ] ]
                 , H.div [ HA.class "pure-u-1-5" ]
-                    [ H.div
-                        [ HA.style "padding" "7px 10px" ]
-                        [ H.text <| String.fromInt moveNum ]
-                    ]
-                , H.div [ HA.class "pure-u-1-5" ] [ H.button [ HE.onClick Forward ] [ forward ] ]
-                , H.div [ HA.class "pure-u-1-5" ] [ H.button [ HE.onClick End ] [ end ] ]
+                    [ H.button [ HE.onClick Backward ] [ backward ] ]
+                , H.div [ HA.class "pure-u-1-5" ]
+                    [ H.div [ HA.style "padding" "7px 10px" ] navMidItem ]
+                , H.div [ HA.class "pure-u-1-5" ]
+                    [ H.button [ HE.onClick Forward ] [ forward ] ]
+                , H.div [ HA.class "pure-u-1-5" ]
+                    [ H.button [ HE.onClick End ] [ end ] ]
                 ]
     in
     [ H.div [ HA.class "game-info" ] [ gameNav ]
-    , H.div [ HA.class "comments" ] (C.view JumpComment model.comments)
+    , H.div [ HA.class "comments" ]
+        (C.view
+            (\c m -> Jump <| ViewComment c m)
+            (currentComment model.view)
+            model.comments
+        )
     , H.div [ HA.class "message" ] [ H.text model.message ]
     ]
 

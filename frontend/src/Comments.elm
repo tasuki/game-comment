@@ -44,7 +44,7 @@ commentsDecoder =
 
 
 
--- Clickable things
+-- Parse Clickable Things
 
 
 type NumberedMove
@@ -147,7 +147,7 @@ clickableThings comment =
 
 
 
--- Viewable Comment
+-- Parse Comment
 
 
 type alias ClickablePartData =
@@ -270,6 +270,27 @@ commentParts record commentStr =
         |> List.reverse
 
 
+
+-- Helper
+
+
+findClickables : List CommentPart -> List ClickablePartData -> List ClickablePartData
+findClickables parts acc =
+    case parts of
+        (ClickablePart cpd) :: tailParts ->
+            findClickables tailParts (cpd :: acc)
+
+        (TextPart _) :: tailParts ->
+            findClickables tailParts acc
+
+        [] ->
+            acc
+
+
+
+-- Publicly Useful Functions
+
+
 getComment : G.Record -> CommentResponse -> Comment
 getComment record commentResponse =
     { source = record.source
@@ -281,28 +302,35 @@ getComment record commentResponse =
     }
 
 
+clickables : Comment -> List ClickablePartData
+clickables comment =
+    findClickables comment.comment []
+        |> List.reverse
+
+
+prevClickable : Int -> Int
+prevClickable current =
+    if current <= 0 then
+        current
+
+    else
+        current - 1
+
+
+nextClickable : Comment -> Int -> Int
+nextClickable comment current =
+    if current + 1 >= (List.length <| clickables comment) then
+        current
+
+    else
+        current + 1
+
+
 getClickable : Int -> Int -> List Comment -> Maybe ClickablePartData
 getClickable commentPos clickablePos comments =
-    let
-        findClickable : Int -> List CommentPart -> Maybe ClickablePartData
-        findClickable pos parts =
-            case parts of
-                (ClickablePart cpd) :: tailParts ->
-                    if pos == 0 then
-                        Just cpd
-
-                    else
-                        findClickable (pos - 1) tailParts
-
-                (TextPart _) :: tailParts ->
-                    findClickable pos tailParts
-
-                [] ->
-                    Nothing
-    in
     comments
         |> List.Extra.getAt commentPos
-        |> Maybe.andThen (\c -> findClickable clickablePos c.comment)
+        |> Maybe.andThen (\c -> List.Extra.getAt clickablePos <| clickables c)
 
 
 
@@ -318,36 +346,59 @@ viewTextPart str =
         )
 
 
-viewClickablePart : msg -> ClickablePartData -> H.Html msg
-viewClickablePart jumpMsg cpd =
-    H.button [ HE.onClick jumpMsg ] [ H.text cpd.clickable ]
+viewClickablePart : msg -> Bool -> ClickablePartData -> H.Html msg
+viewClickablePart jumpMsg highlight cpd =
+    let
+        class =
+            if highlight then
+                "highlight"
+
+            else
+                ""
+    in
+    H.button [ HE.onClick jumpMsg, HA.class class ] [ H.text cpd.clickable ]
 
 
-viewCommentParts : (Int -> msg) -> Int -> List (H.Html msg) -> List CommentPart -> List (H.Html msg)
-viewCommentParts jumpMsg movePos acc parts =
+viewCommentParts : (Int -> msg) -> Maybe Int -> Int -> List (H.Html msg) -> List CommentPart -> List (H.Html msg)
+viewCommentParts jumpMsg currentPos movePos acc parts =
     case parts of
         [] ->
             List.reverse acc
 
         (TextPart str) :: tailParts ->
             viewCommentParts jumpMsg
+                currentPos
                 movePos
                 (viewTextPart str :: acc)
                 tailParts
 
         (ClickablePart cpd) :: tailParts ->
             viewCommentParts jumpMsg
+                currentPos
                 (movePos + 1)
-                (viewClickablePart (jumpMsg movePos) cpd :: acc)
+                (viewClickablePart (jumpMsg movePos) (Just movePos == currentPos) cpd :: acc)
                 tailParts
 
 
-viewComment : (Int -> Int -> msg) -> Int -> Comment -> List (H.Html msg)
-viewComment jumpMsg commentPos comment =
-    viewCommentParts (jumpMsg commentPos) 0 [] comment.comment
+viewComment : (Int -> Int -> msg) -> Maybe Int -> Int -> Comment -> List (H.Html msg)
+viewComment jumpMsg currentPos commentPos comment =
+    viewCommentParts (jumpMsg commentPos) currentPos 0 [] comment.comment
 
 
-view : (Int -> Int -> msg) -> List Comment -> List (H.Html msg)
-view jumpMsg comments =
-    List.indexedMap (viewComment jumpMsg) comments
+view : (Int -> Int -> msg) -> Maybe ( Int, Int ) -> List Comment -> List (H.Html msg)
+view jumpMsg current comments =
+    let
+        maybeCommentMove : Int -> Maybe Int
+        maybeCommentMove commentPos =
+            current
+                |> Maybe.andThen
+                    (\( c, p ) ->
+                        if c == commentPos then
+                            Just p
+
+                        else
+                            Nothing
+                    )
+    in
+    List.indexedMap (\p c -> viewComment jumpMsg (maybeCommentMove p) p c) comments
         |> List.concat
