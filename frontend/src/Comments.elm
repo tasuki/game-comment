@@ -351,10 +351,10 @@ viewClickablePart jumpMsg highlight cpd =
     let
         class =
             if highlight then
-                "highlight"
+                "game-highlight"
 
             else
-                ""
+                "game-clickable"
     in
     H.button [ HE.onClick jumpMsg, HA.class class ] [ H.text cpd.clickable ]
 

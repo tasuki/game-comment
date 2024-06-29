@@ -442,11 +442,11 @@ sideView model =
         navMidItem =
             case model.view of
                 ViewReplay ->
-                    [ H.text <| String.fromInt moveNum ]
+                    [ H.span [ HA.class "game-highlight" ] [ H.text <| String.fromInt moveNum ] ]
 
                 _ ->
                     [ H.button
-                        [ HA.id "back-review", HE.onClick <| Jump ViewReplay ]
+                        [ HA.class "game-clickable", HE.onClick <| Jump ViewReplay ]
                         [ H.text "review" ]
                     ]
 
@@ -458,7 +458,7 @@ sideView model =
                 , H.div [ HA.class "pure-u-1-5" ]
                     [ H.button [ HE.onClick Backward ] [ backward ] ]
                 , H.div [ HA.class "pure-u-1-5" ]
-                    [ H.div [ HA.style "padding" "7px 10px" ] navMidItem ]
+                    [ H.div [ HA.class "mid-item" ] navMidItem ]
                 , H.div [ HA.class "pure-u-1-5" ]
                     [ H.button [ HE.onClick Forward ] [ forward ] ]
                 , H.div [ HA.class "pure-u-1-5" ]
