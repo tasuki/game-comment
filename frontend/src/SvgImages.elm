@@ -12,7 +12,7 @@ defaultWidth =
 
 defaultColor : String
 defaultColor =
-    "black"
+    "currentColor"
 
 
 line : Int -> Int -> Int -> Int -> Svg msg
