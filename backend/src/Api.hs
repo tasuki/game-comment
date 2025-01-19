@@ -4,12 +4,15 @@ module Api where
 
 import Control.Monad (when)
 import qualified Data.Aeson as A
+import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import Data.Aeson ((.=))
 import Data.Text.Lazy (Text, unpack)
 import qualified Data.Time.Clock as TC
 import qualified Data.Time.Clock.System as TCS
 import qualified Data.Time.Format as TF
+import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
 import qualified Network.HTTP.Types.Status as Status
 import Network.Wai (Middleware)
 import Network.Wai.Middleware.AddHeaders (addHeaders)
@@ -17,7 +20,6 @@ import qualified Web.Scotty as S
 
 import Auth
 import qualified ApiResources as Res
-import qualified Utils as U
 
 logMsg :: String -> IO ()
 logMsg str = do
@@ -31,10 +33,10 @@ jsonMsg msg = S.json $ A.object [ "msg" .= (msg :: Text) ]
 customErrorHandler :: Text -> S.ActionM ()
 customErrorHandler msg = jsonMsg msg
 
-jsonError :: Status.Status -> Text -> S.ActionM a
+jsonError :: Status.Status -> String -> S.ActionM a
 jsonError st msg = do
     S.status st
-    S.json $ A.object [ "msg" .= msg ]
+    S.json $ A.object [ "msg" .= (TL.fromStrict $ T.pack msg) ]
     S.finish
 
 jsonData :: (A.FromJSON a) => S.ActionM a
@@ -43,12 +45,12 @@ jsonData = do
     when (b == "") $ do
         jsonError Status.status400 "jsonData - No data was provided."
     case A.eitherDecode b of
-        Left err -> jsonError Status.status400 $ U.stringToLazyText $
+        Left err -> jsonError Status.status400 $
             "jsonData - malformed: " `mappend` LBS.unpack b
                 `mappend` " Error was: " `mappend` err
         Right value -> case A.fromJSON value of
             A.Error err -> do
-                jsonError Status.status400 $ U.stringToLazyText $
+                jsonError Status.status400 $
                     "jsonData - failed parsing: " `mappend` LBS.unpack b
                         `mappend` " Error was: " `mappend` err
             A.Success a -> do
@@ -56,7 +58,7 @@ jsonData = do
 
 addDefaultHeaders :: String -> Middleware
 addDefaultHeaders allowOrigin = addHeaders
-    [ ("Access-Control-Allow-Origin", U.stringToByteString allowOrigin ) ]
+    [ ("Access-Control-Allow-Origin", BS.pack allowOrigin ) ]
 
 onlySignedIn :: String -> (Res.UserData -> S.ActionM ()) -> S.ActionM ()
 onlySignedIn secretKey action = do

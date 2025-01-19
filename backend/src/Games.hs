@@ -5,7 +5,8 @@ module Games where
 import Control.Exception (try)
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.ByteString.Lazy.Char8 as LBS
-import Data.Text.Lazy (Text, unpack)
+import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
 import qualified Database.SQLite.Simple as SQL
 import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Client.TLS as TLS
@@ -20,9 +21,9 @@ import qualified Database as DB
 -- General game-fetching shenanigans
 
 type GameFetched = Either HTTP.HttpException (Status.Status, LBS.ByteString)
-type GameFetcher = Text -> IO GameFetched
+type GameFetcher = TL.Text -> IO GameFetched
 
-maybeSaveRecord :: SQL.Connection -> Text -> Text -> GameFetched -> IO (DB.SqlResult ())
+maybeSaveRecord :: SQL.Connection -> TL.Text -> TL.Text -> GameFetched -> IO (DB.SqlResult ())
 maybeSaveRecord conn source gameId eitherResult =
     case eitherResult of
         Right (responseStatus, sgf) | responseStatus == Status.status200 -> do
@@ -35,11 +36,12 @@ maybeSaveRecord conn source gameId eitherResult =
             _ <- Api.logMsg $ printf "NOT saving game, exception: %s" (show e)
             pure $ DB.Success ()
 
-getGame :: GameFetcher -> SQL.Connection -> Text -> Text -> S.ActionM ()
+getGame :: GameFetcher -> SQL.Connection -> TL.Text -> String -> S.ActionM ()
 getGame fetcher conn source gameId = do
-    result <- liftIO $ fetcher gameId
-    _ <- liftIO $ maybeSaveRecord conn source gameId result
-    record <- liftIO $ DB.fetchRecord conn source gameId
+    let gid = TL.fromStrict $ T.pack gameId
+    result <- liftIO $ fetcher gid
+    _ <- liftIO $ maybeSaveRecord conn source gid result
+    record <- liftIO $ DB.fetchRecord conn source gid
     case record of
         DB.Success record -> do
             S.status Status.status200
@@ -53,7 +55,7 @@ getGame fetcher conn source gameId = do
 
 fetchLittleGolemGameRecord :: GameFetcher
 fetchLittleGolemGameRecord gameId = do
-    let gameUrl = "https://www.littlegolem.net/servlet/sgf/" <> unpack gameId <> "/game.sgf"
+    let gameUrl = "https://www.littlegolem.net/servlet/sgf/" <> TL.unpack gameId <> "/game.sgf"
     try $ do
         _ <- Api.logMsg $ printf "Fetching game: %s" gameUrl
         manager <- HTTP.newManager TLS.tlsManagerSettings

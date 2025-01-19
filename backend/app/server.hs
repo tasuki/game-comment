@@ -13,7 +13,6 @@ import qualified Auth
 import qualified Database as DB
 import qualified Env
 import qualified Games
-import qualified Utils as U
 
 main :: IO ()
 main = do
@@ -41,7 +40,7 @@ main = do
                 DB.Success (Right userData) ->
                     S.json $ Res.SessionData $ Auth.createJwt (Env.jwtSecret config) nowTime userData
                 DB.Success (Left msg) ->
-                    jsonError Status.status401 $ U.stringToLazyText msg
+                    jsonError Status.status401 msg
                 _ ->
                     jsonError Status.status500 "Unknown error"
 
@@ -58,16 +57,16 @@ main = do
         -- Games
         S.get "/games/lg/:gameId" $ do
             gameId <- S.param "gameId"
-            case U.stringToInt gameId of
-                Nothing ->
+            case reads gameId :: [(Int, String)] of
+                [(x, "")] ->
+                    Games.getGame Games.fetchLittleGolemGameRecord conn "lg" gameId
+                _ ->
                     jsonError Status.status400 "LG game id must be a number"
-                Just _ ->
-                    Games.getGame Games.fetchLittleGolemGameRecord conn "lg" $ U.stringToLazyText gameId
 
         S.get "/games/here/:gameId" $ do
             let source = "here"
             gameId <- S.param "gameId"
-            Games.getGame Games.fetchFail conn source $ U.stringToLazyText gameId
+            Games.getGame Games.fetchFail conn source gameId
 
         S.put "/games/here/:gameId" $ do
             let source = "here"
