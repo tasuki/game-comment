@@ -17,7 +17,7 @@ import qualified Games
 main :: IO ()
 main = do
     config <- Env.readEnvVars
-    conn <- DB.open "game-comment.sqlite3"
+    conn <- DB.open $ Env.sqliteFile config
     S.scotty 6483 $ do
         S.middleware $ Api.addDefaultHeaders $ Env.allowOrigin config
         S.defaultHandler Api.customErrorHandler

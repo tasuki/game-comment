@@ -8,6 +8,7 @@ import System.Exit (die)
 
 data Config = Config
     { allowOrigin :: String
+    , sqliteFile :: String
     , jwtSecret :: String
     , passSalt :: String
     }
@@ -24,7 +25,8 @@ readEnvVars = do
     loadFile defaultConfig
 
     allowOrigin <- readOne "ALLOW_ORIGIN"
+    sqliteFile <- readOne "SQLITE_FILE"
     jwtSecret <- readOne "JWT_SECRET"
     passSalt <- readOne "PASS_SALT"
 
-    pure $ Config allowOrigin jwtSecret passSalt
+    pure $ Config allowOrigin sqliteFile jwtSecret passSalt

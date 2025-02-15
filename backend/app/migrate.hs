@@ -10,6 +10,7 @@ import Data.List (sort)
 import Data.Maybe (listToMaybe)
 
 import qualified Database as DB
+import qualified Env
 
 applyMigration :: S.Connection -> FilePath -> IO ()
 applyMigration conn file = do
@@ -24,7 +25,8 @@ wasMigrationAppliedAt conn file = do
 
 main :: IO ()
 main = do
-    conn <- DB.open "game-comment.sqlite3"
+    config <- Env.readEnvVars
+    conn <- DB.open $ Env.sqliteFile config
     S.execute_ conn "CREATE TABLE IF NOT EXISTS migrations \
         \(name TEXT PRIMARY KEY, applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP)"
     files <- listDirectory "migrations"
