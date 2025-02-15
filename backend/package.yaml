@@ -23,6 +23,7 @@ dependencies:
     - tuple
     - wai
     - wai-extra
+    - warp
 
 library:
     source-dirs: src
