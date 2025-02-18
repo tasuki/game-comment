@@ -7,6 +7,30 @@ on:
         branches: [ master ]
 
 jobs:
+    backend:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: ./backend
+        steps:
+            - uses: actions/checkout@v4
+            - uses: haskell/actions/setup@v2
+
+            - name: Cache Stack dependencies
+              uses: actions/cache@v3
+              with:
+                path: |
+                  ~/.stack
+                  .stack-work
+                key: stack-${{ runner.os }}-${{ hashFiles('stack.yaml') }}
+                restore-keys: |
+                  stack-${{ runner.os }}-
+
+            - run: make dev-config
+            - run: stack build --only-dependencies
+            - run: stack build
+            - run: stack test
+
     frontend:
         runs-on: ubuntu-latest
         defaults:
