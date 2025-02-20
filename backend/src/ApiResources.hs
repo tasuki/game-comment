@@ -60,3 +60,4 @@ data Comment = Comment
     , created :: Text
     } deriving (Show, Generic)
 instance A.ToJSON Comment
+instance A.FromJSON Comment

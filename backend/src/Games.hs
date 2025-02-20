@@ -30,10 +30,10 @@ maybeSaveRecord conn source gameId eitherResult =
             _ <- Api.logMsg $ printf "Saving game: %s / %s" source gameId
             DB.saveGame conn source gameId Nothing sgf
         Right (responseStatus, _) -> do
-            _ <- Api.logMsg $ printf "NOT saving game, status was: %s" (show responseStatus)
+            _ <- Api.logMsg $ printf "NOT updating game, status was: %s" (show responseStatus)
             pure $ DB.Success ()
         Left e -> do
-            _ <- Api.logMsg $ printf "NOT saving game, exception: %s" (show e)
+            _ <- Api.logMsg $ printf "NOT updating game, exception: %s" (show e)
             pure $ DB.Success ()
 
 getGame :: GameFetcher -> SQL.Connection -> TL.Text -> String -> S.ActionM ()
