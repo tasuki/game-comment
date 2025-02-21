@@ -7,10 +7,15 @@ import Config
 import GameRecord as G
 import Http
 import LittleGolem as LG
+import User as U
 
 
 baseUrl =
     Config.apiBaseUrl
+
+
+type alias CreatedResult =
+    Result String U.UserCreated
 
 
 type alias SgfResult =
@@ -80,6 +85,19 @@ sgfResponseToResult =
                 "{{" ++ String.fromInt val ++ "}}"
     in
     resolve (BE.toByteValues >> List.map toStr >> String.concat >> Ok)
+
+
+
+-- Endpoints
+
+
+createUser : (CreatedResult -> msg) -> U.CreateUser -> Cmd msg
+createUser msg userData =
+    Http.post
+        { url = baseUrl ++ "/users"
+        , body = Http.jsonBody <| U.createUserEncoder userData
+        , expect = Http.expectJson (decodeErrors >> msg) U.userCreatedDecoder
+        }
 
 
 getSgf : (SgfResult -> msg) -> G.GameSource -> Cmd msg

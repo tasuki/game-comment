@@ -134,6 +134,7 @@ viewPicker picker =
                         , HA.max "50"
                         , HA.value <| String.fromInt picker.size
                         , HE.onInput PickBoardSize
+                        , GH.onEnter CreateBoard
                         ]
                         []
                     , H.button
@@ -147,7 +148,9 @@ viewPicker picker =
     [ H.p [] [ H.text "Create an empty board for:" ]
     , H.div [] (List.map gamePicker G.games)
     , H.div [] sizePickerAndCreateButton
+    , H.br [] []
     , H.h3 [] [ H.text "~~ OR ~~" ]
+    , H.br [] []
     , H.p [] [ H.text "Load a game from LittleGolem:" ]
     , H.div []
         [ H.input
