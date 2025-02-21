@@ -32,21 +32,27 @@ spec :: Spec
 spec = with setupApp $ do
     describe "POST /users" $ do
         it "creates a user successfully" $ do
+            post "/users" [r|{"username": "new", "password": "pass", "favorite": "twixt"}|]
+                `shouldRespondWith` 200
+        it "fails when captcha is missing" $ do
             post "/users" [r|{"username": "new", "password": "pass"}|]
-                `shouldRespondWith` 200
+                `shouldRespondWith` 400
+        it "fails when captcha is wrong" $ do
+            post "/users" [r|{"username": "new", "password": "pass", "favorite": "chess"}|]
+                `shouldRespondWith` 400
         it "fails when username already exists" $ do
-            post "/users" [r|{"username": "dupe", "password": "pass"}|]
+            post "/users" [r|{"username": "new", "password": "pass", "favorite": "twixt"}|]
                 `shouldRespondWith` 200
-            post "/users" [r|{"username": "dupe", "password": "pass"}|]
+            post "/users" [r|{"username": "new", "password": "pass", "favorite": "twixt"}|]
                 `shouldRespondWith` 409
 
     describe "POST /sessions" $ do
         it "can create a session" $ do
-            post "/users" [r|{"username": "user", "password": "pass"}|]
+            post "/users" [r|{"username": "user", "password": "pass", "favorite": "twixt"}|]
             post "/sessions" [r|{"username": "user", "password": "pass"}|]
                 `shouldRespondWith` 200
         it "does not create a session with wrong password" $ do
-            post "/users" [r|{"username": "user", "password": "pass"}|]
+            post "/users" [r|{"username": "user", "password": "pass", "favorite": "twixt"}|]
             post "/sessions" [r|{"username": "user", "password": "pass1"}|]
                 `shouldRespondWith` 401
 
@@ -84,6 +90,8 @@ spec = with setupApp $ do
                 Just (cmnt : _) -> do
                     liftIO $ (Cmt.username cmnt) `shouldBe` "user"
                     liftIO $ (Cmt.comment cmnt) `shouldBe` "first!"
+                Just [] -> do
+                    error "No comments :scream:"
                 Nothing ->
                     error "Failed to decode JSON into comments"
 
@@ -102,7 +110,7 @@ getAuthHeader body = do
 
 setupUserSession :: WaiSession st [Header.Header]
 setupUserSession = do
-    _ <- post "/users" [r|{"username": "user", "password": "pass"}|]
+    _ <- post "/users" [r|{"username": "user", "password": "pass", "favorite": "twixt"}|]
     response <- post "/sessions" [r|{"username": "user", "password": "pass"}|]
     return $ getAuthHeader (simpleBody response)
 

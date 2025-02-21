@@ -11,6 +11,7 @@ import GHC.Generics (Generic)
 data CreateUser = CreateUser
     { username :: Text
     , password :: Text
+    , favorite :: Text
     , email :: Maybe Text
     } deriving (Show, Generic)
 instance A.FromJSON CreateUser

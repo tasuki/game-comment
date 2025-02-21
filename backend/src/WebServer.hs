@@ -3,6 +3,8 @@
 module WebServer where
 
 import Control.Monad.IO.Class (liftIO)
+import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
 import qualified Database.SQLite.Simple as SQLite
 import qualified Network.HTTP.Types.Status as Status
 import qualified Network.Wai as Wai
@@ -11,6 +13,7 @@ import qualified Web.Scotty as S
 import Api (jsonData, jsonError, jsonMsg, onlySignedIn)
 import qualified Api
 import qualified ApiResources as Res
+import qualified ApiResources as CU (CreateUser(favorite))
 import qualified ApiResources as UD (UserData(id))
 import qualified ApiResources as GG (GetGame(userId))
 import qualified Auth
@@ -18,6 +21,7 @@ import qualified Database as DB
 import qualified Env
 import qualified Games
 
+captchaWhitelist = ["twixt", "hex", "go", "torusgo", "torus go"]
 
 waiApp :: Env.Config -> SQLite.Connection -> IO Wai.Application
 waiApp config conn =
@@ -29,11 +33,15 @@ waiApp config conn =
         -- Users
         S.post "/users" $ do
             user <- jsonData :: S.ActionM Res.CreateUser
-            creationResult <- liftIO $ DB.createUser conn (Env.passSalt config) user
-            case creationResult of
-                DB.Success () -> jsonMsg "User created successfully"
-                DB.ConstraintError -> jsonError Status.status409 "Username already exists"
-                _ -> jsonError Status.status500 "Unknown error"
+            let favoriteLower = T.toLower $ TL.toStrict $ CU.favorite user
+            if elem favoriteLower captchaWhitelist then do
+                creationResult <- liftIO $ DB.createUser conn (Env.passSalt config) user
+                case creationResult of
+                    DB.Success () -> jsonMsg "User created successfully"
+                    DB.ConstraintError -> jsonError Status.status409 "Username already exists"
+                    _ -> jsonError Status.status500 "Unknown error"
+            else
+                jsonError Status.status400 "You have failed the captcha, sorry..."
 
         S.post "/sessions" $ do
             nowTime <- liftIO Api.getCurrentUnixTime
