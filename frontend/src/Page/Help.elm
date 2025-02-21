@@ -28,6 +28,10 @@ type Msg
     = Noop
 
 
+
+-- VIEW
+
+
 list : List (H.Html msg) -> H.Html msg
 list elements =
     H.ul [] <| List.map (\el -> H.li [] [ el ]) elements

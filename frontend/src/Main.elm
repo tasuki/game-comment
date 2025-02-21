@@ -13,6 +13,7 @@ import Page
 import Page.Game
 import Page.Help
 import Page.Home
+import Page.User
 import Replay as R
 import Route
 import Session exposing (Session)
@@ -55,6 +56,7 @@ updateWithStorage msg oldModel =
 type Page
     = NotFound Session
     | Home Page.Home.Model
+    | User Page.User.Model
     | Help Page.Help.Model
     | Game Page.Game.Model
 
@@ -111,6 +113,7 @@ type Msg
     | UrlChanged Url
     | LinkClicked Browser.UrlRequest
     | HomeMsg Page.Home.Msg
+    | UserMsg Page.User.Msg
     | HelpMsg Page.Help.Msg
     | GameMsg Page.Game.Msg
     | ToggleMenu
@@ -131,6 +134,9 @@ update message model =
 
         ( HomeMsg msg, Home m ) ->
             Page.Home.update msg m |> updateWith model Home HomeMsg
+
+        ( UserMsg msg, User m ) ->
+            Page.User.update msg m |> updateWith model User UserMsg
 
         ( GameMsg msg, Game m ) ->
             updateGamePage model msg m
@@ -195,6 +201,9 @@ getSession page =
         Home m ->
             m.session
 
+        User m ->
+            m.session
+
         Help m ->
             m.session
 
@@ -233,6 +242,10 @@ changeRouteTo url model =
         Just Route.Home ->
             Page.Home.init session
                 |> updateWith newModel Home HomeMsg
+
+        Just Route.User ->
+            Page.User.init session
+                |> updateWith newModel User UserMsg
 
         Just Route.Help ->
             Page.Help.init session
@@ -287,6 +300,9 @@ view model =
     case model.page of
         Home m ->
             Page.viewPage HomeMsg (Page.Home.view m) nav
+
+        User m ->
+            Page.viewPage UserMsg (Page.User.view m) nav
 
         Help m ->
             Page.viewPage HelpMsg (Page.Help.view m) nav

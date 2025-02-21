@@ -132,8 +132,9 @@ getGamesTiles closeMsg showFullMenu replays =
 
 firstTiles : List (NavTile msg)
 firstTiles =
-    [ NavTile (Route.toUrl Route.Home) [ H.text "new" ] [ H.text "new" ] [ H.text "n" ] Nothing
-    , NavTile (Route.toUrl Route.Help) [ H.text "help" ] [ H.text "?" ] [ H.text "?" ] Nothing
+    [ NavTile (Route.toUrl Route.User) [ H.text "user" ] [ H.text "user" ] [ H.text "u" ] Nothing
+    , NavTile (Route.toUrl Route.Home) [ H.text "new" ] [ H.text "new" ] [ H.text "n" ] Nothing
+    , NavTile (Route.toUrl Route.Help) [ H.text "help" ] [ H.text "help" ] [ H.text "?" ] Nothing
     ]
 
 
