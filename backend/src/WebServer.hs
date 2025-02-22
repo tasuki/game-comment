@@ -29,6 +29,12 @@ waiApp config conn =
         S.middleware $ Api.addDefaultHeaders $ Env.allowOrigin config
         S.defaultHandler Api.customErrorHandler
 
+        -- Fuck cors
+        S.options (S.regex ".*") $ do
+            S.status Status.status204
+            S.text ""
+            S.finish
+
 
         -- Users
         S.post "/users" $ do

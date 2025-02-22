@@ -58,7 +58,10 @@ jsonData = do
 
 addDefaultHeaders :: String -> Middleware
 addDefaultHeaders allowOrigin = addHeaders
-    [ ("Access-Control-Allow-Origin", BS.pack allowOrigin ) ]
+    [ ("Access-Control-Allow-Origin", BS.pack allowOrigin)
+    , ("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    , ("Access-Control-Allow-Headers", "Content-Type")
+    ]
 
 onlySignedIn :: String -> (Res.UserData -> S.ActionM ()) -> S.ActionM ()
 onlySignedIn secretKey action = do
