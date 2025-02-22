@@ -6,6 +6,7 @@ import Comments as C
 import Config
 import GameRecord as G
 import Http
+import Json.Decode as D
 import LittleGolem as LG
 import User as U
 
@@ -14,8 +15,26 @@ baseUrl =
     Config.apiBaseUrl
 
 
-type alias CreatedResult =
-    Result String U.UserCreated
+type alias Error =
+    { msg : String }
+
+
+errorDecoder : D.Decoder Error
+errorDecoder =
+    D.map Error (D.field "msg" D.string)
+
+
+emptyDecoder : D.Decoder ()
+emptyDecoder =
+    D.succeed ()
+
+
+type alias UserCreatedResult =
+    Result Error ()
+
+
+type alias SessionResult =
+    Result Error U.SessionData
 
 
 type alias SgfResult =
@@ -66,11 +85,11 @@ httpErrorToString error =
             "Bad status: " ++ String.fromInt status
 
         Http.BadBody body ->
-            "Bad boy: " ++ body
+            "Oops: " ++ body
 
 
-decodeErrors : Result Http.Error a -> Result String a
-decodeErrors =
+decodeStatusError : Result Http.Error a -> Result String a
+decodeStatusError =
     Result.mapError httpErrorToString
 
 
@@ -87,16 +106,66 @@ sgfResponseToResult =
     resolve (BE.toByteValues >> List.map toStr >> String.concat >> Ok)
 
 
+handleError : (Result Error a -> msg) -> Result Http.Error a -> msg
+handleError msg result =
+    case result of
+        Ok a ->
+            msg (Ok a)
+
+        Err httpError ->
+            msg (Err { msg = httpErrorToString httpError })
+
+
+expectMaybeError : (Result Http.Error a -> msg) -> D.Decoder a -> D.Decoder Error -> Http.Expect msg
+expectMaybeError toMsg decoder ed =
+    Http.expectStringResponse toMsg <|
+        \response ->
+            case response of
+                Http.BadUrl_ url ->
+                    Err (Http.BadUrl url)
+
+                Http.Timeout_ ->
+                    Err Http.Timeout
+
+                Http.NetworkError_ ->
+                    Err Http.NetworkError
+
+                Http.BadStatus_ metadata body ->
+                    case D.decodeString ed body of
+                        Ok value ->
+                            Err (Http.BadBody value.msg)
+
+                        Err _ ->
+                            Err (Http.BadStatus metadata.statusCode)
+
+                Http.GoodStatus_ _ body ->
+                    case D.decodeString decoder body of
+                        Ok value ->
+                            Ok value
+
+                        Err err ->
+                            Err <| Http.BadBody (D.errorToString err)
+
+
 
 -- Endpoints
 
 
-createUser : (CreatedResult -> msg) -> U.CreateUser -> Cmd msg
+createUser : (UserCreatedResult -> msg) -> U.CreateUser -> Cmd msg
 createUser msg userData =
     Http.post
         { url = baseUrl ++ "/users"
         , body = Http.jsonBody <| U.createUserEncoder userData
-        , expect = Http.expectJson (decodeErrors >> msg) U.userCreatedDecoder
+        , expect = expectMaybeError (handleError msg) emptyDecoder errorDecoder
+        }
+
+
+createSession : (SessionResult -> msg) -> U.CreateSession -> Cmd msg
+createSession msg createSessionData =
+    Http.post
+        { url = baseUrl ++ "/sessions"
+        , body = Http.jsonBody <| U.createSessionEncoder createSessionData
+        , expect = expectMaybeError (handleError msg) U.sessionDataDecoder errorDecoder
         }
 
 
@@ -110,7 +179,7 @@ getSgf msg gameSource =
         { url = baseUrl ++ "/games/" ++ source ++ "/" ++ gameId
         , expect =
             Http.expectBytesResponse
-                (decodeErrors >> Result.andThen (LG.parse gameSource) >> msg)
+                (decodeStatusError >> Result.andThen (LG.parse gameSource) >> msg)
                 sgfResponseToResult
         }
 
@@ -123,5 +192,5 @@ getComments msg gameSource =
     in
     Http.get
         { url = baseUrl ++ "/games/" ++ source ++ "/" ++ gameId ++ "/comments"
-        , expect = Http.expectJson (decodeErrors >> msg) C.commentsDecoder
+        , expect = Http.expectJson (decodeStatusError >> msg) C.commentsDecoder
         }

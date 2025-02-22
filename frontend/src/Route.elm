@@ -8,7 +8,9 @@ import Url.Parser as Parser exposing ((</>), (<?>), Parser, s)
 
 type Route
     = Home
-    | User
+    | Login
+    | LoggedIn String String
+    | UserDetails String
     | Help
     | Game String String
     | EmptyGame G.Game Int
@@ -23,7 +25,9 @@ parser : Parser (Route -> Route) Route
 parser =
     Parser.oneOf
         [ Parser.map Home Parser.top
-        , Parser.map User (s "user")
+        , Parser.map Login (s "user")
+        , Parser.map LoggedIn (s "user" </> Parser.string </> Parser.string)
+        , Parser.map UserDetails (s "user" </> Parser.string)
         , Parser.map Help (s "help")
         , Parser.map Game (s "game" </> Parser.string </> Parser.string)
         , Parser.map EmptyGame (s "board" </> gameParser </> Parser.int)
@@ -36,8 +40,14 @@ toUrl r =
         Home ->
             Builder.absolute [] []
 
-        User ->
+        Login ->
             Builder.absolute [ "user" ] []
+
+        LoggedIn name pass ->
+            Builder.absolute [ "user", name, pass ] []
+
+        UserDetails name ->
+            Builder.absolute [ "user", name ] []
 
         Help ->
             Builder.absolute [ "help" ] []

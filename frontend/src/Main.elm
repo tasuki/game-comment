@@ -13,6 +13,7 @@ import Page
 import Page.Game
 import Page.Help
 import Page.Home
+import Page.Login
 import Page.User
 import Replay as R
 import Route
@@ -56,6 +57,7 @@ updateWithStorage msg oldModel =
 type Page
     = NotFound Session
     | Home Page.Home.Model
+    | Login Page.Login.Model
     | User Page.User.Model
     | Help Page.Help.Model
     | Game Page.Game.Model
@@ -91,7 +93,7 @@ init : E.Value -> Url -> Nav.Key -> ( Model, Cmd Msg )
 init jsonValue url key =
     let
         session =
-            { navKey = key }
+            { navKey = key, user = Nothing }
 
         model =
             emptyModel key session url
@@ -113,6 +115,7 @@ type Msg
     | UrlChanged Url
     | LinkClicked Browser.UrlRequest
     | HomeMsg Page.Home.Msg
+    | LoginMsg Page.Login.Msg
     | UserMsg Page.User.Msg
     | HelpMsg Page.Help.Msg
     | GameMsg Page.Game.Msg
@@ -134,6 +137,9 @@ update message model =
 
         ( HomeMsg msg, Home m ) ->
             Page.Home.update msg m |> updateWith model Home HomeMsg
+
+        ( LoginMsg msg, Login m ) ->
+            Page.Login.update msg m |> updateWith model Login LoginMsg
 
         ( UserMsg msg, User m ) ->
             Page.User.update msg m |> updateWith model User UserMsg
@@ -201,6 +207,9 @@ getSession page =
         Home m ->
             m.session
 
+        Login m ->
+            m.session
+
         User m ->
             m.session
 
@@ -243,7 +252,15 @@ changeRouteTo url model =
             Page.Home.init session
                 |> updateWith newModel Home HomeMsg
 
-        Just Route.User ->
+        Just Route.Login ->
+            Page.Login.init session
+                |> updateWith newModel Login LoginMsg
+
+        Just (Route.LoggedIn user pass) ->
+            Page.Login.initLogin session user pass
+                |> updateWith newModel Login LoginMsg
+
+        Just (Route.UserDetails user) ->
             Page.User.init session
                 |> updateWith newModel User UserMsg
 
@@ -300,6 +317,9 @@ view model =
     case model.page of
         Home m ->
             Page.viewPage HomeMsg (Page.Home.view m) nav
+
+        Login m ->
+            Page.viewPage LoginMsg (Page.Login.view m) nav
 
         User m ->
             Page.viewPage UserMsg (Page.User.view m) nav

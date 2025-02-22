@@ -2,6 +2,7 @@ module User exposing (..)
 
 import Json.Decode as D
 import Json.Encode as E
+import Jwt
 import List.Extra
 import Random
 
@@ -24,21 +25,62 @@ createUserEncoder createUser =
         ]
 
 
-type alias UserCreated =
+type alias CreateSession =
+    { username : String
+    , password : String
+    }
+
+
+createSessionEncoder : CreateSession -> E.Value
+createSessionEncoder createSession =
+    E.object
+        [ ( "username", E.string createSession.username )
+        , ( "password", E.string createSession.password )
+        ]
+
+
+type alias SessionData =
+    { authToken : String
+    }
+
+
+sessionDataDecoder : D.Decoder SessionData
+sessionDataDecoder =
+    D.map SessionData
+        (D.field "authToken" D.string)
+
+
+type alias TokenData =
     { id : Int
     , username : String
     }
 
 
-userCreatedDecoder : D.Decoder UserCreated
-userCreatedDecoder =
-    D.map2 UserCreated
+tokenDecoder : D.Decoder TokenData
+tokenDecoder =
+    D.map2 TokenData
         (D.field "id" D.int)
         (D.field "username" D.string)
 
 
+type alias User =
+    { name : String
+    , token : String
+    }
 
--- Passwords
+
+sessionDataToUser : SessionData -> Result String User
+sessionDataToUser sessionData =
+    case Jwt.decodeToken tokenDecoder sessionData.authToken of
+        Ok td ->
+            Ok { name = td.username, token = sessionData.authToken }
+
+        Err err ->
+            Err <| Jwt.errorToString err
+
+
+
+-- Generating passwords
 
 
 vowels : List Char
