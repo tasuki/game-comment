@@ -1,12 +1,13 @@
 module Page.User exposing (..)
 
 import ApiClient as AC
-import Expect exposing (pass)
+import Browser.Navigation as Nav
 import GameHelpers as GH
 import Html as H
 import Html.Attributes as HA
 import Html.Events as HE
 import Page exposing (Page)
+import Route
 import Random
 import Session exposing (Session)
 import User
@@ -42,7 +43,7 @@ type Msg
     | EnterFavorite String
     | CreateAccount
     | DoCreateAccount String
-    | Created AC.CreatedResult
+    | Created String AC.CreatedResult
     | EnterLoginName String
     | EnterLoginPass String
     | LogIn
@@ -62,7 +63,7 @@ update msg model =
 
         DoCreateAccount password ->
             ( model
-            , AC.createUser Created
+            , AC.createUser (Created password)
                 { username = model.createName
                 , password = password
                 , favorite = model.favorite
@@ -70,14 +71,15 @@ update msg model =
                 }
             )
 
-        Created cr ->
+        Created password cr ->
             case cr of
-                Ok record ->
-                    -- TODO
-                    ( model, Cmd.none )
+                Ok _ ->
+                    ( model
+                    , Nav.pushUrl model.session.navKey (Route.toUrl <| Route.Login model.createName password )
+                    )
 
                 Err err ->
-                    ( { model | message = "Could not create user: [ " ++ err ++ " ]" }
+                    ( { model | message = "Could not create user: [ " ++ err.msg ++ " ]" }
                     , Cmd.none
                     )
 
@@ -88,7 +90,9 @@ update msg model =
             ( { model | loginPass = pass }, Cmd.none )
 
         LogIn ->
-            ( model, Cmd.none )
+            ( model
+            , Nav.pushUrl model.session.navKey (Route.toUrl <| Route.Login model.loginName model.loginPass )
+            )
 
 
 
@@ -130,6 +134,7 @@ forms model =
         [ H.input
             [ HA.type_ "text"
             , HA.placeholder "Username"
+            , HE.onInput EnterLoginName
             , GH.onEnter LogIn
             ]
             []
@@ -138,6 +143,7 @@ forms model =
         [ H.input
             [ HA.type_ "text"
             , HA.placeholder "Password"
+            , HE.onInput EnterLoginPass
             , GH.onEnter LogIn
             ]
             []
@@ -147,6 +153,8 @@ forms model =
             [ HE.onClick LogIn ]
             [ H.text "Log in" ]
         ]
+    , H.br [] []
+    , H.div [] [ H.text model.message ]
     ]
 
 

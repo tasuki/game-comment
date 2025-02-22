@@ -247,6 +247,13 @@ changeRouteTo url model =
             Page.User.init session
                 |> updateWith newModel User UserMsg
 
+        Just (Route.Login user pass) ->
+            let
+                _ = Debug.log "asdf" (user, pass)
+            in
+            Page.User.init session
+                |> updateWith newModel User UserMsg
+
         Just Route.Help ->
             Page.Help.init session
                 |> updateWith newModel Help HelpMsg

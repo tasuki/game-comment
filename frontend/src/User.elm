@@ -24,18 +24,6 @@ createUserEncoder createUser =
         ]
 
 
-type alias UserCreated =
-    { id : Int
-    , username : String
-    }
-
-
-userCreatedDecoder : D.Decoder UserCreated
-userCreatedDecoder =
-    D.map2 UserCreated
-        (D.field "id" D.int)
-        (D.field "username" D.string)
-
 
 
 -- Passwords

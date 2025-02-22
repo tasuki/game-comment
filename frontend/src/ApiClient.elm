@@ -1,5 +1,6 @@
 module ApiClient exposing (..)
 
+import Json.Decode as D
 import Bytes as B
 import Bytes.Extra as BE
 import Comments as C
@@ -14,8 +15,19 @@ baseUrl =
     Config.apiBaseUrl
 
 
+type alias Error =
+    { msg : String }
+
+errorDecoder : D.Decoder Error
+errorDecoder =
+    D.map Error (D.field "msg" D.string)
+
+emptyDecoder : D.Decoder ()
+emptyDecoder =
+    D.succeed ()
+
 type alias CreatedResult =
-    Result String U.UserCreated
+    Result Error ()
 
 
 type alias SgfResult =
@@ -66,11 +78,11 @@ httpErrorToString error =
             "Bad status: " ++ String.fromInt status
 
         Http.BadBody body ->
-            "Bad boy: " ++ body
+            "Oops: " ++ body
 
 
-decodeErrors : Result Http.Error a -> Result String a
-decodeErrors =
+decodeStatusError : Result Http.Error a -> Result String a
+decodeStatusError =
     Result.mapError httpErrorToString
 
 
@@ -96,8 +108,47 @@ createUser msg userData =
     Http.post
         { url = baseUrl ++ "/users"
         , body = Http.jsonBody <| U.createUserEncoder userData
-        , expect = Http.expectJson (decodeErrors >> msg) U.userCreatedDecoder
+        , expect = expectMaybeError (handleError msg) emptyDecoder errorDecoder
         }
+
+handleError : ((Result Error a) -> msg) -> Result Http.Error a -> msg
+handleError msg result =
+    case result of
+        Ok a ->
+            msg (Ok a)
+
+        Err httpError ->
+            msg (Err { msg = httpErrorToString httpError })
+
+expectMaybeError : (Result Http.Error a -> msg) -> D.Decoder a -> D.Decoder Error -> Http.Expect msg
+expectMaybeError toMsg decoder ed =
+    Http.expectStringResponse toMsg <|
+        \response ->
+            case response of
+                Http.BadUrl_ url ->
+                    Err (Http.BadUrl url)
+
+                Http.Timeout_ ->
+                    Err Http.Timeout
+
+                Http.NetworkError_ ->
+                    Err Http.NetworkError
+
+                Http.BadStatus_ metadata body ->
+                    case D.decodeString ed body of
+                        Ok value ->
+                            Err (Http.BadBody value.msg)
+
+                        Err _ ->
+                            Err (Http.BadStatus metadata.statusCode)
+
+                Http.GoodStatus_ _ body ->
+                    case D.decodeString decoder body of
+                        Ok value ->
+                            Ok value
+
+                        Err err ->
+                            Err <| Http.BadBody (D.errorToString err)
 
 
 getSgf : (SgfResult -> msg) -> G.GameSource -> Cmd msg
@@ -110,7 +161,7 @@ getSgf msg gameSource =
         { url = baseUrl ++ "/games/" ++ source ++ "/" ++ gameId
         , expect =
             Http.expectBytesResponse
-                (decodeErrors >> Result.andThen (LG.parse gameSource) >> msg)
+                (decodeStatusError >> Result.andThen (LG.parse gameSource) >> msg)
                 sgfResponseToResult
         }
 
@@ -123,5 +174,5 @@ getComments msg gameSource =
     in
     Http.get
         { url = baseUrl ++ "/games/" ++ source ++ "/" ++ gameId ++ "/comments"
-        , expect = Http.expectJson (decodeErrors >> msg) C.commentsDecoder
+        , expect = Http.expectJson (decodeStatusError >> msg) C.commentsDecoder
         }
