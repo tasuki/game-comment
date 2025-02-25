@@ -1,12 +1,12 @@
 module ApiClient exposing (..)
 
-import Json.Decode as D
 import Bytes as B
 import Bytes.Extra as BE
 import Comments as C
 import Config
 import GameRecord as G
 import Http
+import Json.Decode as D
 import LittleGolem as LG
 import User as U
 
@@ -18,16 +18,23 @@ baseUrl =
 type alias Error =
     { msg : String }
 
+
 errorDecoder : D.Decoder Error
 errorDecoder =
     D.map Error (D.field "msg" D.string)
+
 
 emptyDecoder : D.Decoder ()
 emptyDecoder =
     D.succeed ()
 
-type alias CreatedResult =
+
+type alias UserCreatedResult =
     Result Error ()
+
+
+type alias SessionResult =
+    Result Error U.SessionData
 
 
 type alias SgfResult =
@@ -99,19 +106,7 @@ sgfResponseToResult =
     resolve (BE.toByteValues >> List.map toStr >> String.concat >> Ok)
 
 
-
--- Endpoints
-
-
-createUser : (CreatedResult -> msg) -> U.CreateUser -> Cmd msg
-createUser msg userData =
-    Http.post
-        { url = baseUrl ++ "/users"
-        , body = Http.jsonBody <| U.createUserEncoder userData
-        , expect = expectMaybeError (handleError msg) emptyDecoder errorDecoder
-        }
-
-handleError : ((Result Error a) -> msg) -> Result Http.Error a -> msg
+handleError : (Result Error a -> msg) -> Result Http.Error a -> msg
 handleError msg result =
     case result of
         Ok a ->
@@ -119,6 +114,7 @@ handleError msg result =
 
         Err httpError ->
             msg (Err { msg = httpErrorToString httpError })
+
 
 expectMaybeError : (Result Http.Error a -> msg) -> D.Decoder a -> D.Decoder Error -> Http.Expect msg
 expectMaybeError toMsg decoder ed =
@@ -149,6 +145,28 @@ expectMaybeError toMsg decoder ed =
 
                         Err err ->
                             Err <| Http.BadBody (D.errorToString err)
+
+
+
+-- Endpoints
+
+
+createUser : (UserCreatedResult -> msg) -> U.CreateUser -> Cmd msg
+createUser msg userData =
+    Http.post
+        { url = baseUrl ++ "/users"
+        , body = Http.jsonBody <| U.createUserEncoder userData
+        , expect = expectMaybeError (handleError msg) emptyDecoder errorDecoder
+        }
+
+
+createSession : (SessionResult -> msg) -> U.CreateSession -> Cmd msg
+createSession msg createSessionData =
+    Http.post
+        { url = baseUrl ++ "/sessions"
+        , body = Http.jsonBody <| U.createSessionEncoder createSessionData
+        , expect = expectMaybeError (handleError msg) U.sessionDataDecoder errorDecoder
+        }
 
 
 getSgf : (SgfResult -> msg) -> G.GameSource -> Cmd msg
