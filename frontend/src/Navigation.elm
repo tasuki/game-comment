@@ -7,13 +7,13 @@ import Html.Attributes as HA
 import Html.Events as HE
 import List.Extra
 import Replay as R
-import Route
+import Route exposing (Route)
 import SvgImages as SI
 import Url exposing (Url)
 
 
 type alias NavTile msg =
-    { url : String
+    { route : Route
     , full : List (H.Html msg)
     , short : List (H.Html msg)
     , first : List (H.Html msg)
@@ -35,7 +35,7 @@ showTile : Bool -> Url -> NavTile msg -> List (H.Html msg)
 showTile showFullMenu currentUrl navTile =
     let
         class =
-            if navTile.url == currentUrl.path then
+            if Route.isOfRoute currentUrl navTile.route then
                 "current"
 
             else
@@ -45,7 +45,7 @@ showTile showFullMenu currentUrl navTile =
             if showFullMenu then
                 navTile.full
 
-            else if navTile.url == currentUrl.path then
+            else if Route.isOfRoute currentUrl navTile.route then
                 navTile.short
 
             else
@@ -62,7 +62,7 @@ showTile showFullMenu currentUrl navTile =
 
         showLink : List (H.Html msg)
         showLink =
-            [ H.a [ HA.href navTile.url ] text ]
+            [ H.a [ HA.href <| Route.toUrl navTile.route ] text ]
     in
     [ H.div
         [ HA.class "menu-item "
@@ -119,8 +119,12 @@ gameNavTile showFullMenu closeMsg ( url, replay ) =
 
             else
                 Nothing
+
+        route =
+            -- suffer
+            Route.fromPath url |> Maybe.withDefault Route.Home
     in
-    NavTile url fullText shortText firstL gameCloseMsg
+    NavTile route fullText shortText firstL gameCloseMsg
 
 
 getGamesTiles : (String -> msg) -> Bool -> Dict String R.Replay -> List (NavTile msg)
@@ -132,9 +136,9 @@ getGamesTiles closeMsg showFullMenu replays =
 
 firstTiles : List (NavTile msg)
 firstTiles =
-    [ NavTile (Route.toUrl Route.Login) [ H.text "user" ] [ H.text "user" ] [ H.text "u" ] Nothing
-    , NavTile (Route.toUrl Route.Home) [ H.text "new" ] [ H.text "new" ] [ H.text "n" ] Nothing
-    , NavTile (Route.toUrl Route.Help) [ H.text "help" ] [ H.text "help" ] [ H.text "?" ] Nothing
+    [ NavTile Route.Login [ H.text "user" ] [ H.text "user" ] [ H.text "u" ] Nothing
+    , NavTile Route.Home [ H.text "new" ] [ H.text "new" ] [ H.text "n" ] Nothing
+    , NavTile Route.Help [ H.text "help" ] [ H.text "help" ] [ H.text "?" ] Nothing
     ]
 
 

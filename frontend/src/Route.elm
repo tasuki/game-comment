@@ -16,6 +16,22 @@ type Route
     | EmptyGame G.Game Int
 
 
+dummyUrl : Url
+dummyUrl =
+    { protocol = Url.Https
+    , host = ""
+    , port_ = Nothing
+    , path = ""
+    , query = Nothing
+    , fragment = Nothing
+    }
+
+
+fromPath : String -> Maybe Route
+fromPath path =
+    parse { dummyUrl | path = path }
+
+
 parse : Url -> Maybe Route
 parse url =
     Parser.parse parser url
@@ -99,3 +115,23 @@ gameParser =
                 _ ->
                     Nothing
         )
+
+
+isOfRoute : Url -> Route -> Bool
+isOfRoute url route =
+    -- is the route represented by the url?
+    let
+        contains r =
+            case r of
+                LoggedIn _ _ ->
+                    route == Login
+
+                other ->
+                    route == other
+    in
+    case parse url of
+        Just r ->
+            contains r
+
+        Nothing ->
+            False
