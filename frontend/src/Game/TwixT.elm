@@ -3,7 +3,6 @@ module Game.TwixT exposing (view)
 import Dict exposing (Dict)
 import GameHelpers as GH
 import GameRecord as G
-import Replay as R
 import Svg exposing (Svg)
 import Svg.Attributes as SA
 import Svg.Events as SE
@@ -289,41 +288,61 @@ drawPegs size position lastMove onMove playMsg =
         pegs =
             pegDict position.pegs
 
-        coordProps coords =
-            [ SA.cx <| String.fromInt coords.x
-            , SA.cy <| String.fromInt coords.y
-            ]
-
         isClickable : G.Player -> Int -> Bool
         isClickable player dirCoord =
             onMove == player && dirCoord /= 1 && dirCoord /= size
 
-        styleProps coords =
+        viewPeg : G.Coords -> G.Player -> Svg msg
+        viewPeg coords player =
+            Svg.circle
+                [ SA.cx <| String.fromInt coords.x
+                , SA.cy <| String.fromInt coords.y
+                , SA.r "0.35"
+                , SA.stroke "black"
+                , SA.strokeWidth "0.1"
+                , SA.fill <| G.color player
+                ]
+                []
+
+        highlightLastMove : G.Coords -> Svg msg
+        highlightLastMove coords =
+            Svg.circle
+                [ SA.cx <| String.fromInt coords.x
+                , SA.cy <| String.fromInt coords.y
+                , SA.r "0.5"
+                , SA.fill "#F33"
+                ]
+                []
+
+        showPosition : G.Coords -> Svg msg
+        showPosition coords =
             case Dict.get ( coords.x, coords.y ) pegs of
-                Nothing ->
-                    if isClickable G.Black coords.y || isClickable G.White coords.x then
-                        [ SA.r "0.4"
-                        , SA.fill "transparent"
-                        , SA.class "clickable"
-                        , SE.onClick <| playMsg coords
-                        ]
+                Just player ->
+                    if GH.isLastMove lastMove coords then
+                        Svg.g []
+                            [ highlightLastMove coords
+                            , viewPeg coords player
+                            ]
 
                     else
-                        []
+                        viewPeg coords player
 
-                Just player ->
-                    GH.classesProps lastMove player coords
-                        ++ [ SA.r "0.35"
-                           , SA.stroke "black"
-                           , SA.strokeWidth "0.1"
-                           , SA.fill <| G.color player
-                           ]
+                Nothing ->
+                    if isClickable G.Black coords.y || isClickable G.White coords.x then
+                        Svg.circle
+                            [ SA.cx <| String.fromInt coords.x
+                            , SA.cy <| String.fromInt coords.y
+                            , SA.r "0.4"
+                            , SA.fill "transparent"
+                            , SA.class "clickable"
+                            , SE.onClick <| playMsg coords
+                            ]
+                            []
 
-        drawCoords : G.Coords -> Svg msg
-        drawCoords coords =
-            Svg.circle (coordProps coords ++ styleProps coords) []
+                    else
+                        Svg.g [] []
     in
-    List.map drawCoords (coordList size)
+    List.map showPosition (coordList size)
 
 
 viewHighlight : Maybe G.Coords -> List (Svg msg)
@@ -333,9 +352,9 @@ viewHighlight maybeCoords =
             [ Svg.circle
                 [ SA.cx <| String.fromInt coords.x
                 , SA.cy <| String.fromInt coords.y
-                , SA.r <| "0.35"
-                , SA.class "last-move white"
                 , SA.fill <| "transparent"
+                , SA.r <| "0.35"
+                , SA.stroke "#F33"
                 , SA.strokeWidth ".13"
                 ]
                 []

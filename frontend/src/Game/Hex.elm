@@ -3,8 +3,6 @@ module Game.Hex exposing (..)
 import Array exposing (Array)
 import GameHelpers as GH
 import GameRecord as G
-import Html as H
-import Replay as R
 import Svg exposing (Svg)
 import Svg.Attributes as SA
 import Svg.Events as SE
@@ -225,18 +223,26 @@ drawChildren children =
 viewHexes : Position -> Maybe G.Move -> (G.Coords -> msg) -> List G.Coords -> List (Svg msg)
 viewHexes position lastMove playMsg =
     let
-        viewHex : String -> String -> G.Player -> List (H.Attribute msg) -> Svg msg
-        viewHex x y player attrs =
+        highlightLastMove : String -> String -> Svg msg
+        highlightLastMove x y =
             Svg.circle
-                (attrs
-                    ++ [ SA.cx x
-                       , SA.cy y
-                       , SA.r "0.7"
-                       , SA.stroke "black"
-                       , SA.strokeWidth "0.1"
-                       , SA.fill <| G.color player
-                       ]
-                )
+                [ SA.cx <| x
+                , SA.cy <| y
+                , SA.r "0.3"
+                , SA.fill "#F33"
+                ]
+                []
+
+        viewHex : String -> String -> G.Player -> Svg msg
+        viewHex x y player =
+            Svg.circle
+                [ SA.cx x
+                , SA.cy y
+                , SA.r "0.7"
+                , SA.stroke "black"
+                , SA.strokeWidth "0.1"
+                , SA.fill <| G.color player
+                ]
                 []
 
         viewEmpty : String -> String -> msg -> Svg msg
@@ -258,7 +264,14 @@ viewHexes position lastMove playMsg =
             in
             case getHex coords position of
                 Just player ->
-                    viewHex centerX centerY player (GH.classesProps lastMove player coords)
+                    if GH.isLastMove lastMove coords then
+                        Svg.g []
+                            [ viewHex centerX centerY player
+                            , highlightLastMove centerX centerY
+                            ]
+
+                    else
+                        viewHex centerX centerY player
 
                 Nothing ->
                     viewEmpty centerX centerY (playMsg coords)
@@ -277,10 +290,10 @@ viewHighlight maybeCoords =
             [ Svg.circle
                 [ SA.cx <| centerX
                 , SA.cy <| centerY
-                , SA.r <| "0.5"
-                , SA.class "last-move white"
                 , SA.fill <| "transparent"
-                , SA.strokeWidth ".15"
+                , SA.r <| "0.5"
+                , SA.stroke "#F33"
+                , SA.strokeWidth "0.15"
                 ]
                 []
             ]

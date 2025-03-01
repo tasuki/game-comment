@@ -306,18 +306,26 @@ viewStones :
     -> List (Svg msg)
 viewStones normaliseCoords min max position lastMove playMsg =
     let
-        viewStone : G.Coords -> G.Coords -> G.Player -> Svg msg
-        viewStone coords normCoords player =
+        highlightLastMove : G.Coords -> Svg msg
+        highlightLastMove coords =
             Svg.circle
-                (GH.classesProps lastMove player normCoords
-                    ++ [ SA.cx <| String.fromInt coords.x
-                       , SA.cy <| String.fromInt coords.y
-                       , SA.r "0.48"
-                       , SA.stroke "black"
-                       , SA.strokeWidth "0.06"
-                       , SA.fill <| G.color player
-                       ]
-                )
+                [ SA.cx <| String.fromInt coords.x
+                , SA.cy <| String.fromInt coords.y
+                , SA.r "0.2"
+                , SA.fill "#F33"
+                ]
+                []
+
+        viewStone : G.Coords -> G.Player -> Svg msg
+        viewStone coords player =
+            Svg.circle
+                [ SA.cx <| String.fromInt coords.x
+                , SA.cy <| String.fromInt coords.y
+                , SA.r "0.48"
+                , SA.stroke "black"
+                , SA.strokeWidth "0.06"
+                , SA.fill <| G.color player
+                ]
                 []
 
         viewEmpty : G.Coords -> G.Coords -> Svg msg
@@ -339,7 +347,14 @@ viewStones normaliseCoords min max position lastMove playMsg =
             in
             case getStone normCoords position of
                 Just player ->
-                    viewStone coords normCoords player
+                    if GH.isLastMove lastMove normCoords then
+                        Svg.g []
+                            [ viewStone coords player
+                            , highlightLastMove coords
+                            ]
+
+                    else
+                        viewStone coords player
 
                 Nothing ->
                     viewEmpty coords normCoords
@@ -360,10 +375,10 @@ viewHighlight maybeCoords =
             [ Svg.circle
                 [ SA.cx <| String.fromInt coords.x
                 , SA.cy <| String.fromInt coords.y
-                , SA.r <| "0.3"
-                , SA.class "last-move white"
                 , SA.fill <| "transparent"
-                , SA.strokeWidth ".1"
+                , SA.r <| "0.3"
+                , SA.stroke "#F33"
+                , SA.strokeWidth "0.12"
                 ]
                 []
             ]

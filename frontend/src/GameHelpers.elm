@@ -5,7 +5,6 @@ import Html as H
 import Html.Events as HE
 import Json.Decode as Json
 import Svg exposing (Svg)
-import Svg.Attributes as SA
 
 
 type alias GameView msg =
@@ -39,17 +38,9 @@ coordList from to =
     List.concatMap (\x -> List.map (G.Coords x) nodes) nodes
 
 
-classesProps : Maybe G.Move -> G.Player -> G.Coords -> List (H.Attribute msg)
-classesProps lastMove player coords =
-    if Maybe.map .play lastMove == Just (G.Place coords) then
-        if player == G.Black then
-            [ SA.class "last-move black" ]
-
-        else
-            [ SA.class "last-move white" ]
-
-    else
-        []
+isLastMove : Maybe G.Move -> G.Coords -> Bool
+isLastMove lastMove coords =
+    Maybe.map .play lastMove == Just (G.Place coords)
 
 
 onEnter : msg -> H.Attribute msg
