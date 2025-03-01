@@ -50,7 +50,11 @@ viewNext : Int -> View -> View
 viewNext comments v =
     case v of
         ViewReplay ->
-            ViewComment 0 0
+            if comments > 0 then
+                ViewComment 0 0
+
+            else
+                v
 
         ViewComment comment _ ->
             if comment < comments - 1 then
