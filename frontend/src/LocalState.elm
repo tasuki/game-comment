@@ -10,6 +10,7 @@ import Replay.Tree as T
 
 type alias LocalState =
     { showFullMenu : Bool
+    , authToken : Maybe String
     , replays : Dict String R.Replay
     }
 
@@ -18,6 +19,7 @@ localStateCodec : Codec LocalState
 localStateCodec =
     Codec.object LocalState
         |> Codec.field "showFullMenu" .showFullMenu Codec.bool
+        |> Codec.field "authToken" .authToken (Codec.maybe Codec.string)
         |> Codec.field "replays" .replays (Codec.dict replayCodec)
         |> Codec.buildObject
 

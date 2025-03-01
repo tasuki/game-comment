@@ -69,11 +69,11 @@ type alias User =
     }
 
 
-sessionDataToUser : SessionData -> Result String User
-sessionDataToUser sessionData =
-    case Jwt.decodeToken tokenDecoder sessionData.authToken of
+authTokenToUser : String -> Result String User
+authTokenToUser authToken =
+    case Jwt.decodeToken tokenDecoder authToken of
         Ok td ->
-            Ok { name = td.username, token = sessionData.authToken }
+            Ok { name = td.username, token = authToken }
 
         Err err ->
             Err <| Jwt.errorToString err

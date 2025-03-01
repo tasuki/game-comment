@@ -21,6 +21,7 @@ type alias Model =
     { session : Session
     , message : String
     , createName : String
+    , createEmail : String
     , favorite : String
     , loginName : String
     , loginPass : String
@@ -32,6 +33,7 @@ init session =
     ( { session = session
       , message = ""
       , createName = ""
+      , createEmail = ""
       , favorite = ""
       , loginName = ""
       , loginPass = ""
@@ -57,6 +59,7 @@ initLogin session user pass =
     ( { session = session
       , message = ""
       , createName = ""
+      , createEmail = ""
       , favorite = ""
       , loginName = user
       , loginPass = pass
@@ -71,6 +74,7 @@ initLogin session user pass =
 
 type Msg
     = EnterCreateName String
+    | EnterCreateEmail String
     | EnterFavorite String
     | CreateAccount
     | DoCreateAccount String
@@ -79,6 +83,7 @@ type Msg
     | EnterLoginPass String
     | LogIn
     | LoggedIn AC.SessionResult
+    | LogOut
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -86,6 +91,9 @@ update msg model =
     case msg of
         EnterCreateName name ->
             ( { model | createName = name }, Cmd.none )
+
+        EnterCreateEmail email ->
+            ( { model | createEmail = email }, Cmd.none )
 
         EnterFavorite fav ->
             ( { model | favorite = fav }, Cmd.none )
@@ -99,7 +107,12 @@ update msg model =
                 { username = model.createName
                 , password = password
                 , favorite = model.favorite
-                , email = Nothing
+                , email =
+                    if model.createEmail == "" then
+                        Nothing
+
+                    else
+                        Just model.createEmail
                 }
             )
 
@@ -135,26 +148,27 @@ update msg model =
         LoggedIn sessionResult ->
             case sessionResult of
                 Ok sessionData ->
-                    let
-                        ( maybeUser, messge ) =
-                            case User.sessionDataToUser sessionData of
-                                Ok user ->
-                                    ( Just user, "" )
-
-                                Err err ->
-                                    ( Nothing, err )
-
-                        ns =
-                            model.session
-                    in
-                    ( { model | session = { ns | user = maybeUser }, message = "Logged in!" }
-                    , Nav.pushUrl model.session.navKey <| Route.toUrl (Route.LoggedIn model.loginName model.loginPass)
+                    ( { model
+                        | session =
+                            Session.withToken (Just sessionData.authToken) model.session
+                      }
+                    , Nav.pushUrl model.session.navKey <|
+                        Route.toUrl (Route.LoggedIn model.loginName model.loginPass)
                     )
 
                 Err err ->
                     ( { model | message = "Could not log in: [ " ++ err.msg ++ " ]" }
                     , Cmd.none
                     )
+
+        LogOut ->
+            let
+                session =
+                    model.session
+            in
+            ( { model | session = { session | user = Nothing } }
+            , Nav.pushUrl model.session.navKey <| Route.toUrl Route.Login
+            )
 
 
 
@@ -176,6 +190,15 @@ forms model =
     , H.div []
         [ H.input
             [ HA.type_ "text"
+            , HA.placeholder "Email (optional!)"
+            , HE.onInput EnterCreateEmail
+            , GH.onEnter CreateAccount
+            ]
+            []
+        ]
+    , H.div []
+        [ H.input
+            [ HA.type_ "text"
             , HA.placeholder "Favourite game?"
             , HE.onInput EnterFavorite
             , GH.onEnter CreateAccount
@@ -185,7 +208,7 @@ forms model =
         ]
     , H.div []
         [ H.button
-            [ HE.onClick <| CreateAccount ]
+            [ HE.onClick CreateAccount ]
             [ H.text "Create an account" ]
         ]
     , H.br [] []
@@ -220,10 +243,37 @@ forms model =
     ]
 
 
+loginInfo : Model -> List (H.Html Msg)
+loginInfo model =
+    if model.loginName /= "" && model.loginPass /= "" then
+        [ H.p [] [ H.text <| "To preserve your account access, ", H.em [] [ H.text "bookmark the current url!" ] ]
+        , H.p [] [ H.text <| "Alternately, store your password: ", H.strong [] [ H.text model.loginPass ] ]
+        ]
+
+    else
+        []
+
+
+userPage : Model -> User.User -> List (H.Html Msg)
+userPage model user =
+    [ H.p [] [ H.text <| "You are logged in as ", H.strong [] [ H.text user.name ], H.text "." ]
+    , H.button [ HE.onClick LogOut ] [ H.text "Log out" ]
+    ]
+        ++ loginInfo model
+        ++ [ H.p [] [ H.text "There might be a list of your comments or games or something in the future, but for now there's nothing!" ]
+           ]
+
+
 view : Model -> Page Msg
 view model =
     { title = "Game Comment - User Account"
     , extraClass = "user narrower"
-    , content = forms model
+    , content =
+        case model.session.user of
+            Nothing ->
+                forms model
+
+            Just user ->
+                userPage model user
     , sidebar = Page.sideHelp
     }

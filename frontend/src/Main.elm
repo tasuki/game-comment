@@ -43,7 +43,11 @@ updateWithStorage msg oldModel =
 
         localState : E.Value
         localState =
-            LocalState.encode { showFullMenu = model.showFullMenu, replays = model.replays }
+            LocalState.encode
+                { showFullMenu = model.showFullMenu
+                , authToken = Maybe.map .token (getSession model.page).user
+                , replays = model.replays
+                }
     in
     ( model
     , Cmd.batch [ setStorage localState, cmds ]
@@ -85,8 +89,16 @@ emptyModel key session url =
 
 
 modelFromLocalState : Model -> LocalState -> Model
-modelFromLocalState empty ls =
-    { empty | showFullMenu = ls.showFullMenu, replays = ls.replays }
+modelFromLocalState model ls =
+    let
+        newSession =
+            Session.withToken ls.authToken <| getSession model.page
+    in
+    { model
+        | showFullMenu = ls.showFullMenu
+        , page = setSession model.page newSession
+        , replays = ls.replays
+    }
 
 
 init : E.Value -> Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -218,6 +230,28 @@ getSession page =
 
         Game m ->
             m.session
+
+
+setSession : Page -> Session -> Page
+setSession page session =
+    case page of
+        NotFound _ ->
+            NotFound session
+
+        Home m ->
+            Home { m | session = session }
+
+        Login m ->
+            Login { m | session = session }
+
+        User m ->
+            User { m | session = session }
+
+        Help m ->
+            Help { m | session = session }
+
+        Game m ->
+            Game { m | session = session }
 
 
 handleLinkClick : Browser.UrlRequest -> Model -> ( Model, Cmd msg )
