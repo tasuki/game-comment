@@ -16,6 +16,7 @@ import Json.Decode as D
 import List.Extra
 import Maybe.Extra
 import Page exposing (Page)
+import Page.Help exposing (Model)
 import Replay as R
 import Session exposing (Session)
 import Svg exposing (Svg)
@@ -152,6 +153,8 @@ type Msg
     | PrevVariation
     | NextVariation
     | CutVariation
+    | CreateComment String
+    | CommentCreated AC.CommentCreatedResult
 
 
 onlyInReplay : Model -> Model -> ( Model, Cmd msg )
@@ -286,6 +289,24 @@ update msg model =
 
                     _ ->
                         model
+
+        CreateComment text ->
+            case model.source of
+                Just gameSource ->
+                    ( model
+                    , AC.createComment
+                        CommentCreated
+                        model.session
+                        gameSource
+                        { comment = text }
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        CommentCreated result ->
+            -- TODO maybe do something if something broke or didn't?
+            ( model, Cmd.none )
 
 
 
@@ -437,6 +458,16 @@ boardView model =
             H.div [] []
 
 
+createComment : Model -> List (H.Html Msg)
+createComment model =
+    case model.session.user |> Maybe.map .token of
+        Just token ->
+            []
+
+        Nothing ->
+            []
+
+
 sideView : Model -> List (H.Html Msg)
 sideView model =
     let
@@ -476,6 +507,7 @@ sideView model =
                 ]
     in
     [ H.div [ HA.class "game-info" ] [ gameNav ]
+    , H.div [ HA.class "create-comment" ] <| createComment model
     , H.div [ HA.class "comments" ]
         (C.view
             (\c m -> Jump <| ViewComment c m)

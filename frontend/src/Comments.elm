@@ -5,6 +5,7 @@ import Html as H
 import Html.Attributes as HA
 import Html.Events as HE
 import Json.Decode as D
+import Json.Encode as E
 import List.Extra
 import Maybe.Extra
 import Regex
@@ -23,11 +24,6 @@ type alias CommentResponse =
     }
 
 
-type alias CreateComment =
-    { comment : String
-    }
-
-
 commentDecoder : D.Decoder CommentResponse
 commentDecoder =
     D.map5 CommentResponse
@@ -41,6 +37,16 @@ commentDecoder =
 commentsDecoder : D.Decoder (List CommentResponse)
 commentsDecoder =
     D.list commentDecoder
+
+
+type alias CreateComment =
+    { comment : String
+    }
+
+
+createCommentEncoder : CreateComment -> E.Value
+createCommentEncoder createComment =
+    E.object [ ( "comment", E.string createComment.comment ) ]
 
 
 
@@ -382,7 +388,18 @@ viewCommentParts jumpMsg currentPos movePos acc parts =
 
 viewComment : (Int -> Int -> msg) -> Maybe Int -> Int -> Comment -> List (H.Html msg)
 viewComment jumpMsg currentPos commentPos comment =
-    viewCommentParts (jumpMsg commentPos) currentPos 0 [] comment.comment
+    let
+        info =
+            H.div [ HA.class "comment-info" ]
+                [ H.span [ HA.class "created" ] [ H.text comment.created ]
+                , H.span [ HA.class "username" ] [ H.text comment.username ]
+                ]
+
+        parts =
+            H.div [ HA.class "comment-parts" ]
+                (viewCommentParts (jumpMsg commentPos) currentPos 0 [] comment.comment)
+    in
+    [ H.div [ HA.class "comment" ] [ info, parts ] ]
 
 
 view : (Int -> Int -> msg) -> Maybe ( Int, Int ) -> List Comment -> List (H.Html msg)

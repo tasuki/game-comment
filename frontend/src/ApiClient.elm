@@ -8,6 +8,7 @@ import GameRecord as G
 import Http
 import Json.Decode as D
 import LittleGolem as LG
+import Session exposing (Session)
 import User as U
 
 
@@ -43,6 +44,10 @@ type alias SgfResult =
 
 type alias CommentsResult =
     Result String (List C.CommentResponse)
+
+
+type alias CommentCreatedResult =
+    Result Error ()
 
 
 
@@ -181,6 +186,33 @@ getSgf msg gameSource =
             Http.expectBytesResponse
                 (decodeStatusError >> Result.andThen (LG.parse gameSource) >> msg)
                 sgfResponseToResult
+        }
+
+
+getAuthHeaders : Session -> List Http.Header
+getAuthHeaders session =
+    case session.user |> Maybe.map .token of
+        Just token ->
+            [ Http.header "Authorization" <| "Bearer " ++ token ]
+
+        Nothing ->
+            []
+
+
+createComment : (CommentCreatedResult -> msg) -> Session -> G.GameSource -> C.CreateComment -> Cmd msg
+createComment msg session gameSource commentData =
+    let
+        (G.GameSource source gameId) =
+            gameSource
+    in
+    Http.request
+        { method = "POST"
+        , headers = getAuthHeaders session
+        , url = baseUrl ++ "/games/" ++ source ++ "/" ++ gameId ++ "/comments"
+        , body = Http.jsonBody <| C.createCommentEncoder commentData
+        , expect = expectMaybeError (handleError msg) emptyDecoder errorDecoder
+        , timeout = Nothing
+        , tracker = Nothing
         }
 
 
