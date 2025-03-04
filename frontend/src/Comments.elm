@@ -5,6 +5,7 @@ import Html as H
 import Html.Attributes as HA
 import Html.Events as HE
 import Json.Decode as D
+import Json.Encode as E
 import List.Extra
 import Maybe.Extra
 import Regex
@@ -23,11 +24,6 @@ type alias CommentResponse =
     }
 
 
-type alias CreateComment =
-    { comment : String
-    }
-
-
 commentDecoder : D.Decoder CommentResponse
 commentDecoder =
     D.map5 CommentResponse
@@ -41,6 +37,16 @@ commentDecoder =
 commentsDecoder : D.Decoder (List CommentResponse)
 commentsDecoder =
     D.list commentDecoder
+
+
+type alias CreateComment =
+    { comment : String
+    }
+
+
+createCommentEncoder : CreateComment -> E.Value
+createCommentEncoder createComment =
+    E.object [ ( "comment", E.string createComment.comment ) ]
 
 
 
@@ -258,7 +264,11 @@ commentPartsHelper commentText acc cpds =
                     TextPart "Problem reassembling comment. Should never happen!" :: acc
 
         [] ->
-            TextPart commentText :: acc
+            if commentText == "" then
+                acc
+
+            else
+                TextPart commentText :: acc
 
 
 commentParts : G.Record -> String -> List CommentPart
@@ -302,10 +312,9 @@ getComment record commentResponse =
     }
 
 
-clickables : Comment -> List ClickablePartData
-clickables comment =
-    findClickables comment.comment []
-        |> List.reverse
+clickables : List CommentPart -> List ClickablePartData
+clickables cps =
+    findClickables cps [] |> List.reverse
 
 
 prevClickable : Int -> Int
@@ -317,24 +326,55 @@ prevClickable current =
         current - 1
 
 
-nextClickable : Comment -> Int -> Int
-nextClickable comment current =
-    if current + 1 >= (List.length <| clickables comment) then
+nextClickable : List CommentPart -> Int -> Int
+nextClickable cps current =
+    if current + 1 >= (List.length <| clickables cps) then
         current
 
     else
         current + 1
 
 
-getClickable : Int -> Int -> List Comment -> Maybe ClickablePartData
-getClickable commentPos clickablePos comments =
+getClickableForOne : Int -> List CommentPart -> Maybe ClickablePartData
+getClickableForOne clickablePos cps =
+    List.Extra.getAt clickablePos <| clickables cps
+
+
+getClickableForMany : Int -> Int -> List Comment -> Maybe ClickablePartData
+getClickableForMany commentPos clickablePos comments =
     comments
         |> List.Extra.getAt commentPos
-        |> Maybe.andThen (\c -> List.Extra.getAt clickablePos <| clickables c)
+        |> Maybe.andThen (\c -> getClickableForOne clickablePos c.comment)
 
 
 
 -- View
+
+
+commentPartToString : CommentPart -> String
+commentPartToString cp =
+    case cp of
+        TextPart s ->
+            s
+
+        ClickablePart cpd ->
+            cpd.clickable
+
+
+toString : List CommentPart -> String
+toString =
+    -- TODO maybe remove this? I thought I needed it...
+    let
+        helper : List String -> List CommentPart -> String
+        helper acc cps =
+            case cps of
+                [] ->
+                    List.reverse acc |> String.concat
+
+                h :: t ->
+                    helper (commentPartToString h :: acc) t
+    in
+    helper []
 
 
 viewTextPart : String -> H.Html msg
@@ -359,30 +399,46 @@ viewClickablePart jumpMsg highlight cpd =
     H.button [ HE.onClick jumpMsg, HA.class class ] [ H.text cpd.clickable ]
 
 
-viewCommentParts : (Int -> msg) -> Maybe Int -> Int -> List (H.Html msg) -> List CommentPart -> List (H.Html msg)
-viewCommentParts jumpMsg currentPos movePos acc parts =
+viewCommentPartsHelper : (Int -> msg) -> Maybe Int -> Int -> List (H.Html msg) -> List CommentPart -> List (H.Html msg)
+viewCommentPartsHelper jumpMsg currentPos movePos acc parts =
     case parts of
         [] ->
             List.reverse acc
 
         (TextPart str) :: tailParts ->
-            viewCommentParts jumpMsg
+            viewCommentPartsHelper jumpMsg
                 currentPos
                 movePos
                 (viewTextPart str :: acc)
                 tailParts
 
         (ClickablePart cpd) :: tailParts ->
-            viewCommentParts jumpMsg
+            viewCommentPartsHelper jumpMsg
                 currentPos
                 (movePos + 1)
                 (viewClickablePart (jumpMsg movePos) (Just movePos == currentPos) cpd :: acc)
                 tailParts
 
 
+viewCommentParts : (Int -> msg) -> Maybe Int -> List CommentPart -> List (H.Html msg)
+viewCommentParts jumpMsg currentPos parts =
+    viewCommentPartsHelper jumpMsg currentPos 0 [] parts
+
+
 viewComment : (Int -> Int -> msg) -> Maybe Int -> Int -> Comment -> List (H.Html msg)
 viewComment jumpMsg currentPos commentPos comment =
-    viewCommentParts (jumpMsg commentPos) currentPos 0 [] comment.comment
+    let
+        info =
+            H.div [ HA.class "comment-info" ]
+                [ H.span [ HA.class "created" ] [ H.text comment.created ]
+                , H.span [ HA.class "username" ] [ H.text comment.username ]
+                ]
+
+        parts =
+            H.div [ HA.class "comment-parts" ]
+                (viewCommentParts (jumpMsg commentPos) currentPos comment.comment)
+    in
+    [ H.div [ HA.class "comment" ] [ info, parts ] ]
 
 
 view : (Int -> Int -> msg) -> Maybe ( Int, Int ) -> List Comment -> List (H.Html msg)

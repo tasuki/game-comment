@@ -16,6 +16,7 @@ import Json.Decode as D
 import List.Extra
 import Maybe.Extra
 import Page exposing (Page)
+import Page.Help exposing (Model)
 import Replay as R
 import Session exposing (Session)
 import Svg exposing (Svg)
@@ -29,39 +30,72 @@ import Task
 
 type View
     = ViewReplay
+    | ViewWipComment Int
     | ViewComment Int Int
 
 
-viewPrevious : View -> View
-viewPrevious v =
-    case v of
-        ViewReplay ->
-            v
+hasWipComment : Model -> Bool
+hasWipComment model =
+    model.wipComment /= ""
 
+
+getCommentParts : Model -> List C.CommentPart
+getCommentParts model =
+    case model.replay of
+        Just replay ->
+            C.commentParts replay.record model.wipComment
+
+        _ ->
+            []
+
+
+viewPrevious : Model -> View
+viewPrevious model =
+    case model.view of
         ViewComment comment _ ->
             if comment > 0 then
                 ViewComment (comment - 1) 0
 
+            else if hasWipComment model then
+                ViewWipComment 0
+
             else
                 ViewReplay
 
+        _ ->
+            ViewReplay
 
-viewNext : Int -> View -> View
-viewNext comments v =
-    case v of
-        ViewReplay ->
-            if comments > 0 then
+
+viewNext : Model -> View
+viewNext model =
+    let
+        commentsLength =
+            List.length model.comments
+
+        wipNext =
+            if commentsLength > 0 then
                 ViewComment 0 0
 
             else
-                v
+                model.view
+    in
+    case model.view of
+        ViewReplay ->
+            if hasWipComment model then
+                ViewWipComment 0
+
+            else
+                wipNext
+
+        ViewWipComment _ ->
+            wipNext
 
         ViewComment comment _ ->
-            if comment < comments - 1 then
+            if comment < commentsLength - 1 then
                 ViewComment (comment + 1) 0
 
             else
-                v
+                model.view
 
 
 currentComment : View -> Maybe ( Int, Int )
@@ -83,6 +117,8 @@ type alias Model =
     , view : View
     , source : Maybe G.GameSource
     , replay : Maybe R.Replay
+    , wipCommentBeingEdited : Bool
+    , wipComment : String
     , comments : List C.Comment
     , message : String
     }
@@ -99,6 +135,8 @@ initEmpty game size session =
       , view = ViewReplay
       , source = Nothing
       , replay = Just <| R.emptyReplay <| G.empty game size
+      , wipCommentBeingEdited = False
+      , wipComment = ""
       , comments = []
       , message = sidebarMsg
       }
@@ -112,6 +150,8 @@ initGame gameSource session =
       , view = ViewReplay
       , source = Just gameSource
       , replay = Nothing
+      , wipCommentBeingEdited = False
+      , wipComment = ""
       , comments = []
       , message = sidebarMsg
       }
@@ -125,6 +165,8 @@ initPrevious gameSource replay session =
       , view = ViewReplay -- TODO preserve previous view?
       , source = Just gameSource
       , replay = Just replay
+      , wipCommentBeingEdited = False
+      , wipComment = "" -- TODO lol preserve this or ppl kill me
       , comments = [] -- TODO definitely preserve comments!
       , message = ""
       }
@@ -152,6 +194,11 @@ type Msg
     | PrevVariation
     | NextVariation
     | CutVariation
+    | CommentFocus
+    | CommentBlur
+    | CommentEdit String
+    | CreateComment
+    | CommentCreated AC.CommentCreatedResult
 
 
 onlyInReplay : Model -> Model -> ( Model, Cmd msg )
@@ -222,34 +269,40 @@ update msg model =
                     )
 
         PrevView ->
-            ( { model | view = viewPrevious model.view }, Cmd.none )
+            ( { model | view = viewPrevious model }, Cmd.none )
 
         NextView ->
-            ( { model | view = viewNext (List.length model.comments) model.view }, Cmd.none )
+            ( { model | view = viewNext model }, Cmd.none )
 
         Jump jumpView ->
             ( { model | view = jumpView }, Cmd.none )
 
         Backward ->
             case model.view of
-                ViewReplay ->
-                    ( { model | replay = Maybe.map R.prev model.replay }, Cmd.none )
-
                 ViewComment cPos clickable ->
                     ( { model | view = ViewComment cPos (C.prevClickable clickable) }, Cmd.none )
 
+                ViewWipComment clickable ->
+                    ( { model | view = ViewWipComment (C.prevClickable clickable) }, Cmd.none )
+
+                _ ->
+                    ( { model | replay = Maybe.map R.prev model.replay }, Cmd.none )
+
         Forward ->
             case model.view of
-                ViewReplay ->
-                    ( { model | replay = Maybe.map R.next model.replay }, Cmd.none )
-
                 ViewComment cPos clickable ->
                     case List.Extra.getAt cPos model.comments of
                         Just comment ->
-                            ( { model | view = ViewComment cPos (C.nextClickable comment clickable) }, Cmd.none )
+                            ( { model | view = ViewComment cPos (C.nextClickable comment.comment clickable) }, Cmd.none )
 
                         Nothing ->
                             ( model, Cmd.none )
+
+                ViewWipComment clickable ->
+                    ( { model | view = ViewWipComment (C.nextClickable (getCommentParts model) clickable) }, Cmd.none )
+
+                _ ->
+                    ( { model | replay = Maybe.map R.next model.replay }, Cmd.none )
 
         Start ->
             onlyInReplay model { model | replay = Maybe.map R.start model.replay }
@@ -287,15 +340,48 @@ update msg model =
                     _ ->
                         model
 
+        CommentFocus ->
+            ( { model | wipCommentBeingEdited = True }, Cmd.none )
+
+        CommentBlur ->
+            ( { model | wipCommentBeingEdited = False }, Cmd.none )
+
+        CommentEdit comment ->
+            ( { model | wipComment = comment }
+            , Cmd.none
+            )
+
+        CreateComment ->
+            case model.source of
+                Just gameSource ->
+                    ( { model | wipComment = "" }
+                    , AC.createComment
+                        CommentCreated
+                        model.session
+                        gameSource
+                        { comment = model.wipComment }
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        CommentCreated result ->
+            -- TODO maybe do something if something broke or didn't?
+            update Reload model
+
 
 
 -- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Sub.batch
-        [ Browser.Events.onKeyDown (D.map keydown <| D.field "key" D.string) ]
+subscriptions model =
+    if model.wipCommentBeingEdited then
+        Sub.none
+
+    else
+        Sub.batch
+            [ Browser.Events.onKeyDown (D.map keydown <| D.field "key" D.string) ]
 
 
 keydown : String -> Msg
@@ -427,14 +513,67 @@ boardView model =
                         (R.onMove replay.record.game replay)
                         Play
 
+                ViewWipComment clickablePos ->
+                    C.getClickableForOne clickablePos (getCommentParts model)
+                        |> Maybe.map (viewComment replay)
+                        |> Maybe.withDefault
+                            (H.text "This branch shouldn't even exist...")
+
                 ViewComment commentPos clickablePos ->
-                    C.getClickable commentPos clickablePos model.comments
+                    C.getClickableForMany commentPos clickablePos model.comments
                         |> Maybe.map (viewComment replay)
                         |> Maybe.withDefault
                             (H.text "This branch shouldn't even exist...")
 
         Nothing ->
             H.div [] []
+
+
+createComment : Model -> List (H.Html Msg)
+createComment model =
+    case model.session.user |> Maybe.map .token of
+        Just token ->
+            let
+                ( postButton, cls ) =
+                    if hasWipComment model then
+                        ( [ H.button
+                                [ HA.class "submit-comment", HE.onClick CreateComment ]
+                                [ H.text "Create Comment" ]
+                          ]
+                        , "focus"
+                        )
+
+                    else
+                        ( [], "" )
+
+                currentPos =
+                    case model.view of
+                        ViewWipComment m ->
+                            Just m
+
+                        _ ->
+                            Nothing
+            in
+            [ H.div [ HA.class "wip-comment" ]
+                (C.viewCommentParts
+                    (\m -> ViewWipComment m |> Jump)
+                    currentPos
+                    (getCommentParts model)
+                )
+            , H.textarea
+                [ HA.class cls
+                , HA.placeholder "Add your comment"
+                , HA.value model.wipComment
+                , HE.onFocus CommentFocus
+                , HE.onInput CommentEdit
+                , HE.onBlur CommentBlur
+                ]
+                []
+            ]
+                ++ postButton
+
+        Nothing ->
+            []
 
 
 sideView : Model -> List (H.Html Msg)
@@ -477,10 +616,11 @@ sideView model =
     in
     [ H.div [ HA.class "game-info" ] [ gameNav ]
     , H.div [ HA.class "comments" ]
-        (C.view
-            (\c m -> Jump <| ViewComment c m)
-            (currentComment model.view)
-            model.comments
+        ((H.div [ HA.class "create-comment" ] <| createComment model)
+            :: C.view
+                (\c m -> ViewComment c m |> Jump)
+                (currentComment model.view)
+                model.comments
         )
     , H.div [ HA.class "message" ] [ H.text model.message ]
     ]

@@ -34,18 +34,22 @@ h3 { font-size: 20px; font-weight: normal; }
 .picker .content input { background-color: #FFF; }
 .picker .content .lg-picker { width: 80%; }
 
-/* home */
+/* user */
 .user .content button, .user .content input { background-color: #EEE; border: 1px solid #CCC; margin: 10px; padding: 5px 10px; }
-.user .content input { background-color: #FFF; }
-.user .content .lg-picker { width: 80%; }
 
 /* game */
 .game-info .game-nav { max-width: 350px; margin: auto; }
 .game-info .game-nav div { display: flex; justify-content: center; align-items: center; }
 .game-info .game-nav svg { vertical-align: middle; }
-.comments { padding: 10px; }
 .message { margin: 10px; padding: 5px; }
 
+.comments { padding: 10px; }
+.create-comment textarea { background-color: #EEE;  border: 1px solid #CCC; margin: 10px 0; padding: 5px; width: calc(100% - 10px); height: 18px; }
+.create-comment textarea.focus { height: 150px; }
+.comments button.submit-comment { background-color: #EEE; border: 1px solid #CCC; padding: 5px 10px; }
+.comment { padding: 10px 0; }
+.comment-info { padding-bottom: 10px; }
+.comment-info .created { padding-right: 28.8px; }
 .game-clickable { background-color: #CB5; }
 .game-highlight { color: #FFF; background-color: #000; }
 .comments .game-clickable, .comments .game-highlight { padding: 1px 4.6px 1px 5px; }
