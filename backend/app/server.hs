@@ -9,4 +9,4 @@ main = do
     config <- Env.readEnvVars
     conn <- DB.open $ Env.sqliteFile config
     waiApp <- WebServer.waiApp config conn
-    Warp.run 6483 waiApp
+    Warp.run (Env.listenPort config) waiApp
