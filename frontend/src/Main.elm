@@ -2,6 +2,7 @@ port module Main exposing (..)
 
 import Browser
 import Browser.Navigation as Nav
+import Comments as C
 import Dict exposing (Dict)
 import GameRecord as G
 import Html as H
@@ -47,6 +48,7 @@ updateWithStorage msg oldModel =
                 { showFullMenu = model.showFullMenu
                 , authToken = Maybe.map .token (getSession model.page).user
                 , replays = model.replays
+                , wipComments = model.wipComments
                 }
     in
     ( model
@@ -74,6 +76,8 @@ type alias Model =
     , message : String
     , currentUrl : Url
     , replays : Dict String R.Replay
+    , comments : Dict String (List C.Comment)
+    , wipComments : Dict String String
     }
 
 
@@ -85,6 +89,8 @@ emptyModel key session url =
     , message = ""
     , currentUrl = url
     , replays = Dict.empty
+    , comments = Dict.empty
+    , wipComments = Dict.empty
     }
 
 
@@ -98,6 +104,7 @@ modelFromLocalState model ls =
         | showFullMenu = ls.showFullMenu
         , page = setSession model.page newSession
         , replays = ls.replays
+        , wipComments = ls.wipComments
     }
 
 
@@ -183,7 +190,15 @@ updateGamePage model msg m =
                 _ ->
                     model.replays
     in
-    updateWith { model | replays = newReplays } Game GameMsg ( newModel, newCmd )
+    updateWith
+        { model
+            | replays = newReplays
+            , comments = Dict.insert model.currentUrl.path newModel.comments model.comments
+            , wipComments = Dict.insert model.currentUrl.path newModel.wipComment model.wipComments
+        }
+        Game
+        GameMsg
+        ( newModel, newCmd )
 
 
 closeGame : String -> Model -> ( Model, Cmd Msg )
@@ -273,13 +288,14 @@ changeRouteTo url model =
         newModel =
             { model | currentUrl = url }
 
-        maybeLoadReplay source defaultModel =
-            case Dict.get url.path model.replays of
-                Just replay ->
-                    Page.Game.initPrevious source replay (getSession model.page)
-
-                Nothing ->
-                    defaultModel
+        maybeLoadReplay : G.GameSource -> ( Page.Game.Model, Cmd Page.Game.Msg )
+        maybeLoadReplay source =
+            Page.Game.initPrevious
+                source
+                (Dict.get url.path model.replays)
+                (Dict.get url.path model.wipComments |> Maybe.withDefault "")
+                (Dict.get url.path model.comments |> Maybe.withDefault [])
+                (getSession model.page)
     in
     case Route.parse url of
         Just Route.Home ->
@@ -303,15 +319,12 @@ changeRouteTo url model =
                 |> updateWith newModel Help HelpMsg
 
         Just (Route.EmptyGame game size) ->
-            maybeLoadReplay (G.GameSource "" "") (Page.Game.initEmpty game size session)
+            Page.Game.initEmpty game size session
                 |> updateWith newModel Game GameMsg
 
         Just (Route.Game src id) ->
-            let
-                source =
-                    G.GameSource src id
-            in
-            maybeLoadReplay source (Page.Game.initGame source session)
+            G.GameSource src id
+                |> maybeLoadReplay
                 |> updateWith newModel Game GameMsg
 
         Nothing ->

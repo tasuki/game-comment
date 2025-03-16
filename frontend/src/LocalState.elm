@@ -12,6 +12,7 @@ type alias LocalState =
     { showFullMenu : Bool
     , authToken : Maybe String
     , replays : Dict String R.Replay
+    , wipComments : Dict String String
     }
 
 
@@ -21,6 +22,7 @@ localStateCodec =
         |> Codec.field "showFullMenu" .showFullMenu Codec.bool
         |> Codec.field "authToken" .authToken (Codec.maybe Codec.string)
         |> Codec.field "replays" .replays (Codec.dict replayCodec)
+        |> Codec.field "wipComments" .wipComments (Codec.dict Codec.string)
         |> Codec.buildObject
 
 

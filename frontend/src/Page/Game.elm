@@ -159,15 +159,15 @@ initGame gameSource session =
     )
 
 
-initPrevious : G.GameSource -> R.Replay -> Session -> ( Model, Cmd Msg )
-initPrevious gameSource replay session =
+initPrevious : G.GameSource -> Maybe R.Replay -> String -> List C.Comment -> Session -> ( Model, Cmd Msg )
+initPrevious gameSource maybeReplay wipComment comments session =
     ( { session = session
       , view = ViewReplay -- TODO preserve previous view?
       , source = Just gameSource
-      , replay = Just replay
+      , replay = maybeReplay
       , wipCommentBeingEdited = False
-      , wipComment = "" -- TODO lol preserve this or ppl kill me
-      , comments = [] -- TODO definitely preserve comments!
+      , wipComment = wipComment
+      , comments = comments
       , message = ""
       }
     , Task.succeed Reload |> Task.perform identity
