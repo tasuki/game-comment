@@ -498,32 +498,34 @@ boardView model =
                 (highlightLastMove cpd)
                 (G.onMove replay.record.game <| List.length cpd.position)
                 Play
+
+        viewReplay : R.Replay -> Svg Msg
+        viewReplay replay =
+            specificView replay
+                replay.record.size
+                (R.currentMoves replay)
+                Nothing
+                (R.currentColour replay)
+                (R.children replay)
+                (R.lastPlayed replay)
+                (R.onMove replay.record.game replay)
+                Play
     in
     case model.replay of
         Just replay ->
             case model.view of
                 ViewReplay ->
-                    specificView replay
-                        replay.record.size
-                        (R.currentMoves replay)
-                        Nothing
-                        (R.currentColour replay)
-                        (R.children replay)
-                        (R.lastPlayed replay)
-                        (R.onMove replay.record.game replay)
-                        Play
+                    viewReplay replay
 
                 ViewWipComment clickablePos ->
                     C.getClickableForOne clickablePos (getCommentParts model)
                         |> Maybe.map (viewComment replay)
-                        |> Maybe.withDefault
-                            (H.text "This branch shouldn't even exist...")
+                        |> Maybe.withDefault (viewReplay replay)
 
                 ViewComment commentPos clickablePos ->
                     C.getClickableForMany commentPos clickablePos model.comments
                         |> Maybe.map (viewComment replay)
-                        |> Maybe.withDefault
-                            (H.text "This branch shouldn't even exist...")
+                        |> Maybe.withDefault (viewReplay replay)
 
         Nothing ->
             H.div [] []
