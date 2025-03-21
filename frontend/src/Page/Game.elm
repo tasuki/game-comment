@@ -197,6 +197,7 @@ type Msg
     | CommentFocus
     | CommentBlur
     | CommentEdit String
+    | CommentAddVariation
     | CreateComment
     | CommentCreated AC.CommentCreatedResult
 
@@ -348,6 +349,18 @@ update msg model =
 
         CommentEdit comment ->
             ( { model | wipComment = comment }
+            , Cmd.none
+            )
+
+        CommentAddVariation ->
+            let
+                append : String
+                append =
+                    Maybe.map R.currentVariation model.replay
+                        |> Maybe.map (\( moveNum, moves ) -> C.variationToString moveNum moves)
+                        |> Maybe.withDefault ""
+            in
+            ( { model | wipComment = model.wipComment ++ append }
             , Cmd.none
             )
 
@@ -536,14 +549,22 @@ createComment model =
     case model.session.user |> Maybe.map .token of
         Just token ->
             let
+                addCurVar =
+                    model.replay
+                        |> Maybe.Extra.filter (R.isInMainVar >> not)
+                        |> Maybe.map (always [ H.button [ HA.class "add-current-variation", HE.onClick CommentAddVariation ] [ H.text "Add Current Variation" ] ])
+                        |> Maybe.withDefault []
+
+                submit =
+                    [ H.button
+                        [ HA.class "submit-comment", HE.onClick CreateComment ]
+                        [ H.text "Create Comment" ]
+                    , H.div [ HA.class "clear" ] []
+                    ]
+
                 ( postButton, cls ) =
                     if hasWipComment model then
-                        ( [ H.button
-                                [ HA.class "submit-comment", HE.onClick CreateComment ]
-                                [ H.text "Create Comment" ]
-                          ]
-                        , "focus"
-                        )
+                        ( addCurVar ++ submit, "focus" )
 
                     else
                         ( [], "" )

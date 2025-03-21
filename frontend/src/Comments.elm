@@ -351,30 +351,46 @@ getClickableForMany commentPos clickablePos comments =
 -- View
 
 
-commentPartToString : CommentPart -> String
-commentPartToString cp =
-    case cp of
-        TextPart s ->
-            s
+coordToChar : Int -> String
+coordToChar n =
+    if n >= 1 && n <= 26 then
+        String.fromChar (Char.fromCode (n - 1 + Char.toCode 'a'))
 
-        ClickablePart cpd ->
-            cpd.clickable
+    else if n >= 27 && n <= 52 then
+        String.fromChar (Char.fromCode (n - 27 + Char.toCode 'A'))
+
+    else
+        ""
 
 
-toString : List CommentPart -> String
-toString =
-    -- TODO maybe remove this? I thought I needed it...
+playToString : G.Play -> String
+playToString play =
+    case G.maybeCoords play of
+        Just coords ->
+            coordToChar coords.x ++ String.fromInt coords.y
+
+        _ ->
+            ""
+
+
+moveToString : Int -> G.Move -> String
+moveToString moveNum move =
+    String.fromInt moveNum ++ "." ++ playToString move.play
+
+
+variationToString : Int -> List G.Move -> String
+variationToString from moves =
     let
-        helper : List String -> List CommentPart -> String
-        helper acc cps =
-            case cps of
+        toCommentParts : Int -> List G.Move -> List String -> List String
+        toCommentParts moveNum moveList acc =
+            case moveList of
                 [] ->
-                    List.reverse acc |> String.concat
+                    List.reverse acc
 
                 h :: t ->
-                    helper (commentPartToString h :: acc) t
+                    toCommentParts (moveNum + 1) t (moveToString moveNum h :: acc)
     in
-    helper []
+    " |" ++ (toCommentParts from moves [] |> String.join " ")
 
 
 viewTextPart : String -> H.Html msg

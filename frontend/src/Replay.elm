@@ -61,6 +61,33 @@ currentMoveNumber replay =
     GT.currentMoveNumber replay.gameTree
 
 
+dropCommonPart : Int -> List a -> List a -> ( Int, List a )
+dropCommonPart dropped compareTo dropFrom =
+    case ( compareTo, dropFrom ) of
+        ( hct :: tct, hdf :: tdf ) ->
+            if hct == hdf then
+                dropCommonPart (dropped + 1) tct tdf
+
+            else
+                ( dropped, dropFrom )
+
+        _ ->
+            ( dropped, dropFrom )
+
+
+currentVariation : Replay -> ( Int, List G.Move )
+currentVariation replay =
+    dropCommonPart 1 replay.record.moves (currentMoves replay)
+
+
+isInMainVar : Replay -> Bool
+isInMainVar replay =
+    dropCommonPart 1 replay.record.moves (currentMoves replay)
+        |> Tuple.second
+        |> List.length
+        |> (==) 0
+
+
 lastPlayed : Replay -> Maybe G.Move
 lastPlayed replay =
     T.getValue replay.gameTree.focus

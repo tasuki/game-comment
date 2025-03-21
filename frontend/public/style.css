@@ -50,9 +50,10 @@ h3 { font-size: 20px; font-weight: normal; }
 .message { margin: 10px; padding: 5px; }
 
 .comments { padding: 10px; }
-.create-comment textarea { background-color: #EEE;  border: 1px solid #CCC; margin: 10px 0; padding: 5px; width: calc(100% - 10px); height: 18px; }
+.create-comment textarea { background-color: #EEE; border: 1px solid #CCC; margin-top: 10px; padding: 5px; width: calc(100% - 10px); height: 18px; }
 .create-comment textarea.focus { height: 150px; }
-.comments button.submit-comment { background-color: #EEE; border: 1px solid #CCC; padding: 5px 10px; }
+.comments button.add-current-variation { background-color: #EEE; border: 1px solid #CCC; padding: 5px 10px; margin-right: 10px; margin-top: 10px; }
+.comments button.submit-comment { background-color: #EEE; border: 1px solid #CCC; padding: 5px 10px; margin-left: 10px; margin-top: 10px; float: right; }
 .comment { padding: 10px 0; }
 .comment-info { padding-bottom: 10px; }
 .comment-info .created { padding-right: 28.8px; }
