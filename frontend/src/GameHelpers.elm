@@ -16,6 +16,7 @@ type alias GameView msg =
     -> Maybe G.Move -- lastPlayed
     -> G.Player -- onMove
     -> (G.Coords -> msg) -- playMsg
+    -> (G.Coords -> msg) -- existingMsg
     -> Svg msg
 
 

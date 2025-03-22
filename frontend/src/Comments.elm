@@ -348,7 +348,20 @@ getClickableForMany commentPos clickablePos comments =
 
 
 
--- View
+-- Adding things to comments
+
+
+add : String -> String -> String
+add toAdd comment =
+    let
+        maybeSpace =
+            if String.endsWith " " comment || String.endsWith "\n" comment then
+                ""
+
+            else
+                " "
+    in
+    comment ++ maybeSpace ++ toAdd
 
 
 coordToChar : Int -> String
@@ -363,14 +376,16 @@ coordToChar n =
         ""
 
 
+coordsToString : G.Coords -> String
+coordsToString coords =
+    coordToChar coords.x ++ String.fromInt coords.y
+
+
 playToString : G.Play -> String
 playToString play =
-    case G.maybeCoords play of
-        Just coords ->
-            coordToChar coords.x ++ String.fromInt coords.y
-
-        _ ->
-            ""
+    G.maybeCoords play
+        |> Maybe.map coordsToString
+        |> Maybe.withDefault ""
 
 
 moveToString : Int -> G.Move -> String
@@ -391,6 +406,10 @@ variationToString from moves =
                     toCommentParts (moveNum + 1) t (moveToString moveNum h :: acc)
     in
     " |" ++ (toCommentParts from moves [] |> String.join " ")
+
+
+
+-- View
 
 
 viewTextPart : String -> H.Html msg

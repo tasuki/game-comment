@@ -303,8 +303,9 @@ viewStones :
     -> Position
     -> Maybe G.Move
     -> (G.Coords -> msg)
+    -> (G.Coords -> msg)
     -> List (Svg msg)
-viewStones normaliseCoords min max position lastMove playMsg =
+viewStones normaliseCoords min max position lastMove playMsg existingMsg =
     let
         highlightLastMove : G.Coords -> Svg msg
         highlightLastMove coords =
@@ -325,6 +326,7 @@ viewStones normaliseCoords min max position lastMove playMsg =
                 , SA.stroke "black"
                 , SA.strokeWidth "0.06"
                 , SA.fill <| G.color player
+                , SE.onClick <| existingMsg coords
                 ]
                 []
 

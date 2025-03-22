@@ -198,6 +198,7 @@ type Msg
     | CommentBlur
     | CommentEdit String
     | CommentAddVariation
+    | CommentAddCoords G.Coords
     | CreateComment
     | CommentCreated AC.CommentCreatedResult
 
@@ -354,13 +355,33 @@ update msg model =
 
         CommentAddVariation ->
             let
-                append : String
                 append =
                     Maybe.map R.currentVariation model.replay
-                        |> Maybe.map (\( moveNum, moves ) -> C.variationToString moveNum moves)
+                        |> Maybe.map (\( n, ms ) -> C.variationToString n ms)
                         |> Maybe.withDefault ""
             in
-            ( { model | wipComment = model.wipComment ++ append }
+            ( { model | wipComment = C.add append model.wipComment }
+            , Cmd.none
+            )
+
+        CommentAddCoords coords ->
+            let
+                moveNum =
+                    case model.replay of
+                        Just r ->
+                            R.currentMoves r
+                                |> R.findMoveNumber coords
+                                |> Maybe.Extra.filter (\mn -> Just mn == R.findMoveNumber coords r.record.moves)
+                                |> Maybe.map (\mn -> "|" ++ String.fromInt mn ++ ".")
+                                |> Maybe.withDefault ""
+
+                        _ ->
+                            ""
+
+                append =
+                    moveNum ++ C.coordsToString coords
+            in
+            ( { model | wipComment = C.add append model.wipComment }
             , Cmd.none
             )
 
@@ -511,6 +532,7 @@ boardView model =
                 (highlightLastMove cpd)
                 (G.onMove replay.record.game <| List.length cpd.position)
                 Play
+                CommentAddCoords
 
         viewReplay : R.Replay -> Svg Msg
         viewReplay replay =
@@ -523,6 +545,7 @@ boardView model =
                 (R.lastPlayed replay)
                 (R.onMove replay.record.game replay)
                 Play
+                CommentAddCoords
     in
     case model.replay of
         Just replay ->

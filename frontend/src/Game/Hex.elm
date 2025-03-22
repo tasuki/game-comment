@@ -220,8 +220,8 @@ drawChildren children =
     List.map drawChild children
 
 
-viewHexes : Position -> Maybe G.Move -> (G.Coords -> msg) -> List G.Coords -> List (Svg msg)
-viewHexes position lastMove playMsg =
+viewHexes : Position -> Maybe G.Move -> (G.Coords -> msg) -> (G.Coords -> msg) -> List G.Coords -> List (Svg msg)
+viewHexes position lastMove playMsg existingMsg =
     let
         highlightLastMove : String -> String -> Svg msg
         highlightLastMove x y =
@@ -233,8 +233,8 @@ viewHexes position lastMove playMsg =
                 ]
                 []
 
-        viewHex : String -> String -> G.Player -> Svg msg
-        viewHex x y player =
+        viewHex : String -> String -> msg -> G.Player -> Svg msg
+        viewHex x y msg player =
             Svg.circle
                 [ SA.cx x
                 , SA.cy y
@@ -242,6 +242,7 @@ viewHexes position lastMove playMsg =
                 , SA.stroke "black"
                 , SA.strokeWidth "0.1"
                 , SA.fill <| G.color player
+                , SE.onClick msg
                 ]
                 []
 
@@ -252,7 +253,7 @@ viewHexes position lastMove playMsg =
                 , SA.cy y
                 , SA.r "0.7"
                 , SA.fill "transparent"
-                , SE.onClick <| msg
+                , SE.onClick msg
                 ]
                 []
 
@@ -266,12 +267,12 @@ viewHexes position lastMove playMsg =
                 Just player ->
                     if GH.isLastMove lastMove coords then
                         Svg.g []
-                            [ viewHex centerX centerY player
+                            [ viewHex centerX centerY (existingMsg coords) player
                             , highlightLastMove centerX centerY
                             ]
 
                     else
-                        viewHex centerX centerY player
+                        viewHex centerX centerY (existingMsg coords) player
 
                 Nothing ->
                     viewEmpty centerX centerY (playMsg coords)
@@ -303,7 +304,7 @@ viewHighlight maybeCoords =
 
 
 view : GH.GameView msg
-view boardSize currentMoves highlight currentColour children lastPlayed onMove playMsg =
+view boardSize currentMoves highlight currentColour children lastPlayed onMove playMsg existingMsg =
     let
         ( boardWidth, boardHeight ) =
             ( hexWidth * 1.5 * toFloat boardSize + 1, hexHeight * toFloat boardSize * 3 / 4 + 1.5 )
@@ -323,6 +324,6 @@ view boardSize currentMoves highlight currentColour children lastPlayed onMove p
             ++ List.map (viewBoardHex <| currentColour) coordList
             ++ viewBoardSides boardSize
             ++ drawChildren children
-            ++ viewHexes position lastPlayed playMsg coordList
+            ++ viewHexes position lastPlayed playMsg existingMsg coordList
             ++ viewHighlight highlight
         )

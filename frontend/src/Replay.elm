@@ -5,6 +5,7 @@ import GameRecord as G
 import Html as H
 import Html.Attributes as HA
 import Html.Events as HE
+import List.Extra
 import Replay.GameTree as GT
 import Replay.Tree as T
 
@@ -86,6 +87,23 @@ isInMainVar replay =
         |> Tuple.second
         |> List.length
         |> (==) 0
+
+
+findMoveNumber : G.Coords -> List G.Move -> Maybe Int
+findMoveNumber coords moves =
+    let
+        matches : G.Move -> Bool
+        matches m =
+            case m.play of
+                G.Place c ->
+                    c == coords
+
+                _ ->
+                    False
+    in
+    moves
+        |> List.Extra.findIndex matches
+        |> Maybe.map ((+) 1)
 
 
 lastPlayed : Replay -> Maybe G.Move

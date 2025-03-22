@@ -282,14 +282,14 @@ drawLinks position =
     List.map drawLink position.links
 
 
-drawPegs : Int -> Position -> Maybe G.Move -> G.Player -> (G.Coords -> msg) -> List (Svg msg)
-drawPegs size position lastMove onMove playMsg =
+drawPegs : Int -> Position -> Maybe G.Move -> G.Player -> (G.Coords -> msg) -> (G.Coords -> msg) -> List (Svg msg)
+drawPegs size position lastMove onMove playMsg existingMsg =
     let
         pegs =
             pegDict position.pegs
 
-        isClickable : G.Player -> Int -> Bool
-        isClickable player dirCoord =
+        isPlayable : G.Player -> Int -> Bool
+        isPlayable player dirCoord =
             onMove == player && dirCoord /= 1 && dirCoord /= size
 
         viewPeg : G.Coords -> G.Player -> Svg msg
@@ -301,6 +301,7 @@ drawPegs size position lastMove onMove playMsg =
                 , SA.stroke "black"
                 , SA.strokeWidth "0.1"
                 , SA.fill <| G.color player
+                , SE.onClick <| existingMsg coords
                 ]
                 []
 
@@ -328,7 +329,7 @@ drawPegs size position lastMove onMove playMsg =
                         viewPeg coords player
 
                 Nothing ->
-                    if isClickable G.Black coords.y || isClickable G.White coords.x then
+                    if isPlayable G.Black coords.y || isPlayable G.White coords.x then
                         Svg.circle
                             [ SA.cx <| String.fromInt coords.x
                             , SA.cy <| String.fromInt coords.y
@@ -365,7 +366,7 @@ viewHighlight maybeCoords =
 
 
 view : GH.GameView msg
-view boardSize currentMoves highlight currentColour children lastPlayed onMove playMsg =
+view boardSize currentMoves highlight currentColour children lastPlayed onMove playMsg existingMsg =
     let
         position =
             positionFromMoves currentMoves
@@ -378,6 +379,6 @@ view boardSize currentMoves highlight currentColour children lastPlayed onMove p
             ++ drawChildren children
             ++ drawPoints boardSize
             ++ drawLinks position
-            ++ drawPegs boardSize position lastPlayed onMove playMsg
+            ++ drawPegs boardSize position lastPlayed onMove playMsg existingMsg
             ++ viewHighlight highlight
         )
