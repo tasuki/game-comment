@@ -1,0 +1,3 @@
+autocmd BufWritePre *.elm
+    \ silent! execute "!elm-format --yes " . shellescape(expand("%")) |
+    \ edit | write
