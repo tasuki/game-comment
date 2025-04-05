@@ -60,7 +60,8 @@ fetchLittleGolemGameRecord gameId = do
         _ <- Api.logMsg $ printf "Fetching game: %s" gameUrl
         manager <- HTTP.newManager TLS.tlsManagerSettings
         request <- HTTP.parseRequest gameUrl
-        response <- HTTP.httpLbs request manager
+        let request' = request { HTTP.responseTimeout = HTTP.responseTimeoutMicro 2000000 }
+        response <- HTTP.httpLbs request' manager
         pure (HTTP.responseStatus response, HTTP.responseBody response)
 
 fetchFail :: GameFetcher
