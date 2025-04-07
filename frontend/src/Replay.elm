@@ -171,7 +171,11 @@ prevVariation replay =
 
 cutVariation : Replay -> Replay
 cutVariation replay =
-    { replay | gameTree = T.cutVariation replay.gameTree }
+    if T.isLocked replay.gameTree then
+        replay
+
+    else
+        { replay | gameTree = T.cutVariation replay.gameTree }
 
 
 jump : GameView -> Replay -> Replay

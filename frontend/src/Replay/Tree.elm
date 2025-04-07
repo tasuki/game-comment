@@ -74,6 +74,21 @@ defaultChild =
     getTreeNodeData >> Maybe.map .defaultChild
 
 
+isTreeLocked : Tree a -> Bool
+isTreeLocked tree =
+    case tree of
+        Locked ->
+            True
+
+        Tree tnd ->
+            case tnd.children of
+                firstChild :: _ ->
+                    isTreeLocked firstChild
+
+                _ ->
+                    False
+
+
 
 -- Zipper
 
@@ -126,24 +141,24 @@ ascend zipper =
                 }
 
 
-descend : Zipper a -> Maybe (Zipper a)
-descend zipper =
+descendHelper : Zipper a -> (Node a -> Int) -> Maybe (Zipper a)
+descendHelper zipper childSelector =
     case zipper.focus of
         Locked ->
             Nothing
 
         Tree tnd ->
-            descendToChild tnd.defaultChild tnd zipper
+            descendToChild (childSelector tnd) tnd zipper
+
+
+descend : Zipper a -> Maybe (Zipper a)
+descend zipper =
+    descendHelper zipper .defaultChild
 
 
 descendToIndex : Int -> Zipper a -> Maybe (Zipper a)
 descendToIndex childIndex zipper =
-    case zipper.focus of
-        Locked ->
-            Nothing
-
-        Tree tnd ->
-            descendToChild childIndex tnd zipper
+    descendHelper zipper (always childIndex)
 
 
 ascendStart : Zipper a -> Zipper a
@@ -192,6 +207,11 @@ nextVariation zipper =
             , after = rest
             , crumbs = zipper.crumbs
             }
+
+
+isLocked : Zipper a -> Bool
+isLocked zipper =
+    isTreeLocked zipper.focus
 
 
 cutVariation : Zipper a -> Zipper a
