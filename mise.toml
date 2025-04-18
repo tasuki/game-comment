@@ -1,0 +1,9 @@
+[tools]
+ghcup = "0.1.50.1"
+
+[tasks.install-haskell-tools]
+description = "Install specific versions of GHC and HLS for LSP"
+run = """
+ghcup install ghc 8.10.7
+ghcup install hls 2.2.0.0
+"""
