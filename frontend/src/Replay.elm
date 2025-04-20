@@ -6,12 +6,11 @@ import Html as H
 import Html.Attributes as HA
 import Html.Events as HE
 import List.Extra
-import Replay.GameTree as GT
 import Replay.Tree as T
 
 
 type alias GameView =
-    GT.GameView
+    T.Zipper G.Move
 
 
 type alias Replay =
@@ -21,26 +20,43 @@ type alias Replay =
 
 
 
--- Replay
+-- GameView
 
 
-emptyReplay : G.Record -> Replay
-emptyReplay record =
-    { record = record
-    , gameTree = GT.treeFromRecord record |> GT.treeToGameView
-    }
+addOrVisitChild : G.Move -> GameView -> GameView
+addOrVisitChild move gameView =
+    let
+        ( index, newView ) =
+            case T.findChildIndex move gameView of
+                Just i ->
+                    ( i, gameView )
+
+                Nothing ->
+                    T.addChild move gameView
+    in
+    T.descendToIndex index newView
+        |> Maybe.withDefault gameView
 
 
-withRecord : G.Record -> Maybe Replay -> Replay
-withRecord record maybeReplay =
-    case maybeReplay of
-        Just r ->
-            { record = record
-            , gameTree = GT.withRecord record.moves r.gameTree
-            }
+treeWithRecord : List G.Move -> GameView -> GameView
+treeWithRecord record zipper =
+    let
+        replaced : T.Zipper G.Move
+        replaced =
+            T.makeTree zipper
+                |> T.replaceFirstVar (Nothing :: List.map Just record)
+                |> T.makeZipper
 
-        Nothing ->
-            emptyReplay record
+        goToMove : Int -> Maybe GameView -> Maybe GameView
+        goToMove num mz =
+            if num <= 0 then
+                mz
+
+            else
+                goToMove (num - 1) (Maybe.andThen T.descend mz)
+    in
+    goToMove (T.currentValues zipper |> List.length) (Just replaced)
+        |> Maybe.withDefault zipper
 
 
 
@@ -54,12 +70,12 @@ allMoves replay =
 
 currentMoves : Replay -> List G.Move
 currentMoves replay =
-    GT.currentMoves replay.gameTree
+    T.currentValues replay.gameTree
 
 
 currentMoveNumber : Replay -> Int
-currentMoveNumber replay =
-    GT.currentMoveNumber replay.gameTree
+currentMoveNumber =
+    currentMoves >> List.length
 
 
 dropCommonPart : Int -> List a -> List a -> ( Int, List a )
@@ -124,7 +140,26 @@ children replay =
 
 
 
--- Replay manipulations
+-- Replay
+
+
+emptyReplay : G.Record -> Replay
+emptyReplay record =
+    { record = record
+    , gameTree = T.createLockedTree record.moves |> T.makeZipper
+    }
+
+
+withRecord : G.Record -> Maybe Replay -> Replay
+withRecord record maybeReplay =
+    case maybeReplay of
+        Just r ->
+            { record = record
+            , gameTree = treeWithRecord record.moves r.gameTree
+            }
+
+        Nothing ->
+            emptyReplay record
 
 
 playCoords : G.Coords -> Replay -> Replay
@@ -136,7 +171,7 @@ playCoords coords replay =
             , play = G.Place coords
             }
     in
-    { replay | gameTree = GT.addOrVisitChild move replay.gameTree }
+    { replay | gameTree = addOrVisitChild move replay.gameTree }
 
 
 next : Replay -> Replay

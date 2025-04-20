@@ -4,7 +4,6 @@ import Codec exposing (Codec, Value, value)
 import Dict exposing (Dict)
 import GameRecord as G
 import Replay as R
-import Replay.GameTree as GT
 import Replay.Tree as T
 
 
@@ -48,7 +47,7 @@ replayCodec =
         |> Codec.buildObject
 
 
-gameViewCodec : Codec GT.GameView
+gameViewCodec : Codec R.GameView
 gameViewCodec =
     zipperCodec moveCodec
 

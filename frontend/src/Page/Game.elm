@@ -627,12 +627,9 @@ sideView model =
     let
         moveNum : Int
         moveNum =
-            case model.replay of
-                Just replay ->
-                    R.currentMoveNumber replay
-
-                Nothing ->
-                    0
+            model.replay
+                |> Maybe.map R.currentMoveNumber
+                |> Maybe.withDefault 0
 
         navMidItem =
             case model.view of
