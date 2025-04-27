@@ -24,18 +24,18 @@ type alias Replay =
 
 
 addOrVisitChild : G.Move -> GameView -> GameView
-addOrVisitChild move gameView =
+addOrVisitChild move zipper =
     let
         ( index, newView ) =
-            case T.findChildIndex move gameView of
+            case T.findChildIndex move zipper of
                 Just i ->
-                    ( i, gameView )
+                    ( i, zipper )
 
                 Nothing ->
-                    T.addChild move gameView
+                    T.addChild move zipper
     in
     T.descendToIndex index newView
-        |> Maybe.withDefault gameView
+        |> Maybe.withDefault zipper
 
 
 treeWithRecord : List G.Move -> GameView -> GameView
