@@ -8,22 +8,39 @@ import Test exposing (..)
 
 
 
+-- trickyTree:
+--
 -- A1 A2 A3
 --        \ E4
 --        \ F4 F5 F6
 --        \ G4
 -- B1 B2 B3
 --  \ C2 C3 C4
---
------------------------------
---
+
+
+linTree : T.Tree String
+linTree =
+    t "root" [ t "A1" [ t "A2" [] ] ]
+
+
+varTree : T.Tree String
+varTree =
+    t "root"
+        [ t "A1" []
+        , t "B1" []
+        , t "C1" []
+        ]
+
+
+
 -- A1 A2 A3 A4 A5 A6 A7 A8
 --  \ F2  |     \ D6     \ B9
 --  |     \ E4 E5 E6 E7  \ C9
 --  \ G2 G3
+--     \ H3 H4
 
 
-trickierTree : T.Zipper String
+trickierTree : T.Tree String
 trickierTree =
     t "root"
         [ t "A1"
@@ -47,23 +64,32 @@ trickierTree =
                     ]
                 ]
             , t "F2" []
-            , t "G2" [ t "G3" [] ]
+            , t "G2"
+                [ t "G3" []
+                , t "H3" [ t "H4" [] ]
+                ]
             ]
         ]
-        |> T.makeZipper
 
 
 testBuildBranchQueue : Test
 testBuildBranchQueue =
     describe "Build branch queue"
-        [ test "Can build branch queue from tricky tree" <|
+        [ test "Can build branch queue from linear tree" <|
             \_ ->
-                -- A1 A2 A3
-                --        \ E4
-                --        \ F4 F5 F6
-                --        \ G4
-                -- B1 B2 B3
-                --  \ C2 C3 C4
+                Expect.equal
+                    [ { firstNodeNum = 0, nodes = [ "root", "A1", "A2" ], parentBranch = 0 } ]
+                    (buildBranchQueue linTree)
+        , test "Can build branch queue from var tree" <|
+            \_ ->
+                Expect.equal
+                    [ { firstNodeNum = 0, nodes = [ "root", "A1" ], parentBranch = 0 }
+                    , { firstNodeNum = 0, nodes = [ "B1" ], parentBranch = 0 }
+                    , { firstNodeNum = 0, nodes = [ "C1" ], parentBranch = 0 }
+                    ]
+                    (buildBranchQueue varTree)
+        , test "Can build branch queue from tricky tree" <|
+            \_ ->
                 Expect.equal
                     [ { firstNodeNum = 0, nodes = [ "root", "A1", "A2", "A3" ], parentBranch = 0 }
                     , { firstNodeNum = 0, nodes = [ "E4" ], parentBranch = 0 }
@@ -83,6 +109,7 @@ testBuildBranchQueue =
                     , { firstNodeNum = 0, nodes = [ "E4", "E5", "E6", "E7" ], parentBranch = 0 }
                     , { firstNodeNum = 0, nodes = [ "F2" ], parentBranch = 0 }
                     , { firstNodeNum = 0, nodes = [ "G2", "G3" ], parentBranch = 0 }
+                    , { firstNodeNum = 0, nodes = [ "H3", "H4" ], parentBranch = 0 }
                     ]
-                    (buildBranchQueue <| T.makeTree trickierTree)
+                    (buildBranchQueue trickierTree)
         ]
