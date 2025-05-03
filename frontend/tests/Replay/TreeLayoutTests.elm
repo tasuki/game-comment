@@ -60,13 +60,18 @@ trickierTree =
                             , t "D6" []
                             ]
                         ]
-                    , t "E4" [ t "E5" [ t "E6" [ t "E7" [] ] ] ]
+                    , t "E4"
+                        [ t "E5"
+                            [ t "E6" [ t "E7" [] ]
+                            , t "F6" []
+                            ]
+                        ]
                     ]
                 ]
-            , t "F2" []
-            , t "G2"
-                [ t "G3" []
-                , t "H3" [ t "H4" [] ]
+            , t "G2" []
+            , t "H2"
+                [ t "H3" []
+                , t "I3" [ t "I4" [] ]
                 ]
             ]
         ]
@@ -78,38 +83,39 @@ testBuildBranchQueue =
         [ test "Can build branch queue from linear tree" <|
             \_ ->
                 Expect.equal
-                    [ { firstNodeNum = 0, nodes = [ "root", "A1", "A2" ], parentBranch = 0 } ]
+                    [ { nodes = [ "root", "A1", "A2" ], parents = [] } ]
                     (buildBranchQueue linTree)
         , test "Can build branch queue from var tree" <|
             \_ ->
                 Expect.equal
-                    [ { firstNodeNum = 0, nodes = [ "root", "A1" ], parentBranch = 0 }
-                    , { firstNodeNum = 0, nodes = [ "B1" ], parentBranch = 0 }
-                    , { firstNodeNum = 0, nodes = [ "C1" ], parentBranch = 0 }
+                    [ { nodes = [ "root", "A1" ], parents = [] }
+                    , { nodes = [ "B1" ], parents = [ "root" ] }
+                    , { nodes = [ "C1" ], parents = [ "root" ] }
                     ]
                     (buildBranchQueue varTree)
         , test "Can build branch queue from tricky tree" <|
             \_ ->
                 Expect.equal
-                    [ { firstNodeNum = 0, nodes = [ "root", "A1", "A2", "A3" ], parentBranch = 0 }
-                    , { firstNodeNum = 0, nodes = [ "E4" ], parentBranch = 0 }
-                    , { firstNodeNum = 0, nodes = [ "F4", "F5", "F6" ], parentBranch = 0 }
-                    , { firstNodeNum = 0, nodes = [ "G4" ], parentBranch = 0 }
-                    , { firstNodeNum = 0, nodes = [ "B1", "B2", "B3" ], parentBranch = 0 }
-                    , { firstNodeNum = 0, nodes = [ "C2", "C3", "C4" ], parentBranch = 0 }
+                    [ { nodes = [ "root", "A1", "A2", "A3" ], parents = [] }
+                    , { nodes = [ "E4" ], parents = [ "root", "A1", "A2", "A3" ] }
+                    , { nodes = [ "F4", "F5", "F6" ], parents = [ "root", "A1", "A2", "A3" ] }
+                    , { nodes = [ "G4" ], parents = [ "root", "A1", "A2", "A3" ] }
+                    , { nodes = [ "B1", "B2", "B3" ], parents = [ "root" ] }
+                    , { nodes = [ "C2", "C3", "C4" ], parents = [ "root", "B1" ] }
                     ]
                     (buildBranchQueue <| T.makeTree TT.trickyTree)
         , test "Can build branch queue from trickier tree" <|
             \_ ->
                 Expect.equal
-                    [ { firstNodeNum = 0, nodes = [ "root", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8" ], parentBranch = 0 }
-                    , { firstNodeNum = 0, nodes = [ "B9" ], parentBranch = 0 }
-                    , { firstNodeNum = 0, nodes = [ "C9" ], parentBranch = 0 }
-                    , { firstNodeNum = 0, nodes = [ "D6" ], parentBranch = 0 }
-                    , { firstNodeNum = 0, nodes = [ "E4", "E5", "E6", "E7" ], parentBranch = 0 }
-                    , { firstNodeNum = 0, nodes = [ "F2" ], parentBranch = 0 }
-                    , { firstNodeNum = 0, nodes = [ "G2", "G3" ], parentBranch = 0 }
-                    , { firstNodeNum = 0, nodes = [ "H3", "H4" ], parentBranch = 0 }
+                    [ { nodes = [ "root", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8" ], parents = [] }
+                    , { nodes = [ "B9" ], parents = [ "root", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8" ] }
+                    , { nodes = [ "C9" ], parents = [ "root", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8" ] }
+                    , { nodes = [ "D6" ], parents = [ "root", "A1", "A2", "A3", "A4", "A5" ] }
+                    , { nodes = [ "E4", "E5", "E6", "E7" ], parents = [ "root", "A1", "A2", "A3" ] }
+                    , { nodes = [ "F6" ], parents = [ "root", "A1", "A2", "A3", "E4", "E5" ] }
+                    , { nodes = [ "G2" ], parents = [ "root", "A1" ] }
+                    , { nodes = [ "H2", "H3" ], parents = [ "root", "A1" ] }
+                    , { nodes = [ "I3", "I4" ], parents = [ "root", "A1", "H2" ] }
                     ]
                     (buildBranchQueue trickierTree)
         ]
