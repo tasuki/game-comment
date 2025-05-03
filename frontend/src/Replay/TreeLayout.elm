@@ -144,6 +144,51 @@ nextParent node ( branchIndex, bwp ) =
 
 
 
--- TODO
--- 3. process layout: take branches off the queue and add horizontal line for each
--- 4. layout horizontal line
+-- 3. process layout: take branches off the queue and position each
+
+
+type alias PositionedBranch a =
+    { branchOffset : Int
+    , firstNodeNum : Int
+    , nodes : List a
+    }
+
+
+buildPositionedBranches : List (Branch a) -> List (PositionedBranch a)
+buildPositionedBranches =
+    let
+        helper acc branches =
+            case branches of
+                [] ->
+                    acc
+
+                branch :: restBranches ->
+                    helper (positionBranch 0 branch acc) restBranches
+    in
+    helper []
+
+
+positionBranch : Int -> Branch a -> List (PositionedBranch a) -> List (PositionedBranch a)
+positionBranch offset branch acc =
+    let
+        isWhollyBefore b1 b2 =
+            b1.firstNodeNum > b2.firstNodeNum + List.length b2.nodes
+
+        conflicts : PositionedBranch a -> Bool
+        conflicts b =
+            (offset == b.branchOffset)
+                && (not <| isWhollyBefore branch b)
+                && (not <| isWhollyBefore b branch)
+    in
+    if List.any conflicts acc then
+        positionBranch (offset + 1) branch acc
+
+    else
+        let
+            positioned =
+                { branchOffset = offset
+                , firstNodeNum = branch.firstNodeNum
+                , nodes = branch.nodes
+                }
+        in
+        acc ++ [ positioned ]

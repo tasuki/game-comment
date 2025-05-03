@@ -7,15 +7,9 @@ import Replay.TreeTests as TT exposing (t)
 import Test exposing (..)
 
 
-
--- trickyTree:
---
--- A1 A2 A3
---        \ E4
---        \ F4 F5 F6
---        \ G4
--- B1 B2 B3
---  \ C2 C3 C4
+empTree : T.Tree String
+empTree =
+    t "root" []
 
 
 linTree : T.Tree String
@@ -33,11 +27,57 @@ varTree =
 
 
 
+-- TT.trickyTree:
+--
+-- A1 A2 A3
+--        \ E4
+--        \ F4 F5 F6
+--        \ G4
+-- B1 B2 B3
+--  \ C2 C3 C4
+
+
+trickyTreeBranchesWithParents : List (BranchWithParents String)
+trickyTreeBranchesWithParents =
+    [ { nodes = [ "root", "A1", "A2", "A3" ], parents = [] }
+    , { nodes = [ "E4" ], parents = [ "root", "A1", "A2", "A3" ] }
+    , { nodes = [ "F4", "F5", "F6" ], parents = [ "root", "A1", "A2", "A3" ] }
+    , { nodes = [ "G4" ], parents = [ "root", "A1", "A2", "A3" ] }
+    , { nodes = [ "B1", "B2", "B3" ], parents = [ "root" ] }
+    , { nodes = [ "C2", "C3", "C4" ], parents = [ "root", "B1" ] }
+    ]
+
+
+trickyTreeBranches : List (Branch String)
+trickyTreeBranches =
+    [ { parentBranch = 0, firstNodeNum = 0, nodes = [ "root", "A1", "A2", "A3" ] }
+    , { parentBranch = 0, firstNodeNum = 4, nodes = [ "E4" ] }
+    , { parentBranch = 0, firstNodeNum = 4, nodes = [ "F4", "F5", "F6" ] }
+    , { parentBranch = 0, firstNodeNum = 4, nodes = [ "G4" ] }
+    , { parentBranch = 0, firstNodeNum = 1, nodes = [ "B1", "B2", "B3" ] }
+    , { parentBranch = 4, firstNodeNum = 2, nodes = [ "C2", "C3", "C4" ] }
+    ]
+
+
+trickyTreePositioned : List (PositionedBranch String)
+trickyTreePositioned =
+    [ { branchOffset = 0, firstNodeNum = 0, nodes = [ "root", "A1", "A2", "A3" ] }
+    , { branchOffset = 1, firstNodeNum = 4, nodes = [ "E4" ] }
+    , { branchOffset = 2, firstNodeNum = 4, nodes = [ "F4", "F5", "F6" ] }
+    , { branchOffset = 3, firstNodeNum = 4, nodes = [ "G4" ] }
+    , { branchOffset = 4, firstNodeNum = 1, nodes = [ "B1", "B2", "B3" ] }
+    , { branchOffset = 5, firstNodeNum = 2, nodes = [ "C2", "C3", "C4" ] }
+    ]
+
+
+
+-- Trickier tree
+--
 -- A1 A2 A3 A4 A5 A6 A7 A8
---  \ F2  |     \ D6     \ B9
+--  \ G2  |     \ D6     \ B9
 --  |     \ E4 E5 E6 E7  \ C9
---  \ G2 G3
---     \ H3 H4
+--  \ H2 H3     \ F6
+--     \ I3 I4
 
 
 trickierTree : T.Tree String
@@ -77,17 +117,6 @@ trickierTree =
         ]
 
 
-trickyTreeBranchesWithParents : List (BranchWithParents String)
-trickyTreeBranchesWithParents =
-    [ { nodes = [ "root", "A1", "A2", "A3" ], parents = [] }
-    , { nodes = [ "E4" ], parents = [ "root", "A1", "A2", "A3" ] }
-    , { nodes = [ "F4", "F5", "F6" ], parents = [ "root", "A1", "A2", "A3" ] }
-    , { nodes = [ "G4" ], parents = [ "root", "A1", "A2", "A3" ] }
-    , { nodes = [ "B1", "B2", "B3" ], parents = [ "root" ] }
-    , { nodes = [ "C2", "C3", "C4" ], parents = [ "root", "B1" ] }
-    ]
-
-
 trickierTreeBranchesWithParents : List (BranchWithParents String)
 trickierTreeBranchesWithParents =
     [ { nodes = [ "root", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8" ], parents = [] }
@@ -102,10 +131,47 @@ trickierTreeBranchesWithParents =
     ]
 
 
+trickierTreeBranches : List (Branch String)
+trickierTreeBranches =
+    [ { parentBranch = 0, firstNodeNum = 0, nodes = [ "root", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8" ] }
+    , { parentBranch = 0, firstNodeNum = 9, nodes = [ "B9" ] }
+    , { parentBranch = 0, firstNodeNum = 9, nodes = [ "C9" ] }
+    , { parentBranch = 0, firstNodeNum = 6, nodes = [ "D6" ] }
+    , { parentBranch = 0, firstNodeNum = 4, nodes = [ "E4", "E5", "E6", "E7" ] }
+    , { parentBranch = 4, firstNodeNum = 6, nodes = [ "F6" ] }
+    , { parentBranch = 0, firstNodeNum = 2, nodes = [ "G2" ] }
+    , { parentBranch = 0, firstNodeNum = 2, nodes = [ "H2", "H3" ] }
+    , { parentBranch = 7, firstNodeNum = 3, nodes = [ "I3", "I4" ] }
+    ]
+
+
+trickierTreePositioned : List (PositionedBranch String)
+trickierTreePositioned =
+    [ { branchOffset = 0, firstNodeNum = 0, nodes = [ "root", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8" ] }
+    , { branchOffset = 1, firstNodeNum = 9, nodes = [ "B9" ] }
+    , { branchOffset = 2, firstNodeNum = 9, nodes = [ "C9" ] }
+    , { branchOffset = 1, firstNodeNum = 6, nodes = [ "D6" ] }
+    , { branchOffset = 2, firstNodeNum = 4, nodes = [ "E4", "E5", "E6", "E7" ] }
+    , { branchOffset = 3, firstNodeNum = 6, nodes = [ "F6" ] }
+    , { branchOffset = 1, firstNodeNum = 2, nodes = [ "G2" ] }
+    , { branchOffset = 3, firstNodeNum = 2, nodes = [ "H2", "H3" ] }
+    , { branchOffset = 4, firstNodeNum = 3, nodes = [ "I3", "I4" ] }
+    ]
+
+
+
+-- Tests...
+
+
 testBuildBranchQueue : Test
 testBuildBranchQueue =
     describe "Build branch queue"
-        [ test "Can build branch queue from linear tree" <|
+        [ test "Can build branch queue from empty tree" <|
+            \_ ->
+                Expect.equal
+                    [ { nodes = [ "root" ], parents = [] } ]
+                    (buildBranchQueue empTree)
+        , test "Can build branch queue from linear tree" <|
             \_ ->
                 Expect.equal
                     [ { nodes = [ "root", "A1", "A2" ], parents = [] } ]
@@ -158,27 +224,24 @@ testBuildBranchList =
     describe "Build branch list"
         [ test "Can build branch list for tricky tree" <|
             \_ ->
-                Expect.equal
-                    [ { firstNodeNum = 0, parentBranch = 0, nodes = [ "root", "A1", "A2", "A3" ] }
-                    , { firstNodeNum = 4, parentBranch = 0, nodes = [ "E4" ] }
-                    , { firstNodeNum = 4, parentBranch = 0, nodes = [ "F4", "F5", "F6" ] }
-                    , { firstNodeNum = 4, parentBranch = 0, nodes = [ "G4" ] }
-                    , { firstNodeNum = 1, parentBranch = 0, nodes = [ "B1", "B2", "B3" ] }
-                    , { firstNodeNum = 2, parentBranch = 4, nodes = [ "C2", "C3", "C4" ] }
-                    ]
+                Expect.equal trickyTreeBranches
                     (buildBranchList trickyTreeBranchesWithParents)
         , test "Can build branch list for trickier tree" <|
             \_ ->
-                Expect.equal
-                    [ { firstNodeNum = 0, parentBranch = 0, nodes = [ "root", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8" ] }
-                    , { firstNodeNum = 9, parentBranch = 0, nodes = [ "B9" ] }
-                    , { firstNodeNum = 9, parentBranch = 0, nodes = [ "C9" ] }
-                    , { firstNodeNum = 6, parentBranch = 0, nodes = [ "D6" ] }
-                    , { firstNodeNum = 4, parentBranch = 0, nodes = [ "E4", "E5", "E6", "E7" ] }
-                    , { firstNodeNum = 6, parentBranch = 4, nodes = [ "F6" ] }
-                    , { firstNodeNum = 2, parentBranch = 0, nodes = [ "G2" ] }
-                    , { firstNodeNum = 2, parentBranch = 0, nodes = [ "H2", "H3" ] }
-                    , { firstNodeNum = 3, parentBranch = 7, nodes = [ "I3", "I4" ] }
-                    ]
+                Expect.equal trickierTreeBranches
                     (buildBranchList trickierTreeBranchesWithParents)
+        ]
+
+
+testBuildPositionedBranches : Test
+testBuildPositionedBranches =
+    describe "Build positioned branches list"
+        [ test "Can build positioned branch list for tricky tree" <|
+            \_ ->
+                Expect.equal trickyTreePositioned
+                    (buildPositionedBranches trickyTreeBranches)
+        , test "Can build positioned branch list for trickier tree" <|
+            \_ ->
+                Expect.equal trickierTreePositioned
+                    (buildPositionedBranches trickierTreeBranches)
         ]
