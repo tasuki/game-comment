@@ -3,13 +3,6 @@ module Replay.TreeLayout exposing (..)
 import Replay.Tree as T
 
 
-type alias Branch a =
-    { parentBranch : Int
-    , firstNodeNum : Int
-    , nodes : List a
-    }
-
-
 
 -- 1. build branch queue
 
@@ -86,7 +79,71 @@ processForestForBranches forest ancestors =
 
 
 
--- TODO
 -- 2. `List (BranchWithParents a) -> List (Branch a)`
+
+
+type alias Branch a =
+    { parentBranch : Int
+    , firstNodeNum : Int
+    , nodes : List a
+    }
+
+
+buildBranchList : List (BranchWithParents a) -> List (Branch a)
+buildBranchList bwps =
+    let
+        toBranch : BranchWithParents a -> Branch a
+        toBranch b =
+            { parentBranch = findParentBranch bwps b
+            , firstNodeNum = List.length b.parents
+            , nodes = b.nodes
+            }
+    in
+    List.map toBranch bwps
+
+
+findParentBranch : List (BranchWithParents a) -> BranchWithParents a -> Int
+findParentBranch allBranches =
+    findParentBranchHelper (List.indexedMap Tuple.pair allBranches)
+
+
+findParentBranchHelper : List ( Int, BranchWithParents a ) -> BranchWithParents a -> Int
+findParentBranchHelper matchingBranches branch =
+    case branch.parents of
+        [] ->
+            matchingBranches
+                |> List.head
+                |> Maybe.map Tuple.first
+                |> Maybe.withDefault 0
+
+        firstParent :: restParents ->
+            findParentBranchHelper
+                (List.filterMap (nextParent firstParent) matchingBranches)
+                { branch | parents = restParents }
+
+
+nextParent : a -> ( Int, BranchWithParents a ) -> Maybe ( Int, BranchWithParents a )
+nextParent node ( branchIndex, bwp ) =
+    case ( bwp.parents, bwp.nodes ) of
+        ( [], hNode :: tNodes ) ->
+            if hNode == node then
+                Just ( branchIndex, { bwp | nodes = tNodes } )
+
+            else
+                Nothing
+
+        ( hParent :: tParents, _ ) ->
+            if hParent == node then
+                Just ( branchIndex, { bwp | parents = tParents } )
+
+            else
+                Nothing
+
+        _ ->
+            Nothing
+
+
+
+-- TODO
 -- 3. process layout: take branches off the queue and add horizontal line for each
 -- 4. layout horizontal line
