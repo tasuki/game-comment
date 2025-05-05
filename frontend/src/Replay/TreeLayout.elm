@@ -176,8 +176,8 @@ positionBranch offset branch acc =
 
         conflicts : PositionedBranch a -> Bool
         conflicts b =
-            (offset == b.branchOffset)
-                && (not <| isWhollyBefore branch b)
+            (offset <= b.branchOffset)
+                -- && (not <| isWhollyBefore branch b) -- good idea or not?
                 && (not <| isWhollyBefore b branch)
     in
     if List.any conflicts acc then
@@ -192,3 +192,12 @@ positionBranch offset branch acc =
                 }
         in
         acc ++ [ positioned ]
+
+
+
+-- 4. Tree to branches
+
+
+treeToBranches : T.Tree a -> List (PositionedBranch a)
+treeToBranches =
+    buildBranchQueue >> buildBranchList >> buildPositionedBranches

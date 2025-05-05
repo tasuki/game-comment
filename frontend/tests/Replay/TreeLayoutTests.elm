@@ -160,6 +160,71 @@ trickierTreePositioned =
 
 
 
+-- Trickiest tree
+--
+-- A1 A2 A3 A4 A5 A6 A7 A8
+--  \ G2  |     \ D6     \ B9
+--  |     \ E4 E5 E6 E7  \ C9
+--  |     |     \ F6
+--  |     \ X4 X5
+--  \ H2 H3
+--     \ I3 I4
+
+
+trickiestTree : T.Tree String
+trickiestTree =
+    t "root"
+        [ t "A1"
+            [ t "A2"
+                [ t "A3"
+                    [ t "A4"
+                        [ t "A5"
+                            [ t "A6"
+                                [ t "A7"
+                                    [ t "A8"
+                                        [ T.Locked
+                                        , t "B9" []
+                                        , t "C9" []
+                                        ]
+                                    ]
+                                ]
+                            , t "D6" []
+                            ]
+                        ]
+                    , t "E4"
+                        [ t "E5"
+                            [ t "E6" [ t "E7" [] ]
+                            , t "F6" []
+                            ]
+                        ]
+                    , t "X4" [ t "X5" [] ]
+                    ]
+                ]
+            , t "G2" []
+            , t "H2"
+                [ t "H3" []
+                , t "I3" [ t "I4" [] ]
+                ]
+            ]
+        ]
+
+
+trickiestTreePositioned : List (PositionedBranch String)
+trickiestTreePositioned =
+    [ { branchOffset = 0, firstNodeNum = 0, nodes = [ "root", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8" ] }
+    , { branchOffset = 1, firstNodeNum = 9, nodes = [ "B9" ] }
+    , { branchOffset = 2, firstNodeNum = 9, nodes = [ "C9" ] }
+    , { branchOffset = 1, firstNodeNum = 6, nodes = [ "D6" ] }
+    , { branchOffset = 2, firstNodeNum = 4, nodes = [ "E4", "E5", "E6", "E7" ] }
+    , { branchOffset = 3, firstNodeNum = 6, nodes = [ "F6" ] }
+    , { branchOffset = 4, firstNodeNum = 4, nodes = [ "X4", "X5" ] }
+    , { branchOffset = 1, firstNodeNum = 2, nodes = [ "G2" ] }
+    , { branchOffset = 5, firstNodeNum = 2, nodes = [ "H2", "H3" ] }
+    , { branchOffset = 6, firstNodeNum = 3, nodes = [ "I3", "I4" ] }
+    ]
+
+
+
 -- Tests...
 
 
@@ -244,4 +309,22 @@ testBuildPositionedBranches =
             \_ ->
                 Expect.equal trickierTreePositioned
                     (buildPositionedBranches trickierTreeBranches)
+        ]
+
+
+testTreeToPositionedBranches : Test
+testTreeToPositionedBranches =
+    describe "Tree to positioned branches"
+        [ test "Can convert trickyTree to positioned branches" <|
+            \_ ->
+                Expect.equal trickyTreePositioned
+                    (treeToBranches <| T.makeTree TT.trickyTree)
+        , test "Can convert trickerTree to positioned branches" <|
+            \_ ->
+                Expect.equal trickierTreePositioned
+                    (treeToBranches trickierTree)
+        , test "Can convert trickestTree to positioned branches" <|
+            \_ ->
+                Expect.equal trickiestTreePositioned
+                    (treeToBranches trickiestTree)
         ]
