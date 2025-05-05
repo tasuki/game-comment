@@ -225,6 +225,39 @@ trickiestTreePositioned =
 
 
 
+-- An open question...
+--
+-- A1
+--  \ B2 B3 B4
+--  \ D2  \ C4
+
+
+anOpenQuestion : T.Tree String
+anOpenQuestion =
+    t "root"
+        [ t "A1"
+            [ T.Locked
+            , t "B2"
+                [ t "B3"
+                    [ t "B4" []
+                    , t "C4" []
+                    ]
+                ]
+            , t "D2" []
+            ]
+        ]
+
+
+anOpenQuestionPositioned : List (PositionedBranch String)
+anOpenQuestionPositioned =
+    [ { branchOffset = 0, firstNodeNum = 0, nodes = [ "root", "A1" ] }
+    , { branchOffset = 1, firstNodeNum = 2, nodes = [ "B2", "B3", "B4" ] }
+    , { branchOffset = 2, firstNodeNum = 4, nodes = [ "C4" ] }
+    , { branchOffset = 2, firstNodeNum = 2, nodes = [ "D2" ] }
+    ]
+
+
+
 -- Tests...
 
 
@@ -327,4 +360,8 @@ testTreeToPositionedBranches =
             \_ ->
                 Expect.equal trickiestTreePositioned
                     (treeToBranches trickiestTree)
+        , test "Can convert anOpenQuestion to positioned branches" <|
+            \_ ->
+                Expect.equal anOpenQuestionPositioned
+                    (treeToBranches anOpenQuestion)
         ]
