@@ -61,12 +61,12 @@ trickyTreeBranches =
 
 trickyTreePositioned : List (PositionedBranch String)
 trickyTreePositioned =
-    [ { branchOffset = 0, firstNodeNum = 0, nodes = [ "root", "A1", "A2", "A3" ] }
-    , { branchOffset = 1, firstNodeNum = 4, nodes = [ "E4" ] }
-    , { branchOffset = 2, firstNodeNum = 4, nodes = [ "F4", "F5", "F6" ] }
-    , { branchOffset = 3, firstNodeNum = 4, nodes = [ "G4" ] }
-    , { branchOffset = 4, firstNodeNum = 1, nodes = [ "B1", "B2", "B3" ] }
-    , { branchOffset = 5, firstNodeNum = 2, nodes = [ "C2", "C3", "C4" ] }
+    [ { parentBranch = 0, branchOffset = 0, firstNodeNum = 0, nodes = [ "root", "A1", "A2", "A3" ] }
+    , { parentBranch = 0, branchOffset = 1, firstNodeNum = 4, nodes = [ "E4" ] }
+    , { parentBranch = 0, branchOffset = 2, firstNodeNum = 4, nodes = [ "F4", "F5", "F6" ] }
+    , { parentBranch = 0, branchOffset = 3, firstNodeNum = 4, nodes = [ "G4" ] }
+    , { parentBranch = 0, branchOffset = 4, firstNodeNum = 1, nodes = [ "B1", "B2", "B3" ] }
+    , { parentBranch = 4, branchOffset = 5, firstNodeNum = 2, nodes = [ "C2", "C3", "C4" ] }
     ]
 
 
@@ -147,15 +147,15 @@ trickierTreeBranches =
 
 trickierTreePositioned : List (PositionedBranch String)
 trickierTreePositioned =
-    [ { branchOffset = 0, firstNodeNum = 0, nodes = [ "root", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8" ] }
-    , { branchOffset = 1, firstNodeNum = 9, nodes = [ "B9" ] }
-    , { branchOffset = 2, firstNodeNum = 9, nodes = [ "C9" ] }
-    , { branchOffset = 1, firstNodeNum = 6, nodes = [ "D6" ] }
-    , { branchOffset = 2, firstNodeNum = 4, nodes = [ "E4", "E5", "E6", "E7" ] }
-    , { branchOffset = 3, firstNodeNum = 6, nodes = [ "F6" ] }
-    , { branchOffset = 1, firstNodeNum = 2, nodes = [ "G2" ] }
-    , { branchOffset = 3, firstNodeNum = 2, nodes = [ "H2", "H3" ] }
-    , { branchOffset = 4, firstNodeNum = 3, nodes = [ "I3", "I4" ] }
+    [ { parentBranch = 0, branchOffset = 0, firstNodeNum = 0, nodes = [ "root", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8" ] }
+    , { parentBranch = 0, branchOffset = 1, firstNodeNum = 9, nodes = [ "B9" ] }
+    , { parentBranch = 0, branchOffset = 2, firstNodeNum = 9, nodes = [ "C9" ] }
+    , { parentBranch = 0, branchOffset = 1, firstNodeNum = 6, nodes = [ "D6" ] }
+    , { parentBranch = 0, branchOffset = 2, firstNodeNum = 4, nodes = [ "E4", "E5", "E6", "E7" ] }
+    , { parentBranch = 4, branchOffset = 3, firstNodeNum = 6, nodes = [ "F6" ] }
+    , { parentBranch = 0, branchOffset = 1, firstNodeNum = 2, nodes = [ "G2" ] }
+    , { parentBranch = 0, branchOffset = 3, firstNodeNum = 2, nodes = [ "H2", "H3" ] }
+    , { parentBranch = 7, branchOffset = 4, firstNodeNum = 3, nodes = [ "I3", "I4" ] }
     ]
 
 
@@ -211,16 +211,16 @@ trickiestTree =
 
 trickiestTreePositioned : List (PositionedBranch String)
 trickiestTreePositioned =
-    [ { branchOffset = 0, firstNodeNum = 0, nodes = [ "root", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8" ] }
-    , { branchOffset = 1, firstNodeNum = 9, nodes = [ "B9" ] }
-    , { branchOffset = 2, firstNodeNum = 9, nodes = [ "C9" ] }
-    , { branchOffset = 1, firstNodeNum = 6, nodes = [ "D6" ] }
-    , { branchOffset = 2, firstNodeNum = 4, nodes = [ "E4", "E5", "E6", "E7" ] }
-    , { branchOffset = 3, firstNodeNum = 6, nodes = [ "F6" ] }
-    , { branchOffset = 4, firstNodeNum = 4, nodes = [ "X4", "X5" ] }
-    , { branchOffset = 1, firstNodeNum = 2, nodes = [ "G2" ] }
-    , { branchOffset = 5, firstNodeNum = 2, nodes = [ "H2", "H3" ] }
-    , { branchOffset = 6, firstNodeNum = 3, nodes = [ "I3", "I4" ] }
+    [ { parentBranch = 0, branchOffset = 0, firstNodeNum = 0, nodes = [ "root", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8" ] }
+    , { parentBranch = 0, branchOffset = 1, firstNodeNum = 9, nodes = [ "B9" ] }
+    , { parentBranch = 0, branchOffset = 2, firstNodeNum = 9, nodes = [ "C9" ] }
+    , { parentBranch = 0, branchOffset = 1, firstNodeNum = 6, nodes = [ "D6" ] }
+    , { parentBranch = 0, branchOffset = 2, firstNodeNum = 4, nodes = [ "E4", "E5", "E6", "E7" ] }
+    , { parentBranch = 4, branchOffset = 3, firstNodeNum = 6, nodes = [ "F6" ] }
+    , { parentBranch = 0, branchOffset = 4, firstNodeNum = 4, nodes = [ "X4", "X5" ] }
+    , { parentBranch = 0, branchOffset = 1, firstNodeNum = 2, nodes = [ "G2" ] }
+    , { parentBranch = 0, branchOffset = 5, firstNodeNum = 2, nodes = [ "H2", "H3" ] }
+    , { parentBranch = 8, branchOffset = 6, firstNodeNum = 3, nodes = [ "I3", "I4" ] }
     ]
 
 
@@ -250,10 +250,10 @@ anOpenQuestion =
 
 anOpenQuestionPositioned : List (PositionedBranch String)
 anOpenQuestionPositioned =
-    [ { branchOffset = 0, firstNodeNum = 0, nodes = [ "root", "A1" ] }
-    , { branchOffset = 1, firstNodeNum = 2, nodes = [ "B2", "B3", "B4" ] }
-    , { branchOffset = 2, firstNodeNum = 4, nodes = [ "C4" ] }
-    , { branchOffset = 2, firstNodeNum = 2, nodes = [ "D2" ] }
+    [ { parentBranch = 0, branchOffset = 0, firstNodeNum = 0, nodes = [ "root", "A1" ] }
+    , { parentBranch = 0, branchOffset = 1, firstNodeNum = 2, nodes = [ "B2", "B3", "B4" ] }
+    , { parentBranch = 1, branchOffset = 2, firstNodeNum = 4, nodes = [ "C4" ] }
+    , { parentBranch = 0, branchOffset = 2, firstNodeNum = 2, nodes = [ "D2" ] }
     ]
 
 

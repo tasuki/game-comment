@@ -148,7 +148,8 @@ nextParent node ( branchIndex, bwp ) =
 
 
 type alias PositionedBranch a =
-    { branchOffset : Int
+    { parentBranch : Int
+    , branchOffset : Int
     , firstNodeNum : Int
     , nodes : List a
     }
@@ -186,7 +187,8 @@ positionBranch offset branch acc =
     else
         let
             positioned =
-                { branchOffset = offset
+                { parentBranch = branch.parentBranch
+                , branchOffset = offset
                 , firstNodeNum = branch.firstNodeNum
                 , nodes = branch.nodes
                 }
