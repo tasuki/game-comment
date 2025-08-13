@@ -391,3 +391,77 @@ testBranchesToDict =
                     ]
                     (branchesToDict trickiestTreePositioned)
         ]
+
+
+testFindPosition : Test
+testFindPosition =
+    describe "Test findPosition"
+        [ test "Can find position for first branch element" <|
+            \_ ->
+                Expect.equal ( 0, 2 )
+                    (findPosition trickiestTreePositioned [ "root", "A1", "A2" ])
+        , test "Can find position for another first branch element" <|
+            \_ ->
+                Expect.equal ( 0, 5 )
+                    (findPosition trickiestTreePositioned [ "root", "A1", "A2", "A3", "A4", "A5" ])
+        , test "Can find position for B branch element" <|
+            \_ ->
+                Expect.equal ( 1, 9 )
+                    (findPosition trickiestTreePositioned [ "root", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "B9" ])
+        , test "Can find position for C branch element" <|
+            \_ ->
+                Expect.equal ( 2, 9 )
+                    (findPosition trickiestTreePositioned [ "root", "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "C9" ])
+        , test "Can find position for D branch element" <|
+            \_ ->
+                Expect.equal ( 1, 6 )
+                    (findPosition trickiestTreePositioned [ "root", "A1", "A2", "A3", "A4", "A5", "D6" ])
+        , test "Can find position for F branch element" <|
+            \_ ->
+                Expect.equal ( 3, 6 )
+                    (findPosition trickiestTreePositioned [ "root", "A1", "A2", "A3", "E4", "E5", "F6" ])
+        , test "Can find position for G branch element" <|
+            \_ ->
+                Expect.equal ( 1, 2 )
+                    (findPosition trickiestTreePositioned [ "root", "A1", "G2" ])
+        , test "Can find position for H branch element" <|
+            \_ ->
+                Expect.equal ( 5, 2 )
+                    (findPosition trickiestTreePositioned [ "root", "A1", "H2" ])
+        , test "Can find position for another H branch element" <|
+            \_ ->
+                Expect.equal ( 5, 3 )
+                    (findPosition trickiestTreePositioned [ "root", "A1", "H2", "H3" ])
+        , test "Can find position for I branch element" <|
+            \_ ->
+                Expect.equal ( 6, 3 )
+                    (findPosition trickiestTreePositioned [ "root", "A1", "H2", "I3" ])
+        , test "Can't find position for nonexistent element" <|
+            \_ ->
+                Expect.equal ( -1, -1 )
+                    (findPosition trickiestTreePositioned [ "root", "A1", "A2", "I3" ])
+        ]
+
+
+trickiestTreeZipper : T.Zipper String
+trickiestTreeZipper =
+    T.makeZipper trickiestTree
+        |> T.descend
+        |> Maybe.andThen T.descend
+        |> Maybe.andThen T.descend
+        |> Maybe.andThen T.descend
+        |> Maybe.withDefault (T.makeZipper T.Locked)
+
+
+testGetTreeLayout : Test
+testGetTreeLayout =
+    describe "Get tree layout"
+        [ test "Can get tree layout" <|
+            \_ ->
+                Expect.equal
+                    [ [ Just ( ( 0, 1 ), "A2" ), Just ( ( 0, 2 ), "A3" ), Just ( ( 0, 3 ), "A4" ), Just ( ( 0, 4 ), "A5" ), Just ( ( 0, 5 ), "A6" ) ]
+                    , [ Just ( ( 0, 1 ), "G2" ), Nothing, Nothing, Nothing, Just ( ( 0, 5 ), "D6" ) ]
+                    , [ Nothing, Nothing, Just ( ( 0, 3 ), "E4" ), Just ( ( 2, 4 ), "E5" ), Just ( ( 2, 5 ), "E6" ) ]
+                    ]
+                    (getTreeLayout 5 3 trickiestTreeZipper)
+        ]

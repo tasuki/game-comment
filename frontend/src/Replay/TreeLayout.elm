@@ -254,8 +254,7 @@ branchesToDict branches =
     let
         withParent : PositionedBranch a -> Maybe ( PositionedBranch a, PositionedBranch a )
         withParent branch =
-            List.drop branch.parentBranch branches
-                |> List.head
+            List.Extra.getAt branch.parentBranch branches
                 |> Maybe.map (\mpb -> ( mpb, branch ))
     in
     branches
@@ -266,3 +265,102 @@ branchesToDict branches =
                 Dict.insert currentPos ( parentPos, node ) dict
             )
             Dict.empty
+
+
+
+-- 6. find position
+
+
+findPositionHelper : List (PositionedBranch a) -> List a -> Pos -> Pos
+findPositionHelper positionedBranches path ( branchId, nodeNum ) =
+    let
+        _ =
+            Debug.log "path, branchId, nodeNum" ( path, branchId, nodeNum )
+
+        nextNodeNum =
+            nodeNum + 1
+
+        getNextInBranch : a -> PositionedBranch a -> Maybe Pos
+        getNextInBranch elem branch =
+            List.Extra.getAt (nextNodeNum - branch.firstNodeNum) branch.nodes
+                |> Maybe.andThen
+                    (\node ->
+                        if node == elem then
+                            Just ( branchId, nextNodeNum )
+
+                        else
+                            Nothing
+                    )
+
+        findNextBranch : a -> Pos
+        findNextBranch elem =
+            List.indexedMap Tuple.pair positionedBranches
+                |> List.filter
+                    (\( _, pb ) ->
+                        (pb.parentBranch == branchId)
+                            && (pb.firstNodeNum == nextNodeNum)
+                            && (List.head pb.nodes == Just elem)
+                    )
+                |> List.head
+                |> Maybe.map (\( i, _ ) -> ( i, nextNodeNum ))
+                -- TODO bad bad bad
+                |> Maybe.withDefault ( -1, -1 )
+
+        newPositionFromElem : a -> Pos
+        newPositionFromElem elem =
+            positionedBranches
+                |> List.Extra.getAt branchId
+                |> Maybe.andThen (getNextInBranch elem)
+                |> Maybe.withDefault (findNextBranch elem)
+    in
+    case path of
+        [] ->
+            positionedBranches
+                |> List.Extra.getAt branchId
+                |> Maybe.map (\b -> ( b.branchOffset, nodeNum ))
+                -- TODO bad bad bad
+                |> Maybe.withDefault ( -1, -1 )
+
+        head :: tail ->
+            findPositionHelper positionedBranches tail (newPositionFromElem head)
+
+
+findPosition : List (PositionedBranch a) -> List a -> Pos
+findPosition positionedBranches path =
+    findPositionHelper positionedBranches (List.tail path |> Maybe.withDefault []) ( 0, 0 )
+
+
+
+-- 7. View
+
+
+getTreeLayout : Int -> Int -> T.Zipper a -> List (List (Maybe ( Pos, a )))
+getTreeLayout width height zipper =
+    let
+        branches : List (PositionedBranch a)
+        branches =
+            T.makeTree zipper |> treeToBranches
+
+        position : Pos
+        position =
+            findPosition branches (T.currentValues zipper)
+
+        upper =
+            max 0 (Tuple.first position - (height // 2))
+
+        left =
+            max 0 (Tuple.second position - (width // 2))
+
+        dict : Dict Pos ( Pos, a )
+        dict =
+            branchesToDict branches
+    in
+    List.map
+        (\row ->
+            List.map
+                (\col ->
+                    Dict.get ( row, col ) dict
+                )
+                (List.range left (left + width - 1))
+        )
+        (List.range upper (upper + height - 1))
