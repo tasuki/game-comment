@@ -1,5 +1,6 @@
 module Replay.TreeLayoutTests exposing (..)
 
+import Dict exposing (Dict)
 import Expect
 import Replay.Tree as T
 import Replay.TreeLayout exposing (..)
@@ -364,4 +365,29 @@ testTreeToPositionedBranches =
             \_ ->
                 Expect.equal anOpenQuestionPositioned
                     (treeToBranches anOpenQuestion)
+        ]
+
+
+testBranchesToDict : Test
+testBranchesToDict =
+    describe "Branches to dictionary"
+        [ test "Can convert trickiestTree to dictionary" <|
+            \_ ->
+                Expect.all
+                    [ \d -> Expect.equal (Just ( ( 0, 0 ), "root" )) (Dict.get ( 0, 0 ) d)
+                    , \d -> Expect.equal (Just ( ( 0, 0 ), "A1" )) (Dict.get ( 0, 1 ) d)
+                    , \d -> Expect.equal (Just ( ( 0, 1 ), "A2" )) (Dict.get ( 0, 2 ) d)
+                    , \d -> Expect.equal (Just ( ( 0, 7 ), "A8" )) (Dict.get ( 0, 8 ) d)
+                    , \d -> Expect.equal Nothing (Dict.get ( 0, 9 ) d)
+                    , \d -> Expect.equal Nothing (Dict.get ( 1, 0 ) d)
+                    , \d -> Expect.equal (Just ( ( 0, 8 ), "B9" )) (Dict.get ( 1, 9 ) d)
+                    , \d -> Expect.equal (Just ( ( 0, 8 ), "C9" )) (Dict.get ( 2, 9 ) d)
+                    , \d -> Expect.equal (Just ( ( 0, 3 ), "E4" )) (Dict.get ( 2, 4 ) d)
+                    , \d -> Expect.equal (Just ( ( 2, 5 ), "F6" )) (Dict.get ( 3, 6 ) d)
+                    , \d -> Expect.equal (Just ( ( 0, 3 ), "X4" )) (Dict.get ( 4, 4 ) d)
+                    , \d -> Expect.equal (Just ( ( 4, 4 ), "X5" )) (Dict.get ( 4, 5 ) d)
+                    , \d -> Expect.equal (Just ( ( 0, 1 ), "H2" )) (Dict.get ( 5, 2 ) d)
+                    , \d -> Expect.equal (Just ( ( 5, 2 ), "I3" )) (Dict.get ( 6, 3 ) d)
+                    ]
+                    (branchesToDict trickiestTreePositioned)
         ]

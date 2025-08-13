@@ -1,5 +1,7 @@
 module Replay.TreeLayout exposing (..)
 
+import Dict exposing (Dict)
+import List.Extra
 import Replay.Tree as T
 
 
@@ -203,3 +205,64 @@ positionBranch offset branch acc =
 treeToBranches : T.Tree a -> List (PositionedBranch a)
 treeToBranches =
     buildBranchQueue >> buildBranchList >> buildPositionedBranches
+
+
+
+-- 5. Branches to dict
+
+
+type alias Pos =
+    -- branchOffset, nodeNum
+    ( Int, Int )
+
+
+branchToNodes : ( PositionedBranch a, PositionedBranch a ) -> List ( Pos, Pos, a )
+branchToNodes ( parentBranch, b ) =
+    let
+        nodePosition : Int -> a -> ( Pos, a )
+        nodePosition i node =
+            ( ( b.branchOffset, b.firstNodeNum + i ), node )
+
+        branchNodes : List ( Pos, a )
+        branchNodes =
+            List.indexedMap nodePosition b.nodes
+
+        positionsWithoutLast : List Pos
+        positionsWithoutLast =
+            branchNodes
+                |> List.Extra.init
+                |> Maybe.withDefault []
+                |> List.map Tuple.first
+
+        parentPositions : List Pos
+        parentPositions =
+            let
+                newNodeNum =
+                    if b.firstNodeNum > 0 then
+                        b.firstNodeNum - 1
+
+                    else
+                        0
+            in
+            ( parentBranch.branchOffset, newNodeNum ) :: positionsWithoutLast
+    in
+    List.map2 (\pp ( np, n ) -> ( pp, np, n )) parentPositions branchNodes
+
+
+branchesToDict : List (PositionedBranch a) -> Dict Pos ( Pos, a )
+branchesToDict branches =
+    let
+        withParent : PositionedBranch a -> Maybe ( PositionedBranch a, PositionedBranch a )
+        withParent branch =
+            List.drop branch.parentBranch branches
+                |> List.head
+                |> Maybe.map (\mpb -> ( mpb, branch ))
+    in
+    branches
+        |> List.filterMap withParent
+        |> List.concatMap branchToNodes
+        |> List.foldl
+            (\( parentPos, currentPos, node ) dict ->
+                Dict.insert currentPos ( parentPos, node ) dict
+            )
+            Dict.empty
