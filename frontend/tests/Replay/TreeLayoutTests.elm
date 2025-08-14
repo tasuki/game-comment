@@ -459,9 +459,9 @@ testGetTreeLayout =
         [ test "Can get tree layout" <|
             \_ ->
                 Expect.equal
-                    [ [ Just ( ( 0, 1 ), "A2" ), Just ( ( 0, 2 ), "A3" ), Just ( ( 0, 3 ), "A4" ), Just ( ( 0, 4 ), "A5" ), Just ( ( 0, 5 ), "A6" ) ]
-                    , [ Just ( ( 0, 1 ), "G2" ), Nothing, Nothing, Nothing, Just ( ( 0, 5 ), "D6" ) ]
-                    , [ Nothing, Nothing, Just ( ( 0, 3 ), "E4" ), Just ( ( 2, 4 ), "E5" ), Just ( ( 2, 5 ), "E6" ) ]
+                    [ [ Just ( ( 0, 1 ), "A2", False ), Just ( ( 0, 2 ), "A3", False ), Just ( ( 0, 3 ), "A4", True ), Just ( ( 0, 4 ), "A5", False ), Just ( ( 0, 5 ), "A6", False ) ]
+                    , [ Just ( ( 0, 1 ), "G2", False ), Nothing, Nothing, Nothing, Just ( ( 0, 5 ), "D6", False ) ]
+                    , [ Nothing, Nothing, Just ( ( 0, 3 ), "E4", False ), Just ( ( 2, 4 ), "E5", False ), Just ( ( 2, 5 ), "E6", False ) ]
                     ]
                     (getTreeLayout 5 3 trickiestTreeZipper)
         ]

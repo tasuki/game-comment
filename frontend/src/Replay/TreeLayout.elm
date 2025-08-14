@@ -331,7 +331,7 @@ findPosition positionedBranches path =
 -- 7. View
 
 
-getTreeLayout : Int -> Int -> T.Zipper a -> List (List (Maybe ( Pos, a )))
+getTreeLayout : Int -> Int -> T.Zipper a -> List (List (Maybe ( Pos, a, Bool )))
 getTreeLayout width height zipper =
     let
         branches : List (PositionedBranch a)
@@ -357,6 +357,7 @@ getTreeLayout width height zipper =
             List.map
                 (\col ->
                     Dict.get ( row, col ) dict
+                        |> Maybe.map (\( p, a ) -> ( p, a, ( row, col ) == position ))
                 )
                 (List.range left (left + width - 1))
         )

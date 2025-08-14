@@ -232,8 +232,8 @@ chars =
     String.toList "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
-viewMoveHtml : msg -> String -> Int -> G.Move -> H.Html msg
-viewMoveHtml jumpMsg backgroundColour moveNum { player, play } =
+viewMoveHtml : String -> G.Move -> H.Html msg
+viewMoveHtml backgroundColour { player, play } =
     let
         char : Int -> Char
         char coord =
@@ -259,8 +259,7 @@ viewMoveHtml jumpMsg backgroundColour moveNum { player, play } =
                     "player white "
     in
     H.button
-        [ HE.onClick jumpMsg
-        , HA.class class
+        [ HA.class class
         , HA.style "background-color" backgroundColour
         ]
-        [ H.text <| String.fromInt moveNum ++ "." ++ moveStr ]
+        [ H.text moveStr ]

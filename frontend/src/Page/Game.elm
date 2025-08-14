@@ -18,6 +18,7 @@ import Maybe.Extra
 import Page exposing (Page)
 import Page.Help exposing (Model)
 import Replay as R
+import Replay.TreeLayout
 import Session exposing (Session)
 import Svg exposing (Svg)
 import Svg.Attributes as SA
@@ -622,6 +623,37 @@ createComment model =
             []
 
 
+treeView : Maybe R.Replay -> H.Html Msg
+treeView replay =
+    let
+        treeLayout : List (List (Maybe ( Replay.TreeLayout.Pos, G.Move, Bool )))
+        treeLayout =
+            replay
+                |> Maybe.map .gameTree
+                |> Maybe.map (Replay.TreeLayout.getTreeLayout 13 5)
+                |> Maybe.withDefault []
+
+        viewCell : Maybe ( a, G.Move, Bool ) -> H.Html msg
+        viewCell maybeCell =
+            case maybeCell of
+                Just ( _, move, current ) ->
+                    let
+                        color =
+                            if current then
+                                "#CB5"
+
+                            else
+                                "#CCC"
+                    in
+                    H.td [] [ R.viewMoveHtml color move ]
+
+                Nothing ->
+                    H.td [] []
+    in
+    H.table [ HA.class "tree-view" ]
+        (List.map (\r -> H.tr [] (List.map viewCell r)) treeLayout)
+
+
 sideView : Model -> List (H.Html Msg)
 sideView model =
     let
@@ -657,7 +689,7 @@ sideView model =
                     [ H.button [ HE.onClick End ] [ end ] ]
                 ]
     in
-    [ H.div [ HA.class "game-info" ] [ gameNav ]
+    [ H.div [ HA.class "game-info" ] [ gameNav, treeView model.replay ]
     , H.div [ HA.class "comments" ]
         ((H.div [ HA.class "create-comment" ] <| createComment model)
             :: C.view
