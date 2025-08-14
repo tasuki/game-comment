@@ -274,9 +274,6 @@ branchesToDict branches =
 findPositionHelper : List (PositionedBranch a) -> List a -> Pos -> Pos
 findPositionHelper positionedBranches path ( branchId, nodeNum ) =
     let
-        _ =
-            Debug.log "path, branchId, nodeNum" ( path, branchId, nodeNum )
-
         nextNodeNum =
             nodeNum + 1
 
