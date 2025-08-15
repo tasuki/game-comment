@@ -18,7 +18,7 @@ import Maybe.Extra
 import Page exposing (Page)
 import Page.Help exposing (Model)
 import Replay as R
-import Replay.TreeLayout
+import Replay.TreeLayout as RTL
 import Session exposing (Session)
 import Svg exposing (Svg)
 import Svg.Attributes as SA
@@ -634,26 +634,26 @@ createComment model =
 treeView : Maybe R.Replay -> H.Html Msg
 treeView replay =
     let
-        treeLayout : List (List (Maybe ( Replay.TreeLayout.Pos, G.Move, Bool )))
+        treeLayout : List (List (Maybe (RTL.LayoutItem G.Move)))
         treeLayout =
             replay
                 |> Maybe.map .gameTree
-                |> Maybe.map (Replay.TreeLayout.getTreeLayout 13 5)
+                |> Maybe.map (RTL.getTreeLayout 13 5)
                 |> Maybe.withDefault []
 
-        viewCell : Maybe ( a, G.Move, Bool ) -> H.Html msg
+        viewCell : Maybe (RTL.LayoutItem G.Move) -> H.Html msg
         viewCell maybeCell =
             case maybeCell of
-                Just ( _, move, current ) ->
+                Just layoutItem ->
                     let
                         color =
-                            if current then
+                            if layoutItem.focus then
                                 "#CB5"
 
                             else
                                 "#CCC"
                     in
-                    H.td [] [ R.viewMoveHtml color move ]
+                    H.td [] [ R.viewMoveHtml color layoutItem.node ]
 
                 Nothing ->
                     H.td [] []

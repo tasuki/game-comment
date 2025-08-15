@@ -331,7 +331,15 @@ findPosition positionedBranches path =
 -- 7. View
 
 
-getTreeLayout : Int -> Int -> T.Zipper a -> List (List (Maybe ( Pos, a, Bool )))
+type alias LayoutItem a =
+    { parent : Pos
+    , node : a
+    , path : List a
+    , focus : Bool
+    }
+
+
+getTreeLayout : Int -> Int -> T.Zipper a -> List (List (Maybe (LayoutItem a)))
 getTreeLayout width height zipper =
     let
         branches : List (PositionedBranch a)
@@ -351,14 +359,22 @@ getTreeLayout width height zipper =
         dict : Dict Pos ( Pos, a )
         dict =
             branchesToDict branches
+
+        createItem : Bool -> ( Pos, a ) -> LayoutItem a
+        createItem focus ( p, a ) =
+            { parent = p
+            , node = a
+            , path = []
+            , focus = focus
+            }
+
+        createCell : Int -> Int -> Maybe (LayoutItem a)
+        createCell row col =
+            Dict.get ( row, col ) dict
+                |> Maybe.map (createItem (( row, col ) == position))
+
+        createCols : Int -> List (Maybe (LayoutItem a))
+        createCols row =
+            List.map (createCell row) (List.range left (left + width - 1))
     in
-    List.map
-        (\row ->
-            List.map
-                (\col ->
-                    Dict.get ( row, col ) dict
-                        |> Maybe.map (\( p, a ) -> ( p, a, ( row, col ) == position ))
-                )
-                (List.range left (left + width - 1))
-        )
-        (List.range upper (upper + height - 1))
+    List.map createCols (List.range upper (upper + height - 1))
