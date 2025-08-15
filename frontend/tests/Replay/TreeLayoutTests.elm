@@ -459,9 +459,45 @@ testGetTreeLayout =
         [ test "Can get tree layout" <|
             \_ ->
                 Expect.equal
-                    [ [ Just ( ( 0, 1 ), "A2", False ), Just ( ( 0, 2 ), "A3", False ), Just ( ( 0, 3 ), "A4", True ), Just ( ( 0, 4 ), "A5", False ), Just ( ( 0, 5 ), "A6", False ) ]
-                    , [ Just ( ( 0, 1 ), "G2", False ), Nothing, Nothing, Nothing, Just ( ( 0, 5 ), "D6", False ) ]
-                    , [ Nothing, Nothing, Just ( ( 0, 3 ), "E4", False ), Just ( ( 2, 4 ), "E5", False ), Just ( ( 2, 5 ), "E6", False ) ]
+                    [ [ Just ( ( 0, 1 ), "A2" ), Just ( ( 0, 2 ), "A3" ), Just ( ( 0, 3 ), "A4" ), Just ( ( 0, 4 ), "A5" ), Just ( ( 0, 5 ), "A6" ) ]
+                    , [ Just ( ( 0, 1 ), "G2" ), Nothing, Nothing, Nothing, Just ( ( 0, 5 ), "D6" ) ]
+                    , [ Nothing, Nothing, Just ( ( 0, 3 ), "E4" ), Just ( ( 2, 4 ), "E5" ), Just ( ( 2, 5 ), "E6" ) ]
                     ]
-                    (getTreeLayout 5 3 trickiestTreeZipper)
+                    (getTreeLayout 5 3 trickiestTreeZipper |> List.map (List.map (Maybe.map (\li -> ( li.parent, li.node )))))
+        ]
+
+
+testGetPath : Test
+testGetPath =
+    describe "Get path"
+        [ test "Can get path" <|
+            \_ ->
+                Expect.equal
+                    [ "root", "A1", "H2", "H3" ]
+                    (getPath 5 3 trickiestTreePositioned)
+        , test "Can get shorter path" <|
+            \_ ->
+                Expect.equal
+                    [ "root", "A1", "H2" ]
+                    (getPath 5 2 trickiestTreePositioned)
+        , test "Can get simple path" <|
+            \_ ->
+                Expect.equal
+                    [ "root", "A1", "A2" ]
+                    (getPath 0 2 trickiestTreePositioned)
+        , test "Can get complex path" <|
+            \_ ->
+                Expect.equal
+                    [ "root", "A1", "H2", "I3", "I4" ]
+                    (getPath 6 4 trickiestTreePositioned)
+        , test "Can't get inexistent" <|
+            \_ ->
+                Expect.equal
+                    []
+                    (getPath 6 5 trickiestTreePositioned)
+        , test "Can't get another inexistent" <|
+            \_ ->
+                Expect.equal
+                    []
+                    (getPath 6 2 trickiestTreePositioned)
         ]

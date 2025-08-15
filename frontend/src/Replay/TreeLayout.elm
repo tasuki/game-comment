@@ -339,6 +339,41 @@ type alias LayoutItem a =
     }
 
 
+getPath : Int -> Int -> List (PositionedBranch a) -> List a
+getPath row col positionedBranches =
+    let
+        contains : ( Int, PositionedBranch a ) -> Bool
+        contains ( _, pb ) =
+            (pb.branchOffset == row)
+                && (col >= pb.firstNodeNum)
+                && (col < pb.firstNodeNum + List.length pb.nodes)
+
+        doGetPath : Int -> ( Int, PositionedBranch a ) -> List a
+        doGetPath toColumn ( branchId, pb ) =
+            let
+                nodes : List a
+                nodes =
+                    pb.nodes |> List.take (toColumn + 1 - pb.firstNodeNum)
+            in
+            if branchId == 0 then
+                nodes
+
+            else
+                case List.Extra.getAt pb.parentBranch positionedBranches of
+                    Just branch ->
+                        doGetPath (pb.firstNodeNum - 1) ( pb.parentBranch, branch ) ++ nodes
+
+                    Nothing ->
+                        []
+    in
+    positionedBranches
+        |> List.indexedMap Tuple.pair
+        |> List.filter contains
+        |> List.map (doGetPath col)
+        |> List.head
+        |> Maybe.withDefault []
+
+
 getTreeLayout : Int -> Int -> T.Zipper a -> List (List (Maybe (LayoutItem a)))
 getTreeLayout width height zipper =
     let
