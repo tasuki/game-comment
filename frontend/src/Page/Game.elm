@@ -30,7 +30,7 @@ import Task
 
 
 type View
-    = ViewReplay
+    = ViewReplay (Maybe R.GameView)
     | ViewWipComment Int
     | ViewComment Int Int
 
@@ -61,10 +61,10 @@ viewPrevious model =
                 ViewWipComment 0
 
             else
-                ViewReplay
+                ViewReplay Nothing
 
         _ ->
-            ViewReplay
+            ViewReplay Nothing
 
 
 viewNext : Model -> View
@@ -81,7 +81,7 @@ viewNext model =
                 model.view
     in
     case model.view of
-        ViewReplay ->
+        ViewReplay _ ->
             if hasWipComment model then
                 ViewWipComment 0
 
@@ -133,7 +133,7 @@ sidebarMsg =
 initEmpty : G.Game -> Int -> Session -> ( Model, Cmd Msg )
 initEmpty game size session =
     ( { session = session
-      , view = ViewReplay
+      , view = ViewReplay Nothing
       , source = Nothing
       , replay = Just <| R.emptyReplay <| G.empty game size
       , wipCommentBeingEdited = False
@@ -148,7 +148,7 @@ initEmpty game size session =
 initGame : G.GameSource -> Session -> ( Model, Cmd Msg )
 initGame gameSource session =
     ( { session = session
-      , view = ViewReplay
+      , view = ViewReplay Nothing
       , source = Just gameSource
       , replay = Nothing
       , wipCommentBeingEdited = False
@@ -163,7 +163,7 @@ initGame gameSource session =
 initPrevious : G.GameSource -> Maybe R.Replay -> String -> List C.Comment -> Session -> ( Model, Cmd Msg )
 initPrevious gameSource maybeReplay wipComment comments session =
     ( { session = session
-      , view = ViewReplay -- TODO preserve previous view?
+      , view = ViewReplay Nothing -- TODO preserve previous view?
       , source = Just gameSource
       , replay = maybeReplay
       , wipCommentBeingEdited = False
@@ -207,7 +207,7 @@ type Msg
 onlyInReplay : Model -> Model -> ( Model, Cmd msg )
 onlyInReplay model new =
     case model.view of
-        ViewReplay ->
+        ViewReplay _ ->
             ( new, Cmd.none )
 
         _ ->
@@ -276,6 +276,14 @@ update msg model =
 
         NextView ->
             ( { model | view = viewNext model }, Cmd.none )
+
+        Jump (ViewReplay (Just gameView)) ->
+            ( { model
+                | view = ViewReplay Nothing
+                , replay = Maybe.map (R.jump gameView) model.replay
+              }
+            , Cmd.none
+            )
 
         Jump jumpView ->
             ( { model | view = jumpView }, Cmd.none )
@@ -551,7 +559,7 @@ boardView model =
     case model.replay of
         Just replay ->
             case model.view of
-                ViewReplay ->
+                ViewReplay _ ->
                     viewReplay replay
 
                 ViewWipComment clickablePos ->
@@ -665,12 +673,12 @@ sideView model =
 
         navMidItem =
             case model.view of
-                ViewReplay ->
+                ViewReplay _ ->
                     [ H.span [ HA.class "game-highlight" ] [ H.text <| String.fromInt moveNum ] ]
 
                 _ ->
                     [ H.button
-                        [ HA.class "game-clickable", HE.onClick <| Jump ViewReplay ]
+                        [ HA.class "game-clickable", HE.onClick <| Jump <| ViewReplay Nothing ]
                         [ H.text "review" ]
                     ]
 
