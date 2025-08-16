@@ -59,6 +59,31 @@ treeWithRecord record zipper =
         |> Maybe.withDefault zipper
 
 
+descendToPath : List G.Move -> GameView -> GameView
+descendToPath path zipper =
+    case path of
+        [] ->
+            zipper
+
+        head :: tail ->
+            case T.findChildIndex head zipper of
+                Just childIndex ->
+                    case T.descendToIndex childIndex zipper of
+                        Just newZipper ->
+                            descendToPath tail newZipper
+
+                        Nothing ->
+                            zipper
+
+                Nothing ->
+                    zipper
+
+
+viewPath : List G.Move -> GameView -> GameView
+viewPath path zipper =
+    descendToPath path (T.ascendStart zipper)
+
+
 
 -- Moves
 
@@ -232,8 +257,8 @@ chars =
     String.toList "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
-viewMoveHtml : String -> G.Move -> H.Html msg
-viewMoveHtml backgroundColour { player, play } =
+viewMoveHtml : msg -> String -> G.Move -> H.Html msg
+viewMoveHtml viewReplay backgroundColour { player, play } =
     let
         char : Int -> Char
         char coord =
@@ -259,7 +284,8 @@ viewMoveHtml backgroundColour { player, play } =
                     "player white "
     in
     H.button
-        [ HA.class class
+        [ HE.onClick viewReplay
+        , HA.class class
         , HA.style "background-color" backgroundColour
         ]
         [ H.text moveStr ]

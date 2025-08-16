@@ -18,6 +18,11 @@ linTree =
     t "root" [ t "A1" [ t "A2" [] ] ]
 
 
+linMaybeTree : T.Tree (Maybe String)
+linMaybeTree =
+    t Nothing [ t (Just "A1") [ t (Just "A2") [] ] ]
+
+
 varTree : T.Tree String
 varTree =
     t "root"
@@ -365,6 +370,16 @@ testTreeToPositionedBranches =
             \_ ->
                 Expect.equal anOpenQuestionPositioned
                     (treeToBranches anOpenQuestion)
+        , test "Can convert linTree to positioned branches" <|
+            \_ ->
+                Expect.equal
+                    [ { parentBranch = 0, branchOffset = 0, firstNodeNum = 0, nodes = [ "root", "A1", "A2" ] } ]
+                    (treeToBranches linTree)
+        , test "Can convert linMaybeTree to positioned branches" <|
+            \_ ->
+                Expect.equal
+                    [ { parentBranch = 0, branchOffset = 0, firstNodeNum = 0, nodes = [ Nothing, Just "A1", Just "A2" ] } ]
+                    (treeToBranches linMaybeTree)
         ]
 
 
@@ -374,7 +389,7 @@ testBranchesToDict =
         [ test "Can convert trickiestTree to dictionary" <|
             \_ ->
                 Expect.all
-                    [ \d -> Expect.equal (Just ( ( 0, 0 ), "root" )) (Dict.get ( 0, 0 ) d)
+                    [ \d -> Expect.equal (Just ( ( 0, -1 ), "root" )) (Dict.get ( 0, 0 ) d)
                     , \d -> Expect.equal (Just ( ( 0, 0 ), "A1" )) (Dict.get ( 0, 1 ) d)
                     , \d -> Expect.equal (Just ( ( 0, 1 ), "A2" )) (Dict.get ( 0, 2 ) d)
                     , \d -> Expect.equal (Just ( ( 0, 7 ), "A8" )) (Dict.get ( 0, 8 ) d)
@@ -464,6 +479,28 @@ testGetTreeLayout =
                     , [ Nothing, Nothing, Just ( ( 0, 3 ), "E4" ), Just ( ( 2, 4 ), "E5" ), Just ( ( 2, 5 ), "E6" ) ]
                     ]
                     (getTreeLayout 5 3 trickiestTreeZipper |> List.map (List.map (Maybe.map (\li -> ( li.parent, li.node )))))
+        , test "Can get very simple tree layout" <|
+            \_ ->
+                Expect.equal
+                    [ [ Just { focus = True, node = "root", parent = ( 0, -1 ), path = [ "root" ] }
+                      , Just { focus = False, node = "A1", parent = ( 0, 0 ), path = [ "root", "A1" ] }
+                      , Just { focus = False, node = "A2", parent = ( 0, 1 ), path = [ "root", "A1", "A2" ] }
+                      ]
+                    , [ Nothing, Nothing, Nothing ]
+                    , [ Nothing, Nothing, Nothing ]
+                    ]
+                    (getTreeLayout 3 3 (T.makeZipper linTree))
+        , test "Can get maybe tree layout" <|
+            \_ ->
+                Expect.equal
+                    [ [ Just { focus = True, node = Nothing, parent = ( 0, -1 ), path = [ Nothing ] }
+                      , Just { focus = False, node = Just "A1", parent = ( 0, 0 ), path = [ Nothing, Just "A1" ] }
+                      , Just { focus = False, node = Just "A2", parent = ( 0, 1 ), path = [ Nothing, Just "A1", Just "A2" ] }
+                      ]
+                    , [ Nothing, Nothing, Nothing ]
+                    , [ Nothing, Nothing, Nothing ]
+                    ]
+                    (getTreeLayout 3 3 (T.makeZipper linMaybeTree))
         ]
 
 
@@ -500,4 +537,14 @@ testGetPath =
                 Expect.equal
                     []
                     (getPath 6 2 trickiestTreePositioned)
+        , test "Can get 0 1 path" <|
+            \_ ->
+                Expect.equal
+                    [ "root", "A1" ]
+                    (getPath 0 1 (treeToBranches linTree))
+        , test "Can get 0 0 path" <|
+            \_ ->
+                Expect.equal
+                    [ "root" ]
+                    (getPath 0 0 (treeToBranches linTree))
         ]

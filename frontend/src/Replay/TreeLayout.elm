@@ -238,11 +238,7 @@ branchToNodes ( parentBranch, b ) =
         parentPositions =
             let
                 newNodeNum =
-                    if b.firstNodeNum > 0 then
-                        b.firstNodeNum - 1
-
-                    else
-                        0
+                    b.firstNodeNum - 1
             in
             ( parentBranch.branchOffset, newNodeNum ) :: positionsWithoutLast
     in
@@ -395,18 +391,18 @@ getTreeLayout width height zipper =
         dict =
             branchesToDict branches
 
-        createItem : Bool -> ( Pos, a ) -> LayoutItem a
-        createItem focus ( p, a ) =
-            { parent = p
+        createItem : Bool -> List a -> ( Pos, a ) -> LayoutItem a
+        createItem focus path ( parent, a ) =
+            { parent = parent
             , node = a
-            , path = []
+            , path = path
             , focus = focus
             }
 
         createCell : Int -> Int -> Maybe (LayoutItem a)
         createCell row col =
             Dict.get ( row, col ) dict
-                |> Maybe.map (createItem (( row, col ) == position))
+                |> Maybe.map (createItem (( row, col ) == position) (getPath row col branches))
 
         createCols : Int -> List (Maybe (LayoutItem a))
         createCols row =

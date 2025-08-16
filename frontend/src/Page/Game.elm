@@ -30,7 +30,7 @@ import Task
 
 
 type View
-    = ViewReplay (Maybe R.GameView)
+    = ViewReplay (Maybe (List G.Move))
     | ViewWipComment Int
     | ViewComment Int Int
 
@@ -277,10 +277,14 @@ update msg model =
         NextView ->
             ( { model | view = viewNext model }, Cmd.none )
 
-        Jump (ViewReplay (Just gameView)) ->
+        Jump (ViewReplay (Just path)) ->
+            let
+                newReplay replay =
+                    { replay | gameTree = R.viewPath path replay.gameTree }
+            in
             ( { model
                 | view = ViewReplay Nothing
-                , replay = Maybe.map (R.jump gameView) model.replay
+                , replay = Maybe.map newReplay model.replay
               }
             , Cmd.none
             )
@@ -641,11 +645,14 @@ treeView replay =
                 |> Maybe.map (RTL.getTreeLayout 13 5)
                 |> Maybe.withDefault []
 
-        viewCell : Maybe (RTL.LayoutItem G.Move) -> H.Html msg
+        viewCell : Maybe (RTL.LayoutItem G.Move) -> H.Html Msg
         viewCell maybeCell =
             case maybeCell of
                 Just layoutItem ->
                     let
+                        msg =
+                            Jump (ViewReplay (Just layoutItem.path))
+
                         color =
                             if layoutItem.focus then
                                 "#CB5"
@@ -653,7 +660,7 @@ treeView replay =
                             else
                                 "#CCC"
                     in
-                    H.td [] [ R.viewMoveHtml color layoutItem.node ]
+                    H.td [] [ R.viewMoveHtml msg color layoutItem.node ]
 
                 Nothing ->
                     H.td [] []
