@@ -320,7 +320,17 @@ findPositionHelper positionedBranches path ( branchId, nodeNum ) =
 
 findPosition : List (PositionedBranch a) -> List a -> Pos
 findPosition positionedBranches path =
-    findPositionHelper positionedBranches (List.tail path |> Maybe.withDefault []) ( 0, 0 )
+    case path of
+        [] ->
+            -- this whole thing gonna crumble so bad...
+            -- just touch any of this logic...
+            ( 0, -1 )
+
+        _ ->
+            findPositionHelper
+                positionedBranches
+                (List.tail path |> Maybe.withDefault [])
+                ( 0, 0 )
 
 
 

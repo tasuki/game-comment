@@ -8,6 +8,10 @@ import Replay.TreeTests as TT exposing (t)
 import Test exposing (..)
 
 
+
+-- the "root" thing is misleading: it's an actual item and a zipper can look "before" it
+
+
 empTree : T.Tree String
 empTree =
     t "root" []
@@ -547,4 +551,9 @@ testGetPath =
                 Expect.equal
                     [ "root" ]
                     (getPath 0 0 (treeToBranches linTree))
+        , test "Can get 0 -1 path" <|
+            \_ ->
+                Expect.equal
+                    []
+                    (getPath 0 -1 (treeToBranches linTree))
         ]
