@@ -1,7 +1,7 @@
 .PHONY: release bin develop dev-config
 
 release: bin
-	sudo systemctl stop game-comment
+	sudo systemctl stop game-comment || true
 	./bin/gc-migrate
 	sudo systemctl start game-comment
 
