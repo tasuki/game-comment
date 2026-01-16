@@ -10,8 +10,8 @@ release: bin
 bin:
 	mkdir -p bin/
 	# stack build --copy-bins --local-bin-path bin/
-	curl -o bin/gc-migrate https://github.com/tasuki/game-comment/releases/download/v2/gc-migrate
-	curl -o bin/gc-server https://github.com/tasuki/game-comment/releases/download/v2/gc-server
+	curl -o bin/gc-migrate https://github.com/tasuki/game-comment/releases/latest/download/gc-migrate
+	curl -o bin/gc-server https://github.com/tasuki/game-comment/releases/latest/download/gc-server
 	chmod 755 bin/*
 
 develop: dev-config
