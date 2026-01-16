@@ -12,6 +12,7 @@ bin:
 	# stack build --copy-bins --local-bin-path bin/
 	curl -o bin/gc-migrate https://github.com/tasuki/game-comment/releases/download/v2/gc-migrate
 	curl -o bin/gc-server https://github.com/tasuki/game-comment/releases/download/v2/gc-server
+	chmod 755 bin/*
 
 develop: dev-config
 	fd | entr -s "pkill gc-server; stack run gc-server &"
