@@ -67,6 +67,7 @@ instance A.FromJSON Comment
 data RecentComment = RecentComment
     { source :: Text
     , gameId :: Text
+    , sgf :: Text
     , commentsCount :: Int
     , username :: Text
     , created :: Text

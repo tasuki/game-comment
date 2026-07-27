@@ -187,8 +187,15 @@ viewPicker picker =
 
 viewRecentComment : C.RecentComment -> H.Html Msg
 viewRecentComment comment =
+    let
+        game =
+            LG.parse (G.GameSource comment.source comment.gameId) comment.sgf
+                |> Result.map (\record -> G.gameString record.game)
+                |> Result.withDefault "?"
+    in
     H.tr []
-        [ H.td [] [ H.text comment.source ]
+        [ H.td [] [ H.text game ]
+        , H.td [] [ H.text comment.source ]
         , H.td []
             [ H.a [ HA.href <| Route.toUrl <| Route.Game comment.source comment.gameId ]
                 [ H.text comment.gameId ]
@@ -208,9 +215,10 @@ viewRecentComments recentComments =
     , H.table [ HA.class "recent-comments" ]
         [ H.thead []
             [ H.tr []
-                [ H.th [] [ H.text "Source" ]
+                [ H.th [] [ H.text "Game" ]
+                , H.th [] [ H.text "Src" ]
                 , H.th [] [ H.text "Game ID" ]
-                , H.th [] [ H.text "Comments" ]
+                , H.th [] [ H.text "Cmnts" ]
                 , H.th [] [ H.text "Commenter" ]
                 , H.th [] [ H.text "Date" ]
                 ]

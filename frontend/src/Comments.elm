@@ -42,6 +42,7 @@ commentsDecoder =
 type alias RecentComment =
     { source : String
     , gameId : String
+    , sgf : String
     , commentsCount : Int
     , username : String
     , created : String
@@ -50,9 +51,10 @@ type alias RecentComment =
 
 recentCommentDecoder : D.Decoder RecentComment
 recentCommentDecoder =
-    D.map5 RecentComment
+    D.map6 RecentComment
         (D.field "source" D.string)
         (D.field "gameId" D.string)
+        (D.field "sgf" D.string)
         (D.field "commentsCount" D.int)
         (D.field "username" D.string)
         (D.field "created" D.string)

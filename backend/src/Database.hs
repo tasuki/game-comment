@@ -5,6 +5,7 @@ module Database where
 import Control.Exception (try)
 import qualified Database.SQLite.Simple as S
 import Data.Text.Lazy (Text)
+import qualified Data.Text.Lazy as TL
 import Data.Tuple.Curry (uncurryN)
 import qualified Data.ByteString.Lazy.Char8 as LBS
 
@@ -114,11 +115,15 @@ getComments conn source gameId = do
 
 getRecentComments :: S.Connection -> IO (SqlResult [API.RecentComment])
 getRecentComments conn = do
-    rows <- S.query_ conn query :: IO [(Text, Text, Int, Text, Text)]
-    pure $ Success $ map (uncurryN API.RecentComment) rows
-    where query = "\
-        \ SELECT c.source, c.game_id, counts.comments_count, u.username, c.created \
+    rows <- S.query_ conn query :: IO [(Text, Text, LBS.ByteString, Int, Text, Text)]
+    pure $ Success $ map toRecentComment rows
+    where
+        toRecentComment (source, gameId, sgf, commentsCount, username, created) =
+            API.RecentComment source gameId (TL.pack $ LBS.unpack sgf) commentsCount username created
+        query = "\
+        \ SELECT c.source, c.game_id, g.sgf, counts.comments_count, u.username, c.created \
         \ FROM comments AS c \
+        \ JOIN games AS g ON g.source = c.source AND g.game_id = c.game_id \
         \ JOIN users AS u ON u.id = c.user_id \
         \ JOIN ( \
         \     SELECT source, game_id, COUNT(*) AS comments_count \

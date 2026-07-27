@@ -98,7 +98,7 @@ spec = with setupApp $ do
 
         it "lists recent comments" $ do
             authHeader <- setupUserSession
-            request Method.methodPut "/games/here/gameid" authHeader [r|thisisthegamerecord|]
+            request Method.methodPut "/games/here/gameid" authHeader [r|(;FF[4]EV[Hex]PB[black]PW[white]SZ[13])|]
             request Method.methodPost "/games/here/gameid/comments" authHeader [r|{"comment": "first!"}|]
             request Method.methodPost "/games/here/gameid/comments" authHeader [r|{"comment": "second!"}|]
             response <- get "/comments/recent"
