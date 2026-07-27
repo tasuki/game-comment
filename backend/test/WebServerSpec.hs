@@ -19,6 +19,7 @@ import Text.RawString.QQ
 
 import qualified ApiResources as Res
 import qualified ApiResources as Cmt (Comment(username, comment))
+import qualified ApiResources as RC (RecentComment(source, gameId, commentsCount, username))
 import qualified Database as DB
 import qualified Env
 import qualified Migrations
@@ -95,6 +96,24 @@ spec = with setupApp $ do
                 Nothing ->
                     error "Failed to decode JSON into comments"
 
+        it "lists recent comments" $ do
+            authHeader <- setupUserSession
+            request Method.methodPut "/games/here/gameid" authHeader [r|thisisthegamerecord|]
+            request Method.methodPost "/games/here/gameid/comments" authHeader [r|{"comment": "first!"}|]
+            request Method.methodPost "/games/here/gameid/comments" authHeader [r|{"comment": "second!"}|]
+            response <- get "/comments/recent"
+            let comments = decodeRecentComments (simpleBody response)
+            case comments of
+                Just (cmnt : _) -> do
+                    liftIO $ (RC.source cmnt) `shouldBe` "here"
+                    liftIO $ (RC.gameId cmnt) `shouldBe` "gameid"
+                    liftIO $ (RC.commentsCount cmnt) `shouldBe` 2
+                    liftIO $ (RC.username cmnt) `shouldBe` "user"
+                Just [] -> do
+                    error "No recent comments :scream:"
+                Nothing ->
+                    error "Failed to decode JSON into recent comments"
+
 setupApp :: IO Wai.Application
 setupApp = do
     config <- Env.readEnvVars
@@ -123,3 +142,6 @@ assertJsonField body field assertion =
 
 decodeComments :: BL.ByteString -> Maybe [Res.Comment]
 decodeComments body = decode body :: Maybe [Res.Comment]
+
+decodeRecentComments :: BL.ByteString -> Maybe [Res.RecentComment]
+decodeRecentComments body = decode body :: Maybe [Res.RecentComment]

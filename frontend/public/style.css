@@ -39,6 +39,8 @@ h3 { font-size: 20px; font-weight: normal; }
 .picker #content button, .picker #content input { background-color: #EEE; border: 1px solid #CCC; margin: 10px; padding: 5px 10px; }
 .picker #content input { background-color: #FFF; }
 .picker #content .lg-picker { width: 80%; }
+.recent-comments { margin: 10px; border-collapse: collapse; }
+.recent-comments th, .recent-comments td { border: 1px solid #CCC; padding: 5px 10px; text-align: left; }
 
 /* user */
 .user #content button, .user #content input { background-color: #EEE; border: 1px solid #CCC; margin: 10px; padding: 5px 10px; }

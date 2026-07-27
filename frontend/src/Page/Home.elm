@@ -1,6 +1,8 @@
 module Page.Home exposing (..)
 
+import ApiClient
 import Browser.Navigation as Nav
+import Comments as C
 import GameHelpers as GH
 import GameRecord as G
 import Html as H
@@ -27,6 +29,7 @@ type alias Model =
     { session : Session
     , picker : Picker
     , message : String
+    , recentComments : List C.RecentComment
     }
 
 
@@ -35,8 +38,9 @@ init session =
     ( { session = session
       , picker = { game = Nothing, size = 0, identifier = "" }
       , message = "Hi."
+      , recentComments = []
       }
-    , Cmd.none
+    , ApiClient.getRecentComments GotRecentComments
     )
 
 
@@ -50,6 +54,7 @@ type Msg
     | CreateBoard
     | EnterIdentifier String
     | FetchLG String
+    | GotRecentComments ApiClient.RecentCommentsResult
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -101,6 +106,14 @@ update msg model =
                       }
                     , Cmd.none
                     )
+
+        GotRecentComments result ->
+            case result of
+                Ok recentComments ->
+                    ( { model | recentComments = recentComments }, Cmd.none )
+
+                Err error ->
+                    ( { model | message = "Could not load recent comments: [ " ++ error ++ " ]" }, Cmd.none )
 
 
 
@@ -172,10 +185,45 @@ viewPicker picker =
     ]
 
 
+viewRecentComment : C.RecentComment -> H.Html Msg
+viewRecentComment comment =
+    H.tr []
+        [ H.td [] [ H.text comment.source ]
+        , H.td []
+            [ H.a [ HA.href <| Route.toUrl <| Route.Game comment.source comment.gameId ]
+                [ H.text comment.gameId ]
+            ]
+        , H.td [] [ H.text <| String.fromInt comment.commentsCount ]
+        , H.td [] [ H.text comment.username ]
+        , H.td [] [ H.text <| String.left 10 comment.created ]
+        ]
+
+
+viewRecentComments : List C.RecentComment -> List (H.Html Msg)
+viewRecentComments recentComments =
+    [ H.br [] []
+    , H.h3 [] [ H.text "~~ OR ~~" ]
+    , H.br [] []
+    , H.p [] [ H.text "Recent comments:" ]
+    , H.table [ HA.class "recent-comments" ]
+        [ H.thead []
+            [ H.tr []
+                [ H.th [] [ H.text "Source" ]
+                , H.th [] [ H.text "Game ID" ]
+                , H.th [] [ H.text "Comments" ]
+                , H.th [] [ H.text "Commenter" ]
+                , H.th [] [ H.text "Date" ]
+                ]
+            ]
+        , H.tbody [] (List.map viewRecentComment recentComments)
+        ]
+    ]
+
+
 view : Model -> Page Msg
 view model =
     { title = "Game Comment - Load Game"
     , extraClass = "picker narrower"
-    , content = viewPicker model.picker
+    , content = viewPicker model.picker ++ viewRecentComments model.recentComments
     , sidebar = Page.sideHelp
     }

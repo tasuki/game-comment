@@ -105,6 +105,12 @@ waiApp config conn =
                 )
 
         -- Comments
+        S.get "/comments/recent" $ do
+            commentResult <- liftIO $ DB.getRecentComments conn
+            case commentResult of
+                DB.Success comments -> S.json comments
+                _ -> jsonError Status.status500 "Unknown error"
+
         S.get "/games/:source/:gameId/comments" $ do
             gameId <- S.param "gameId"
             source <- S.param "source"

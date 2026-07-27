@@ -19,3 +19,6 @@ develop: dev-config
 
 dev-config:
 	cp -f .env.dev .env
+
+test:
+	stack test

@@ -15,3 +15,6 @@ dev:
 
 serve:
 	serve -p 6484 --single &
+
+test:
+	elm-test

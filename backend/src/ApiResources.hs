@@ -62,3 +62,14 @@ data Comment = Comment
     } deriving (Show, Generic)
 instance A.ToJSON Comment
 instance A.FromJSON Comment
+
+
+data RecentComment = RecentComment
+    { source :: Text
+    , gameId :: Text
+    , commentsCount :: Int
+    , username :: Text
+    , created :: Text
+    } deriving (Show, Generic)
+instance A.ToJSON RecentComment
+instance A.FromJSON RecentComment

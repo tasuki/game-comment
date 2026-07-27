@@ -112,6 +112,22 @@ getComments conn source gameId = do
         \ WHERE c.source = ? AND c.game_id = ? \
         \ ORDER BY c.created"
 
+getRecentComments :: S.Connection -> IO (SqlResult [API.RecentComment])
+getRecentComments conn = do
+    rows <- S.query_ conn query :: IO [(Text, Text, Int, Text, Text)]
+    pure $ Success $ map (uncurryN API.RecentComment) rows
+    where query = "\
+        \ SELECT c.source, c.game_id, counts.comments_count, u.username, c.created \
+        \ FROM comments AS c \
+        \ JOIN users AS u ON u.id = c.user_id \
+        \ JOIN ( \
+        \     SELECT source, game_id, COUNT(*) AS comments_count \
+        \     FROM comments \
+        \     GROUP BY source, game_id \
+        \ ) AS counts ON counts.source = c.source AND counts.game_id = c.game_id \
+        \ ORDER BY c.created DESC \
+        \ LIMIT 10"
+
 postComment :: S.Connection -> API.UserData -> Text -> Text -> Text -> IO (SqlResult ())
 postComment conn userData source gameId comment = do
     result <- try $ S.execute conn query (UD.id userData, source, gameId, comment)

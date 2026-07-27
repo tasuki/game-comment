@@ -39,6 +39,30 @@ commentsDecoder =
     D.list commentDecoder
 
 
+type alias RecentComment =
+    { source : String
+    , gameId : String
+    , commentsCount : Int
+    , username : String
+    , created : String
+    }
+
+
+recentCommentDecoder : D.Decoder RecentComment
+recentCommentDecoder =
+    D.map5 RecentComment
+        (D.field "source" D.string)
+        (D.field "gameId" D.string)
+        (D.field "commentsCount" D.int)
+        (D.field "username" D.string)
+        (D.field "created" D.string)
+
+
+recentCommentsDecoder : D.Decoder (List RecentComment)
+recentCommentsDecoder =
+    D.list recentCommentDecoder
+
+
 type alias CreateComment =
     { comment : String
     }

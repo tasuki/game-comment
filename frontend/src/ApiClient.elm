@@ -46,6 +46,10 @@ type alias CommentsResult =
     Result String (List C.CommentResponse)
 
 
+type alias RecentCommentsResult =
+    Result String (List C.RecentComment)
+
+
 type alias CommentCreatedResult =
     Result Error ()
 
@@ -229,6 +233,14 @@ getComments msg gameSource =
     Http.get
         { url = baseUrl ++ "/games/" ++ source ++ "/" ++ gameId ++ "/comments"
         , expect = Http.expectJson (decodeStatusError >> msg) C.commentsDecoder
+        }
+
+
+getRecentComments : (RecentCommentsResult -> msg) -> Cmd msg
+getRecentComments msg =
+    Http.get
+        { url = baseUrl ++ "/comments/recent"
+        , expect = Http.expectJson (decodeStatusError >> msg) C.recentCommentsDecoder
         }
 
 
