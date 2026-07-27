@@ -47,6 +47,9 @@ h3 { font-size: 20px; font-weight: normal; }
 .game-info .game-nav { max-width: 350px; margin: auto; }
 .game-info .game-nav div { display: flex; justify-content: center; align-items: center; }
 .game-info .game-nav svg { vertical-align: middle; }
+.game-info button.save-game, .game-info .save-game-player-names input { background-color: #EEE; border: 1px solid #CCC; margin: 10px; padding: 5px 10px; }
+.game-info .save-game-player-names input { background-color: #FFF; }
+.game-info button.save-game:hover { background-color: #CB5; border-color: #984; color: #653; }
 .tree-view { width: 100%; overflow: hidden; table-layout: fixed; max-width: 500px; margin: auto; }
 .tree-view button { font-size: 12px; width: 24px; height: 16px; }
 .message { margin: 10px; padding: 5px; }

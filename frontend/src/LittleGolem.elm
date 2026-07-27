@@ -184,10 +184,10 @@ nodesToRecord gameSource nodes =
             else if String.contains "hex" ev then
                 Just Hex
 
-            else if String.contains "toroid" ev then
+            else if String.contains "toroid" ev || String.contains "torus" ev then
                 Just ToroidGo
 
-            else if String.contains "go" vr then
+            else if String.contains "go" ev || String.contains "go" vr then
                 Just Go
 
             else if String.contains "sunjang" vr then
@@ -217,6 +217,79 @@ parse gameSource input =
     Parser.run parser input
         |> Result.mapError showDeadEnds
         |> Result.andThen (nodesToRecord gameSource)
+
+
+encodeCoord : Int -> String
+encodeCoord n =
+    let
+        code =
+            n + 96
+    in
+    if code < 127 then
+        Char.fromCode code |> String.fromChar
+
+    else
+        "{{" ++ String.fromInt code ++ "}}"
+
+
+encodePlay : Play -> String
+encodePlay play =
+    case play of
+        Place coords ->
+            encodeCoord coords.x ++ encodeCoord coords.y
+
+        Swap ->
+            "swap"
+
+        Resign ->
+            "resign"
+
+
+escapeProperty : String -> String
+escapeProperty value =
+    value
+        |> String.replace "\\" "\\\\"
+        |> String.replace "]" "\\]"
+
+
+property : String -> String -> String
+property key value =
+    key ++ "[" ++ escapeProperty value ++ "]"
+
+
+recordToSgf : Record -> String
+recordToSgf record =
+    let
+        ( ( blackName, whiteName ), ( blackMove, whiteMove ) ) =
+            if record.game == TwixT then
+                ( ( "PW", "PB" ), ( "r", "b" ) )
+
+            else if record.game == Hex then
+                ( ( "PB", "PW" ), ( "W", "B" ) )
+
+            else
+                ( ( "PB", "PW" ), ( "B", "W" ) )
+
+        firstNode =
+            ";"
+                ++ property "EV" (gameString record.game)
+                ++ property "SZ" (String.fromInt record.size)
+                ++ property blackName record.black
+                ++ property whiteName record.white
+
+        moveNode move =
+            let
+                prop =
+                    case move.player of
+                        Black ->
+                            blackMove
+
+                        White ->
+                            whiteMove
+            in
+            ";" ++ property prop (encodePlay move.play)
+    in
+    "(" ++ firstNode ++ String.concat (List.map moveNode record.moves) ++ ")"
 
 
 gameIdParser : Parser String

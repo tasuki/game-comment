@@ -182,23 +182,44 @@ updateGamePage model msg m =
         ( newModel, newCmd ) =
             Page.Game.update msg m
 
-        newReplays =
+        baseReplays =
             case newModel.replay of
                 Just replay ->
                     Dict.insert model.currentUrl.path replay model.replays
 
                 _ ->
                     model.replays
+
+        newReplays =
+            case ( msg, newModel.replay ) of
+                ( Page.Game.GameSaved True (G.GameSource source gameId) (Ok _), Just replay ) ->
+                    baseReplays
+                        |> Dict.remove model.currentUrl.path
+                        |> Dict.insert (Route.toUrl <| Route.Game source gameId) replay
+
+                _ ->
+                    baseReplays
+
+        openCmd =
+            case msg of
+                Page.Game.GameSaved True (G.GameSource source gameId) (Ok _) ->
+                    Nav.pushUrl model.key (Route.toUrl <| Route.Game source gameId)
+
+                _ ->
+                    Cmd.none
+
+        ( updatedModel, updatedCmd ) =
+            updateWith
+                { model
+                    | replays = newReplays
+                    , comments = Dict.insert model.currentUrl.path newModel.comments model.comments
+                    , wipComments = Dict.insert model.currentUrl.path newModel.wipComment model.wipComments
+                }
+                Game
+                GameMsg
+                ( newModel, newCmd )
     in
-    updateWith
-        { model
-            | replays = newReplays
-            , comments = Dict.insert model.currentUrl.path newModel.comments model.comments
-            , wipComments = Dict.insert model.currentUrl.path newModel.wipComment model.wipComments
-        }
-        Game
-        GameMsg
-        ( newModel, newCmd )
+    ( updatedModel, Cmd.batch [ updatedCmd, openCmd ] )
 
 
 closeGame : String -> Model -> ( Model, Cmd Msg )

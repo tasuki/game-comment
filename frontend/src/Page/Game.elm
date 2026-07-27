@@ -17,12 +17,14 @@ import List.Extra
 import Maybe.Extra
 import Page exposing (Page)
 import Page.Help exposing (Model)
+import Random
 import Replay as R
 import Replay.TreeLayout as RTL
 import Session exposing (Session)
 import Svg exposing (Svg)
 import Svg.Attributes as SA
 import Task
+import User as U
 
 
 
@@ -122,6 +124,7 @@ type alias Model =
     , wipComment : String
     , comments : List C.Comment
     , message : String
+    , showSaveGameButton : Bool
     }
 
 
@@ -140,6 +143,7 @@ initEmpty game size session =
       , wipComment = ""
       , comments = []
       , message = sidebarMsg
+      , showSaveGameButton = False
       }
     , Cmd.none
     )
@@ -155,6 +159,7 @@ initGame gameSource session =
       , wipComment = ""
       , comments = []
       , message = sidebarMsg
+      , showSaveGameButton = False
       }
     , AC.getSgf Fetched gameSource
     )
@@ -170,6 +175,7 @@ initPrevious gameSource maybeReplay wipComment comments session =
       , wipComment = wipComment
       , comments = comments
       , message = ""
+      , showSaveGameButton = False
       }
     , Task.succeed Reload |> Task.perform identity
     )
@@ -202,6 +208,12 @@ type Msg
     | CommentAddCoords G.Coords
     | CreateComment
     | CommentCreated AC.CommentCreatedResult
+    | SaveGame
+    | CreateGameId String
+    | GameSaved Bool G.GameSource AC.GameSavedResult
+    | ToggleSaveGameButton
+    | EditBlackPlayer String
+    | EditWhitePlayer String
 
 
 onlyInReplay : Model -> Model -> ( Model, Cmd msg )
@@ -212,6 +224,31 @@ onlyInReplay model new =
 
         _ ->
             ( model, Cmd.none )
+
+
+saveGame : Bool -> String -> Model -> ( Model, Cmd Msg )
+saveGame shouldOpen gameId model =
+    case model.replay of
+        Just replay ->
+            let
+                gameSource =
+                    G.GameSource "here" gameId
+
+                record =
+                    replay.record
+
+                recordToSave =
+                    { record | source = gameSource, moves = R.allMoves replay }
+            in
+            ( { model
+                | message = "Saving game..."
+                , replay = Just { replay | record = recordToSave }
+              }
+            , AC.saveHereGame (GameSaved shouldOpen gameSource) model.session gameId recordToSave
+            )
+
+        Nothing ->
+            ( { model | message = "No game to save." }, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -415,6 +452,53 @@ update msg model =
         CommentCreated result ->
             -- TODO maybe do something if something broke or didn't?
             update Reload model
+
+        SaveGame ->
+            case model.source of
+                Just (G.GameSource "here" gameId) ->
+                    saveGame False gameId model
+
+                Just _ ->
+                    ( { model | message = "Only games created here can be updated." }, Cmd.none )
+
+                Nothing ->
+                    ( model, Random.generate CreateGameId (U.passwordGen 8) )
+
+        CreateGameId gameId ->
+            saveGame True gameId model
+
+        GameSaved _ gameSource result ->
+            case result of
+                Ok _ ->
+                    ( { model | source = Just gameSource, message = "Game saved.", showSaveGameButton = False }, Cmd.none )
+
+                Err error ->
+                    ( { model | message = "Could not save game: [ " ++ error.msg ++ " ]" }, Cmd.none )
+
+        ToggleSaveGameButton ->
+            ( { model | showSaveGameButton = not model.showSaveGameButton }, Cmd.none )
+
+        EditBlackPlayer name ->
+            let
+                updateRecord replay =
+                    let
+                        record =
+                            replay.record
+                    in
+                    { replay | record = { record | black = name } }
+            in
+            ( { model | replay = Maybe.map updateRecord model.replay }, Cmd.none )
+
+        EditWhitePlayer name ->
+            let
+                updateRecord replay =
+                    let
+                        record =
+                            replay.record
+                    in
+                    { replay | record = { record | white = name } }
+            in
+            ( { model | replay = Maybe.map updateRecord model.replay }, Cmd.none )
 
 
 
@@ -672,6 +756,48 @@ treeView replay =
 sideView : Model -> List (H.Html Msg)
 sideView model =
     let
+        saveGameControls : List (H.Html Msg)
+        saveGameControls =
+            if model.showSaveGameButton then
+                case ( model.session.user, model.source, model.replay ) of
+                    ( Just _, Nothing, Just replay ) ->
+                        playerNameFields replay
+                            ++ [ H.button [ HA.class "save-game", HE.onClick SaveGame ] [ H.text "Create Game" ] ]
+
+                    ( Just _, Just (G.GameSource "here" _), Just replay ) ->
+                        playerNameFields replay
+                            ++ [ H.button [ HA.class "save-game", HE.onClick SaveGame ] [ H.text "Update Game" ] ]
+
+                    _ ->
+                        []
+
+            else
+                []
+
+        playerNameFields : R.Replay -> List (H.Html Msg)
+        playerNameFields replay =
+            [ H.div [ HA.class "save-game-player-names" ]
+                [ H.input
+                    [ HA.placeholder "Black player"
+                    , HA.type_ "text"
+                    , HA.value replay.record.black
+                    , HE.onFocus CommentFocus
+                    , HE.onBlur CommentBlur
+                    , HE.onInput EditBlackPlayer
+                    ]
+                    []
+                , H.input
+                    [ HA.placeholder "White player"
+                    , HA.type_ "text"
+                    , HA.value replay.record.white
+                    , HE.onFocus CommentFocus
+                    , HE.onBlur CommentBlur
+                    , HE.onInput EditWhitePlayer
+                    ]
+                    []
+                ]
+            ]
+
         moveNum : Int
         moveNum =
             model.replay
@@ -681,7 +807,7 @@ sideView model =
         navMidItem =
             case model.view of
                 ViewReplay _ ->
-                    [ H.span [ HA.class "game-highlight" ] [ H.text <| String.fromInt moveNum ] ]
+                    [ H.button [ HA.class "game-highlight", HE.onClick ToggleSaveGameButton ] [ H.text <| String.fromInt moveNum ] ]
 
                 _ ->
                     [ H.button
@@ -704,7 +830,7 @@ sideView model =
                     [ H.button [ HE.onClick End ] [ end ] ]
                 ]
     in
-    [ H.div [ HA.class "game-info" ] [ gameNav, treeView model.replay ]
+    [ H.div [ HA.class "game-info" ] (gameNav :: (saveGameControls ++ [ treeView model.replay ]))
     , H.div [ HA.class "comments" ]
         ((H.div [ HA.class "create-comment" ] <| createComment model)
             :: C.view

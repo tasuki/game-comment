@@ -50,6 +50,10 @@ type alias CommentCreatedResult =
     Result Error ()
 
 
+type alias GameSavedResult =
+    Result Error ()
+
+
 
 -- General things
 
@@ -225,4 +229,17 @@ getComments msg gameSource =
     Http.get
         { url = baseUrl ++ "/games/" ++ source ++ "/" ++ gameId ++ "/comments"
         , expect = Http.expectJson (decodeStatusError >> msg) C.commentsDecoder
+        }
+
+
+saveHereGame : (GameSavedResult -> msg) -> Session -> String -> G.Record -> Cmd msg
+saveHereGame msg session gameId record =
+    Http.request
+        { method = "PUT"
+        , headers = getAuthHeaders session
+        , url = baseUrl ++ "/games/here/" ++ gameId
+        , body = Http.stringBody "application/sgf" (LG.recordToSgf record)
+        , expect = expectMaybeError (handleError msg) emptyDecoder errorDecoder
+        , timeout = Nothing
+        , tracker = Nothing
         }
